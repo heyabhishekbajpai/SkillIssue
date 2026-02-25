@@ -8,6 +8,8 @@ import Features from './components/Features'
 import CTA from './components/CTA'
 import Footer from './components/Footer'
 import SkillBuilder from './pages/SkillBuilder'
+import UserProfile from './pages/UserProfile'
+import AuthCallback from './pages/AuthCallback'
 import AuthModal from './components/AuthModal'
 import OnboardingModal from './components/OnboardingModal'
 
@@ -38,6 +40,8 @@ export default function App() {
                 <Routes>
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/build" element={<SkillBuilder />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route path="/user/:username" element={<UserProfile />} />
                 </Routes>
             </div>
 

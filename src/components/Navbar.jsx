@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
-    const { user, isLoggedIn, openAuthModal, signOut } = useAuth()
+    const { user, profile, isLoggedIn, openAuthModal, signOut } = useAuth()
     const location = useLocation()
     const isHome = location.pathname === '/'
 
@@ -82,19 +82,30 @@ export default function Navbar() {
                     <div className="hidden md:block">
                         {isLoggedIn ? (
                             <div className="flex items-center gap-3">
-                                {user?.user_metadata?.avatar_url ? (
-                                    <img
-                                        src={user.user_metadata.avatar_url}
-                                        alt={user.user_metadata.full_name || 'User'}
-                                        className="w-8 h-8 rounded-full border border-accent/30 object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center">
-                                        <span className="font-clash font-bold text-xs text-accent">
-                                            {user?.user_metadata?.full_name?.charAt(0) ?? 'U'}
-                                        </span>
-                                    </div>
-                                )}
+                                {/* Clickable avatar → profile */}
+                                <Link
+                                    to={profile?.username ? `/user/${profile.username}` : '#'}
+                                    title="My Profile"
+                                    className="relative group/avatar"
+                                >
+                                    {user?.user_metadata?.avatar_url ? (
+                                        <img
+                                            src={user.user_metadata.avatar_url}
+                                            alt={user.user_metadata.full_name || 'User'}
+                                            className="w-8 h-8 rounded-full border border-accent/30 object-cover hover:border-accent transition-colors"
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center hover:border-accent transition-colors">
+                                            <span className="font-clash font-bold text-xs text-accent">
+                                                {user?.user_metadata?.full_name?.charAt(0) ?? 'U'}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {/* Tooltip */}
+                                    <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap font-satoshi text-[10px] text-white/50 bg-navy border border-white/10 px-2 py-0.5 rounded-md opacity-0 group-hover/avatar:opacity-100 transition-opacity pointer-events-none">
+                                        @{profile?.username}
+                                    </span>
+                                </Link>
                                 <button
                                     onClick={signOut}
                                     className="font-satoshi text-sm text-white/40 hover:text-white/70 transition-colors duration-300"
@@ -152,25 +163,39 @@ export default function Navbar() {
                         </Link>
 
                         {isLoggedIn ? (
-                            <div className="flex items-center gap-3 mt-3">
-                                {user?.user_metadata?.avatar_url ? (
-                                    <img
-                                        src={user.user_metadata.avatar_url}
-                                        alt={user.user_metadata.full_name || 'User'}
-                                        className="w-8 h-8 rounded-full border border-accent/30 object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center">
-                                        <span className="font-clash font-bold text-xs text-accent">
-                                            {user?.user_metadata?.full_name?.charAt(0) ?? 'U'}
-                                        </span>
+                            <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-white/[0.06]">
+                                <Link
+                                    to={profile?.username ? `/user/${profile.username}` : '#'}
+                                    onClick={() => setMobileOpen(false)}
+                                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.04] transition-all"
+                                >
+                                    {user?.user_metadata?.avatar_url ? (
+                                        <img
+                                            src={user.user_metadata.avatar_url}
+                                            alt="Profile"
+                                            className="w-8 h-8 rounded-full border border-accent/30 object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center">
+                                            <span className="font-clash font-bold text-xs text-accent">
+                                                {user?.user_metadata?.full_name?.charAt(0) ?? 'U'}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <p className="font-satoshi text-sm text-white/80 leading-none">
+                                            {user?.user_metadata?.full_name ?? 'My Profile'}
+                                        </p>
+                                        <p className="font-satoshi text-xs text-accent/60 mt-0.5">
+                                            @{profile?.username}
+                                        </p>
                                     </div>
-                                )}
+                                </Link>
                                 <button
                                     onClick={signOut}
-                                    className="font-satoshi text-sm text-white/40 hover:text-white/70 py-2"
+                                    className="font-satoshi text-sm text-white/30 hover:text-white/60 py-1.5 text-left px-3 transition-colors"
                                 >
-                                    Sign out ({user?.user_metadata?.full_name ?? user?.email})
+                                    Sign out
                                 </button>
                             </div>
                         ) : (
