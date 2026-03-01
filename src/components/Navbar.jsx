@@ -46,9 +46,9 @@ export default function Navbar() {
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
-                ? 'bg-navy/80 backdrop-blur-xl border-b border-accent/10 shadow-lg shadow-black/20'
-                : 'bg-transparent'
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled || mobileOpen
+                ? 'bg-navy/90 backdrop-blur-xl border-b border-accent/10 shadow-lg shadow-black/20'
+                : 'bg-navy/90 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-b border-white/5 md:border-transparent shadow-lg shadow-black/10 md:shadow-none'
                 }`}
         >
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
