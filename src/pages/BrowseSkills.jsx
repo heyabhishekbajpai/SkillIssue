@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
@@ -78,9 +79,9 @@ function SkillModal({ skill, onClose }) {
     }
 
     async function handleShare() {
-        // Encode repo:path as a stable URL query so links are permanent
+        // Generate a /skill/github?repo=...&path=... link that opens the full detail page
         const params = new URLSearchParams({ repo: skill.repo, path: skill.path })
-        const url = `${window.location.origin}/browse?${params.toString()}`
+        const url = `${window.location.origin}/skill/github?${params.toString()}`
         if (navigator.share) {
             try { await navigator.share({ title: skill.displayName, url }) } catch { /* cancelled */ }
         } else {
@@ -353,6 +354,8 @@ function SkillModal({ skill, onClose }) {
 
 // ── Main Page ───────────────────────────────────────────────────────────
 export default function BrowseSkills() {
+    const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const [officialSkills, setOfficialSkills] = useState([])
     const [openClawSkills, setOpenClawSkills] = useState([])
     const [communitySkills, setCommunitySkills] = useState([])
@@ -364,6 +367,15 @@ export default function BrowseSkills() {
     const [searchQuery, setSearchQuery] = useState('')
     const PAGE_SIZE = 48
     const [ocPage, setOcPage] = useState(1)
+
+    // Backward-compat: redirect old /browse?repo=...&path=... share links
+    useEffect(() => {
+        const repo = searchParams.get('repo')
+        const path = searchParams.get('path')
+        if (repo && path) {
+            navigate(`/skill/github?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`, { replace: true })
+        }
+    }, [searchParams, navigate])
 
     useEffect(() => {
         fetchAllFeaturedSkills()

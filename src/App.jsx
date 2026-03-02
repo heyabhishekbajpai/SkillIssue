@@ -15,6 +15,7 @@ import AuthCallback from './pages/AuthCallback'
 import AuthModal from './components/AuthModal'
 import OnboardingModal from './components/OnboardingModal'
 import SkillDetailPage from './pages/SkillDetailPage'
+import GitHubSkillPage from './pages/GitHubSkillPage'
 
 function LandingPage() {
     return (
@@ -47,6 +48,7 @@ export default function App() {
                     <Route path="/browse" element={<BrowseSkills />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="/user/:username" element={<UserProfile />} />
+                    <Route path="/skill/github" element={<GitHubSkillPage />} />
                     <Route path="/skill/:id" element={<SkillDetailPage />} />
                 </Routes>
             </div>
