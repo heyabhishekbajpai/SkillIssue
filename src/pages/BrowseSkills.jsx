@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -44,6 +44,46 @@ function SkillModal({ skill, onClose }) {
     const [linkCopied, setLinkCopied] = useState(false)
     const [downloading, setDownloading] = useState(false)
     const [viewMode, setViewMode] = useState('rendered') // 'rendered' | 'raw'
+
+    // ── Resize state ─────────────────────────────────────────────────────
+    const MIN_W = 480
+    const MIN_H = 400
+    const [size, setSize] = useState({ width: 768, height: Math.round(window.innerHeight * 0.85) })
+    const dragRef = useRef(null)
+    const isResizing = useRef(false)
+
+    const onResizeMouseDown = useCallback((e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        isResizing.current = true
+        dragRef.current = {
+            startX: e.clientX,
+            startY: e.clientY,
+            startW: size.width,
+            startH: size.height,
+        }
+
+        const onMove = (ev) => {
+            if (!isResizing.current) return
+            const dx = ev.clientX - dragRef.current.startX
+            const dy = ev.clientY - dragRef.current.startY
+            const newW = Math.min(Math.max(dragRef.current.startW + dx, MIN_W), window.innerWidth - 32)
+            const newH = Math.min(Math.max(dragRef.current.startH + dy, MIN_H), window.innerHeight - 32)
+            setSize({ width: newW, height: newH })
+        }
+        const onUp = () => {
+            isResizing.current = false
+            document.removeEventListener('mousemove', onMove)
+            document.removeEventListener('mouseup', onUp)
+            document.body.style.userSelect = ''
+            document.body.style.cursor = ''
+        }
+
+        document.body.style.userSelect = 'none'
+        document.body.style.cursor = 'se-resize'
+        document.addEventListener('mousemove', onMove)
+        document.addEventListener('mouseup', onUp)
+    }, [size])
 
     useEffect(() => {
         if (!skill) return
@@ -114,10 +154,11 @@ function SkillModal({ skill, onClose }) {
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-            {/* Modal */}
+            {/* Modal — size driven by inline style so the drag-handle can resize it */}
             <div
                 onClick={(e) => e.stopPropagation()}
-                className="relative w-full max-w-3xl max-h-[85vh] mx-4 rounded-2xl border border-white/10 bg-navy overflow-hidden flex flex-col animate-fade-in-up"
+                className="relative rounded-2xl border border-white/10 bg-navy overflow-hidden flex flex-col animate-fade-in-up"
+                style={{ width: size.width, height: size.height, maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 32px)' }}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-white/[0.02] shrink-0">
@@ -231,7 +272,7 @@ function SkillModal({ skill, onClose }) {
 
                             {/* Rendered view — pretty markdown */}
                             {viewMode === 'rendered' && (
-                                <div className="p-6 max-h-[50vh] overflow-y-auto">
+                                <div className="p-6 overflow-y-auto flex-1">
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm]}
                                         components={{
@@ -266,7 +307,7 @@ function SkillModal({ skill, onClose }) {
 
                             {/* Raw view — monospace plain text */}
                             {viewMode === 'raw' && (
-                                <pre className="p-5 text-sm font-mono text-white/70 whitespace-pre-wrap overflow-x-auto leading-relaxed max-h-[50vh] overflow-y-auto">
+                                <pre className="p-5 text-sm font-mono text-white/70 whitespace-pre-wrap overflow-x-auto leading-relaxed overflow-y-auto flex-1">
                                     {content}
                                 </pre>
                             )}
@@ -347,6 +388,21 @@ function SkillModal({ skill, onClose }) {
                         </a>
                     </div>
                 )}
+
+                {/* ── Resize handle ── */}
+                <div
+                    onMouseDown={onResizeMouseDown}
+                    className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize z-10 flex items-end justify-end p-1.5 group"
+                    title="Drag to resize"
+                >
+                    <svg width="10" height="10" viewBox="0 0 10 10" className="text-white/20 group-hover:text-accent/70 transition-colors duration-150">
+                        <circle cx="2" cy="6" r="1" fill="currentColor" />
+                        <circle cx="6" cy="6" r="1" fill="currentColor" />
+                        <circle cx="10" cy="6" r="1" fill="currentColor" />
+                        <circle cx="6" cy="10" r="1" fill="currentColor" />
+                        <circle cx="10" cy="10" r="1" fill="currentColor" />
+                    </svg>
+                </div>
             </div>
         </div>
     )
