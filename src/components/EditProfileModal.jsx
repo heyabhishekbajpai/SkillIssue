@@ -66,6 +66,18 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
     const imgLeft = (PREVIEW_SIZE - imgNatural.w * displayScale) / 2 + cropOffset.x
     const imgTop  = (PREVIEW_SIZE - imgNatural.h * displayScale) / 2 + cropOffset.y
 
+    // Clamp offset so the image always fully covers the circle — no empty edges.
+    function clampOffset(ox, oy, scale = cropScale) {
+        const iw = imgNatural.w * baseScale * scale
+        const ih = imgNatural.h * baseScale * scale
+        const maxX = Math.max(0, (iw - PREVIEW_SIZE) / 2)
+        const maxY = Math.max(0, (ih - PREVIEW_SIZE) / 2)
+        return {
+            x: Math.min(maxX, Math.max(-maxX, ox)),
+            y: Math.min(maxY, Math.max(-maxY, oy)),
+        }
+    }
+
     // ── General state ────────────────────────────────────────
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
@@ -102,8 +114,11 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
 
     const handleMouseMove = useCallback((e) => {
         if (!dragStart) return
-        setCropOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y })
-    }, [dragStart])
+        setCropOffset(prev => {
+            const raw = { x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }
+            return clampOffset(raw.x, raw.y)
+        })
+    }, [dragStart, imgNatural, baseScale, cropScale])
 
     const handleMouseUp = useCallback(() => setDragStart(null), [])
 
@@ -116,8 +131,11 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
     const handleTouchMove = useCallback((e) => {
         if (!dragStart) return
         const t = e.touches[0]
-        setCropOffset({ x: t.clientX - dragStart.x, y: t.clientY - dragStart.y })
-    }, [dragStart])
+        setCropOffset(prev => {
+            const raw = { x: t.clientX - dragStart.x, y: t.clientY - dragStart.y }
+            return clampOffset(raw.x, raw.y)
+        })
+    }, [dragStart, imgNatural, baseScale, cropScale])
 
     // ── Upload cropped photo ─────────────────────────────────
     async function handleCropConfirm() {
@@ -227,7 +245,9 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
                                 onTouchEnd={handleMouseUp}
                                 onWheel={e => {
                                     e.preventDefault()
-                                    setCropScale(s => Math.min(4, Math.max(1, s - e.deltaY * 0.003)))
+                                    const newScale = Math.min(4, Math.max(1, cropScale - e.deltaY * 0.003))
+                                    setCropScale(newScale)
+                                    setCropOffset(prev => clampOffset(prev.x, prev.y, newScale))
                                 }}
                             >
                                 {/* Absolutely positioned so preview geometry exactly matches canvas output */}
@@ -257,7 +277,11 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
                             <input
                                 type="range" min="1" max="4" step="0.01"
                                 value={cropScale}
-                                onChange={e => setCropScale(parseFloat(e.target.value))}
+                                onChange={e => {
+                                    const newScale = parseFloat(e.target.value)
+                                    setCropScale(newScale)
+                                    setCropOffset(prev => clampOffset(prev.x, prev.y, newScale))
+                                }}
                                 className="flex-1 h-1.5 appearance-none bg-white/10 rounded-full accent-accent cursor-pointer"
                             />
                             <svg className="w-5 h-5 text-white/30 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

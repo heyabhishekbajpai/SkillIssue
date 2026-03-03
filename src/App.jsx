@@ -17,6 +17,7 @@ import OnboardingModal from './components/OnboardingModal'
 import SkillDetailPage from './pages/SkillDetailPage'
 import GitHubSkillPage from './pages/GitHubSkillPage'
 import Community from './pages/Community'
+import BottomNav from './components/BottomNav'
 
 function LandingPage() {
     return (
@@ -43,16 +44,19 @@ export default function App() {
             {/* Content */}
             <div className="relative z-10">
                 <Navbar />
-                <Routes>
-                    <Route path="/" element={<LandingPage />} />
-                    <Route path="/build" element={<SkillBuilder />} />
-                    <Route path="/browse" element={<BrowseSkills />} />
-                    <Route path="/auth/callback" element={<AuthCallback />} />
-                    <Route path="/user/:username" element={<UserProfile />} />
-                    <Route path="/skill/github" element={<GitHubSkillPage />} />
-                    <Route path="/skill/:id" element={<SkillDetailPage />} />
-                    <Route path="/community" element={<Community />} />
-                </Routes>
+                <div className="pb-20 md:pb-0">
+                    <Routes>
+                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/build" element={<SkillBuilder />} />
+                        <Route path="/browse" element={<BrowseSkills />} />
+                        <Route path="/auth/callback" element={<AuthCallback />} />
+                        <Route path="/user/:username" element={<UserProfile />} />
+                        <Route path="/skill/github" element={<GitHubSkillPage />} />
+                        <Route path="/skill/:id" element={<SkillDetailPage />} />
+                        <Route path="/community" element={<Community />} />
+                    </Routes>
+                </div>
+                <BottomNav />
             </div>
 
             {/* Global Modals (rendered above everything) */}

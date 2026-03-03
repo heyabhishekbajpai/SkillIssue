@@ -147,10 +147,10 @@ export default function Navbar() {
                         )}
                     </div>
 
-                    {/* Mobile Menu Button */}
+                    {/* Mobile Menu Button — hidden on mobile, replaced by BottomNav */}
                     <button
                         onClick={() => setMobileOpen(!mobileOpen)}
-                        className="md:hidden p-2 text-white/70 hover:text-white"
+                        className="hidden p-2 text-white/70 hover:text-white"
                     >
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             {mobileOpen ? (
