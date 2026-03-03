@@ -20,7 +20,7 @@ export async function submitTestimonial({ name, username, body, img }) {
     // Fetch the actual profile to ensure the username matches exactly what's saved in the app
     const profile = await getProfile(user.$id)
     const finalUsername = profile?.username || username || 'user'
-    const finalName = profile?.display_name || profile?.username || name || 'Anonymous'
+    const finalName = profile?.display_name || name || profile?.username || 'Anonymous'
     const finalImg = profile?.avatar_url || img
 
     const perms = [
@@ -210,6 +210,69 @@ export async function createProfile({ id, username, email, avatar_url, display_n
 }
 
 /** Derive a safe username suggestion from an email address. */
+/** Fetch total user count + the 4 most recently joined avatars for social proof. */
+export async function getRecentUsers() {
+    requireAppwrite()
+    try {
+        const res = await databases.listDocuments(
+            DATABASE_ID,
+            USERS_TABLE_ID,
+            [Query.orderDesc('$createdAt'), Query.limit(4)]
+        )
+        return {
+            total: res.total,
+            avatars: res.documents.map(d => ({
+                avatar_url: d.avatar_url,
+                username: d.username,
+                display_name: d.display_name,
+            }))
+        }
+    } catch (err) {
+        console.error('getRecentUsers error:', err)
+        return { total: 0, avatars: [] }
+    }
+}
+
+/** Fetch all users sorted by most recently joined, with optional cursor-based pagination. */
+export async function getAllUsers({ limit = 50, cursor = null } = {}) {
+    requireAppwrite()
+    const queries = [
+        Query.orderDesc('$createdAt'),
+        Query.limit(limit),
+    ]
+    if (cursor) queries.push(Query.cursorAfter(cursor))
+    const res = await databases.listDocuments(DATABASE_ID, USERS_TABLE_ID, queries)
+    return {
+        users: res.documents.map(normalise),
+        total: res.total,
+    }
+}
+
+/** Fetch aggregated per-user stats (skills count + total stars) from public skills in one query. */
+export async function getPublicSkillsStatsByUser() {
+    requireAppwrite()
+    try {
+        const res = await databases.listDocuments(
+            DATABASE_ID,
+            SKILLS_TABLE_ID,
+            [
+                Query.equal('visibility', 'public'),
+                Query.limit(250),
+                Query.select(['user_id', 'star_count']),
+            ]
+        )
+        const stats = {}
+        for (const doc of res.documents) {
+            if (!stats[doc.user_id]) stats[doc.user_id] = { skills: 0, stars: 0 }
+            stats[doc.user_id].skills += 1
+            stats[doc.user_id].stars += (doc.star_count || 0)
+        }
+        return stats
+    } catch {
+        return {}
+    }
+}
+
 export function suggestUsername(email) {
     if (!email) return ''
     const prefix = email.split('@')[0]

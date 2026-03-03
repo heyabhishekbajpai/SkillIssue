@@ -16,6 +16,7 @@ import AuthModal from './components/AuthModal'
 import OnboardingModal from './components/OnboardingModal'
 import SkillDetailPage from './pages/SkillDetailPage'
 import GitHubSkillPage from './pages/GitHubSkillPage'
+import Community from './pages/Community'
 
 function LandingPage() {
     return (
@@ -50,6 +51,7 @@ export default function App() {
                     <Route path="/user/:username" element={<UserProfile />} />
                     <Route path="/skill/github" element={<GitHubSkillPage />} />
                     <Route path="/skill/:id" element={<SkillDetailPage />} />
+                    <Route path="/community" element={<Community />} />
                 </Routes>
             </div>
 

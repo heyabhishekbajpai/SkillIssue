@@ -3,32 +3,39 @@ import { useAuth } from '../context/AuthContext'
 import { updateProfile } from '../lib/userService'
 import { storage, account, ID, Permission, Role, AVATARS_BUCKET_ID } from '../lib/appwrite'
 
-// ── Tiny circular crop helper (no external lib needed) ────────
-// Uses a hidden canvas to extract a circle from the image at the
-// chosen zoom / offset, then returns a Blob.
-async function cropCircle(imageSrc, cropData) {
+const PREVIEW_SIZE = 200 // diameter of the circular crop area in px
+const OUTPUT_SIZE  = 512 // final avatar canvas size in px
+
+// Crops the original image to exactly what's visible in the circular preview.
+// Uses the same geometry as the preview rendering so preview === saved output.
+async function cropCircle(imageSrc, { cropScale, offsetX, offsetY }) {
     return new Promise((resolve) => {
         const img = new Image()
         img.onload = () => {
-            const SIZE = 512
+            // Minimum scale to fill the preview circle (same as baseScale in the UI)
+            const baseScale = Math.max(PREVIEW_SIZE / img.naturalWidth, PREVIEW_SIZE / img.naturalHeight)
+            const displayScale = baseScale * cropScale
+
+            // Top-left of the displayed image inside the PREVIEW_SIZE container
+            const imgLeft = (PREVIEW_SIZE - img.naturalWidth  * displayScale) / 2 + offsetX
+            const imgTop  = (PREVIEW_SIZE - img.naturalHeight * displayScale) / 2 + offsetY
+
+            // Source rectangle in original image pixel coordinates
+            const srcX = -imgLeft / displayScale
+            const srcY = -imgTop  / displayScale
+            const srcW =  PREVIEW_SIZE / displayScale
+            const srcH =  PREVIEW_SIZE / displayScale
+
             const canvas = document.createElement('canvas')
-            canvas.width = SIZE
-            canvas.height = SIZE
+            canvas.width  = OUTPUT_SIZE
+            canvas.height = OUTPUT_SIZE
             const ctx = canvas.getContext('2d')
 
-            // Clip to a circle
             ctx.beginPath()
-            ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2, 0, Math.PI * 2)
+            ctx.arc(OUTPUT_SIZE / 2, OUTPUT_SIZE / 2, OUTPUT_SIZE / 2, 0, Math.PI * 2)
             ctx.clip()
 
-            // Draw the portion of the image
-            const scale = cropData.scale
-            const srcW = img.width / scale
-            const srcH = img.height / scale
-            const srcX = cropData.offsetX / scale
-            const srcY = cropData.offsetY / scale
-
-            ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, SIZE, SIZE)
+            ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE)
             canvas.toBlob(resolve, 'image/jpeg', 0.92)
         }
         img.src = imageSrc
@@ -43,12 +50,21 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
     const [bio, setBio] = useState(profile?.bio || '')
 
     // ── Photo upload & crop state ────────────────────────────
-    const [photoStep, setPhotoStep] = useState('idle') // idle | picking | cropping | uploading
+    const [photoStep, setPhotoStep] = useState('idle') // idle | cropping | uploading
     const [rawSrc, setRawSrc] = useState(null)          // data URL of chosen file
+    const [imgNatural, setImgNatural] = useState({ w: 0, h: 0 }) // natural px dimensions
     const [cropScale, setCropScale] = useState(1)
     const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 })
     const [dragStart, setDragStart] = useState(null)
     const [previewUrl, setPreviewUrl] = useState(profile?.avatar_url || null)
+
+    // Derived preview geometry — image positioned absolutely inside the circle container
+    const baseScale = imgNatural.w && imgNatural.h
+        ? Math.max(PREVIEW_SIZE / imgNatural.w, PREVIEW_SIZE / imgNatural.h)
+        : 1
+    const displayScale = baseScale * cropScale
+    const imgLeft = (PREVIEW_SIZE - imgNatural.w * displayScale) / 2 + cropOffset.x
+    const imgTop  = (PREVIEW_SIZE - imgNatural.h * displayScale) / 2 + cropOffset.y
 
     // ── General state ────────────────────────────────────────
     const [saving, setSaving] = useState(false)
@@ -63,11 +79,18 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
 
         const reader = new FileReader()
         reader.onload = (ev) => {
-            setRawSrc(ev.target.result)
-            setCropScale(1)
-            setCropOffset({ x: 0, y: 0 })
-            setPhotoStep('cropping')
-            setError('')
+            const src = ev.target.result
+            // Load image to capture natural dimensions before entering crop step
+            const tmp = new window.Image()
+            tmp.onload = () => {
+                setImgNatural({ w: tmp.naturalWidth, h: tmp.naturalHeight })
+                setRawSrc(src)
+                setCropScale(1)
+                setCropOffset({ x: 0, y: 0 })
+                setPhotoStep('cropping')
+                setError('')
+            }
+            tmp.src = src
         }
         reader.readAsDataURL(file)
     }
@@ -104,7 +127,7 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
 
         try {
             const blob = await cropCircle(rawSrc, {
-                scale: cropScale,
+                cropScale,
                 offsetX: cropOffset.x,
                 offsetY: cropOffset.y,
             })
@@ -163,8 +186,6 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
         }
     }
 
-    const PREVIEW_SIZE = 200 // px — crop circle diameter in the UI
-
     return (
         <div
             className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4"
@@ -206,19 +227,21 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
                                 onTouchEnd={handleMouseUp}
                                 onWheel={e => {
                                     e.preventDefault()
-                                    setCropScale(s => Math.min(4, Math.max(0.5, s - e.deltaY * 0.003)))
+                                    setCropScale(s => Math.min(4, Math.max(1, s - e.deltaY * 0.003)))
                                 }}
                             >
+                                {/* Absolutely positioned so preview geometry exactly matches canvas output */}
                                 <img
                                     src={rawSrc}
                                     alt="crop"
                                     draggable={false}
                                     style={{
-                                        transform: `scale(${cropScale}) translate(${cropOffset.x / cropScale}px, ${cropOffset.y / cropScale}px)`,
-                                        transformOrigin: 'center',
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover',
+                                        position: 'absolute',
+                                        left: imgLeft,
+                                        top: imgTop,
+                                        width: imgNatural.w * displayScale,
+                                        height: imgNatural.h * displayScale,
+                                        maxWidth: 'none',
                                         pointerEvents: 'none',
                                         userSelect: 'none',
                                     }}
@@ -232,7 +255,7 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
                             </svg>
                             <input
-                                type="range" min="0.5" max="4" step="0.01"
+                                type="range" min="1" max="4" step="0.01"
                                 value={cropScale}
                                 onChange={e => setCropScale(parseFloat(e.target.value))}
                                 className="flex-1 h-1.5 appearance-none bg-white/10 rounded-full accent-accent cursor-pointer"

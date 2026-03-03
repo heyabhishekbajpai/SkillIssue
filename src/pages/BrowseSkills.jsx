@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ReactMarkdown from 'react-markdown'
@@ -877,8 +877,8 @@ export default function BrowseSkills() {
                     </div>
                 )}
 
-                {/* ── Loading skeleton ────────────────── */}
-                {loading && (
+                {/* ── Loading skeleton (GitHub) — only shown before DB skills exist ── */}
+                {loading && filteredDbSkills.length === 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {Array.from({ length: 12 }).map((_, i) => (
                             <SkeletonCard key={i} />
@@ -887,7 +887,7 @@ export default function BrowseSkills() {
                 )}
 
                 {/* ── Unified skills grid ─────────────────────────────────── */}
-                {(!loading || !dbLoading) && (filteredOfficial.length > 0 || filteredCommunity.length > 0 || filteredOpenClaw.length > 0 || filteredDbSkills.length > 0) && (
+                {(filteredOfficial.length > 0 || filteredCommunity.length > 0 || filteredOpenClaw.length > 0 || filteredDbSkills.length > 0) && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
                         {/* ── From the Community (Skill Issue DB) — first, leftmost ── */}
@@ -899,13 +899,31 @@ export default function BrowseSkills() {
                                         <img
                                             src="/skill issue white .png"
                                             alt="Skill Issue"
-                                            className="h-4 w-auto object-contain opacity-60"
+                                            className="h-6 w-auto object-contain opacity-60"
                                         />
                                         <span className="text-emerald-500/20 select-none">·</span>
                                         <span className="font-satoshi text-[11px] font-semibold text-white/20 tracking-widest uppercase">{filteredDbSkills.length} skills</span>
                                     </div>
                                     <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
                                 </div>
+                                {/* Sort controls — above the cards, only in Skill Issue filter */}
+                                {isSkillIssueFilter && (
+                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-center gap-2">
+                                    <span className="font-satoshi text-xs text-white/25 mr-1">Sort:</span>
+                                    {[['recent', 'Recent'], ['most-rated', 'Top Rated'], ['most-copied', 'Most Copied']].map(([val, label]) => (
+                                        <button
+                                            key={val}
+                                            onClick={() => setDbSort(val)}
+                                            className={`px-3 py-1.5 rounded-lg font-satoshi text-xs font-semibold transition-all duration-200 border ${dbSort === val
+                                                ? 'bg-accent/15 border-accent/30 text-accent'
+                                                : 'bg-white/[0.02] border-white/[0.06] text-white/35 hover:text-white/55 hover:border-white/15'
+                                                }`}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                                )}
                                 {filteredDbSkills.map((skill, i) => (
                                     <DbSkillCard
                                         key={skill.id}
@@ -915,23 +933,54 @@ export default function BrowseSkills() {
                                         index={i}
                                     />
                                 ))}
+                                {/* Skeleton placeholder for GitHub skills loading below DB skills */}
+                                {loading && (
+                                    <>
+                                        <div className="col-span-1 sm:col-span-2 lg:col-span-3 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent my-1" />
+                                        {Array.from({ length: 6 }).map((_, i) => (
+                                            <SkeletonCard key={`gh-skel-${i}`} />
+                                        ))}
+                                    </>
+                                )}
                                 {/* Separator after DB skills before GitHub skills */}
-                                {(filteredOfficial.length > 0 || filteredCommunity.length > 0 || filteredOpenClaw.length > 0) && (
+                                {!loading && (filteredOfficial.length > 0 || filteredCommunity.length > 0 || filteredOpenClaw.length > 0) && (
                                     <div className="col-span-1 sm:col-span-2 lg:col-span-3 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent my-1" />
                                 )}
                             </>
                         )}
 
-                        {/* Official cards */}
-                        {filteredOfficial.map((skill) => (
-                            <FeaturedSkillCard
-                                key={`${skill.repo}:${skill.path}`}
-                                skill={skill}
-                                onClick={setSelectedSkill}
-                                onDownload={handleDownload}
-                                isDownloading={downloadingId === `${skill.repo}:${skill.path}`}
-                            />
-                        ))}
+                        {/* Official cards — grouped by company with dividers */}
+                        {FEATURED_SOURCES.map((source) => {
+                            const companySkills = filteredOfficial.filter((s) => s.company === source.company)
+                            if (companySkills.length === 0) return null
+                            return (
+                                <Fragment key={source.company}>
+                                    <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-center gap-4 py-2">
+                                        <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <img
+                                                src={getOrgAvatarUrl(source.repo)}
+                                                alt={source.company}
+                                                className="w-5 h-5 rounded object-cover opacity-70"
+                                            />
+                                            <span className="font-satoshi text-[11px] font-semibold text-white/20 tracking-widest uppercase">{source.company}</span>
+                                            <span className="text-emerald-500/20 select-none">·</span>
+                                            <span className="font-satoshi text-[11px] font-semibold text-white/20 tracking-widest uppercase">{companySkills.length} skills</span>
+                                        </div>
+                                        <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
+                                    </div>
+                                    {companySkills.map((skill) => (
+                                        <FeaturedSkillCard
+                                            key={`${skill.repo}:${skill.path}`}
+                                            skill={skill}
+                                            onClick={setSelectedSkill}
+                                            onDownload={handleDownload}
+                                            isDownloading={downloadingId === `${skill.repo}:${skill.path}`}
+                                        />
+                                    ))}
+                                </Fragment>
+                            )
+                        })}
 
                         {/* Composio (community flat) divider + cards */}
                         {filteredCommunity.length > 0 && (
@@ -1037,25 +1086,6 @@ export default function BrowseSkills() {
                         </div>
                         <p className="font-clash font-semibold text-white/25 text-lg">No skills found</p>
                         <p className="font-satoshi text-sm text-white/15">{searchQuery ? 'Try a different search term' : 'Try selecting a different filter'}</p>
-                    </div>
-                )}
-
-                {/* Sort controls for DB community skills */}
-                {!dbLoading && filteredDbSkills.length > 0 && (
-                    <div className="flex items-center gap-2 mt-4 justify-start">
-                        <span className="font-satoshi text-xs text-white/25 mr-1">Sort community:</span>
-                        {[['recent', 'Recent'], ['most-rated', 'Top Rated'], ['most-copied', 'Most Copied']].map(([val, label]) => (
-                            <button
-                                key={val}
-                                onClick={() => setDbSort(val)}
-                                className={`px-3 py-1.5 rounded-lg font-satoshi text-xs font-semibold transition-all duration-200 border ${dbSort === val
-                                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-                                    : 'bg-white/[0.02] border-white/[0.06] text-white/35 hover:text-white/55 hover:border-white/15'
-                                    }`}
-                            >
-                                {label}
-                            </button>
-                        ))}
                     </div>
                 )}
 

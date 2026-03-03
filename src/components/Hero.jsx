@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { getRecentUsers } from '../lib/userService'
 
 function CountUpNumber({ endValue = 70, duration = 2500 }) {
     const [count, setCount] = useState(0)
@@ -22,6 +23,50 @@ function CountUpNumber({ endValue = 70, duration = 2500 }) {
     }, [endValue, duration])
 
     return <>{count}</>
+}
+
+function SocialProof() {
+    const [data, setData] = useState({ total: 0, avatars: [] })
+
+    useEffect(() => {
+        getRecentUsers().then(setData).catch(() => {})
+    }, [])
+
+    function formatCount(n) {
+        if (n <= 0) return null
+        if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k+`
+        return `${n}+`
+    }
+
+    const label = formatCount(data.total)
+
+    return (
+        <div className="flex items-center gap-3 pt-2">
+            <div className="flex -space-x-2">
+                {data.avatars.length > 0
+                    ? data.avatars.map((u, i) => (
+                        <img
+                            key={i}
+                            src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.username || 'u')}`}
+                            alt={u.display_name || u.username || 'user'}
+                            className="w-8 h-8 rounded-full border-2 border-navy object-cover bg-navy-200"
+                        />
+                    ))
+                    : [...Array(4)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="w-8 h-8 rounded-full border-2 border-navy bg-navy-200 flex items-center justify-center text-[0.55rem] font-bold text-accent/60"
+                        >
+                            {['AB', 'CK', 'RJ', 'DM'][i]}
+                        </div>
+                    ))
+                }
+            </div>
+            <span className="font-satoshi text-sm text-white/30">
+                Join a growing community of AI enthusiasts
+            </span>
+        </div>
+    )
 }
 
 const AI_LOGOS = [
@@ -179,21 +224,7 @@ export default function Hero() {
                         </div>
 
                         {/* Social proof hint */}
-                        <div className="flex items-center gap-3 pt-2">
-                            <div className="flex -space-x-2">
-                                {[...Array(4)].map((_, i) => (
-                                    <div
-                                        key={i}
-                                        className="w-8 h-8 rounded-full border-2 border-navy bg-navy-200 flex items-center justify-center text-[0.55rem] font-bold text-accent/60"
-                                    >
-                                        {['AB', 'CK', 'RJ', 'DM'][i]}
-                                    </div>
-                                ))}
-                            </div>
-                            <span className="font-satoshi text-sm text-white/30">
-                                Join 2,400+ AI enthusiasts
-                            </span>
-                        </div>
+                        <SocialProof />
                     </div>
 
                     {/* Right — Megamind */}
@@ -212,7 +243,7 @@ export default function Hero() {
                             {/* Floating badge */}
                             <div className="absolute -bottom-4 -left-4 z-20 px-4 py-2 rounded-xl bg-navy-100 border border-accent/20 flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                                <span className="font-satoshi text-xs text-white/70">12,847 skills available</span>
+                                <span className="font-satoshi text-xs text-white/70">8,000+ skills available</span>
                             </div>
                         </div>
                     </div>

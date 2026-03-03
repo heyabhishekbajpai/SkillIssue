@@ -99,6 +99,7 @@ export default function Navbar() {
                                 <NavLink to="/browse">Browse Skills</NavLink>
                             </>
                         )}
+                        <NavLink to="/community">Community</NavLink>
                         <NavLink to="/build">Build a Skill</NavLink>
                     </div>
 
@@ -176,6 +177,9 @@ export default function Navbar() {
                                 <Link to="/browse" className="block font-satoshi text-sm text-white/60 hover:text-accent-light py-2">Browse Skills</Link>
                             </>
                         )}
+                        <Link to="/community" className={`block font-satoshi text-sm py-2 ${location.pathname === '/community' ? 'text-accent font-medium' : 'text-white/60 hover:text-accent-light'}`}>
+                            Community
+                        </Link>
                         <Link to="/build" className={`block font-satoshi text-sm py-2 ${location.pathname === '/build' ? 'text-accent font-medium' : 'text-white/60 hover:text-accent-light'}`}>
                             Build a Skill
                         </Link>
