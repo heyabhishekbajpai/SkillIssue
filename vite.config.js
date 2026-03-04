@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import Sitemap from 'vite-plugin-sitemap'
 
 // Custom plugin: intercepts POST /api/generate and proxies to Groq API
 function groqApiPlugin() {
@@ -372,5 +373,12 @@ Produce a skill file that an AI agent could pick up and immediately use to produ
 }
 
 export default defineConfig({
-    plugins: [react(), groqApiPlugin()],
+    plugins: [
+        react(),
+        groqApiPlugin(),
+        Sitemap({
+            hostname: 'https://skillissue.bajpai.tech',
+            dynamicRoutes: ['/build', '/browse', '/skill/github', '/community'],
+        }),
+    ],
 })
