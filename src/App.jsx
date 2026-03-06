@@ -60,8 +60,11 @@ export default function App() {
                         <Route path="/community" element={<Community />} />
                     </Routes>
                 </div>
-                <BottomNav />
             </div>
+
+            {/* Bottom nav — direct child of root so no ancestor overflow/transform
+                can break position:fixed on iOS/Android Safari */}
+            <BottomNav />
 
             {/* Global Modals (rendered above everything) */}
             {showAuthModal && <AuthModal />}

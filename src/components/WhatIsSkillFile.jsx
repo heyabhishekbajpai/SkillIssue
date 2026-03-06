@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useScrollAnimation } from '../hooks/useScrollAnimation'
 
 const USE_CASES = [
@@ -72,104 +73,141 @@ const USE_CASES = [
     },
 ]
 
+// Card animation windows as [start, end] of ratio 0→1
+const CARD_WINDOWS = [
+    [0.00, 0.30],
+    [0.20, 0.55],
+    [0.48, 0.93],
+]
+
 export default function WhatIsSkillFile() {
-    const sectionRef = useScrollAnimation()
+    const trackRef = useRef(null)
+    const cardRefs = useRef([])
+
+    useEffect(() => {
+        const update = () => {
+            const track = trackRef.current
+            if (!track) return
+            // Static on mobile — no scroll animation
+            if (window.innerWidth < 768) {
+                cardRefs.current.forEach(card => {
+                    if (!card) return
+                    card.style.transform  = 'none'
+                    card.style.opacity    = '1'
+                    card.style.willChange = 'auto'
+                })
+                return
+            }
+            const rect       = track.getBoundingClientRect()
+            const trackH     = track.offsetHeight
+            const vh         = window.innerHeight
+            const scrollDist = trackH - vh
+            const earlyStart = vh * 0.7
+            const scrolled   = earlyStart - rect.top
+            const totalDist  = scrollDist + earlyStart
+            const ratio = Math.max(0, Math.min(1, scrolled / totalDist))
+
+            cardRefs.current.forEach((card, i) => {
+                if (!card) return
+                const [start, end] = CARD_WINDOWS[i] ?? [0, 1]
+                const p = Math.max(0, Math.min(1, (ratio - start) / (end - start)))
+                // left-to-right: start at -110%
+                card.style.transform = `translateX(${-110 * (1 - p)}%)`
+                card.style.opacity   = String(p)
+            })
+        }
+
+        update()
+        window.addEventListener('scroll', update, { passive: true })
+        window.addEventListener('resize', update, { passive: true })
+        return () => {
+            window.removeEventListener('scroll', update)
+            window.removeEventListener('resize', update)
+        }
+    }, [])
 
     return (
-        <section ref={sectionRef} className="relative py-24 overflow-hidden">
-            <div className="section-divider mb-20" />
+        <section className="relative">
+            <div className="section-divider" />
 
-            {/* Subtle ambient glow */}
+            {/* Subtle ambient glow — outside track so it doesn't get clipped */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/[0.03] rounded-full blur-[120px] pointer-events-none" />
 
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                {/* ── Headline ───────────────────────────── */}
-                <div className="scroll-reveal text-center mb-6">
-                    <span className="inline-block font-satoshi text-sm font-medium tracking-widest uppercase text-accent/70 mb-4">
-                        What are AI Skills?
-                    </span>
-                    <h2 className="font-clash font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.1]">
-                        Think of it like apps,
-                        <br />
-                        <span className="italic text-accent glow-text">but for AI</span>
-                    </h2>
-                </div>
+            {/* Tall scroll track — pins the sticky container */}
+            <div ref={trackRef} className="features-pin-track" style={{ height: '155vh' }}>
+                <div className="features-pin-sticky" style={{ overflow: 'hidden' }}>
 
-                {/* ── Friendly explanation ────────────────── */}
-                <div className="scroll-reveal scroll-reveal-delay-1 max-w-2xl mx-auto text-center mb-20">
-                    <p className="font-satoshi text-lg sm:text-xl text-white/50 leading-relaxed">
-                        You know how your phone has apps that make it smarter?{' '}
-                        <span className="text-white/80 font-medium">AI skills work the same way.</span>{' '}
-                        A skill is a simple set of instructions that tells your AI exactly how to
-                        behave for a specific task. Instead of typing long instructions every
-                        time, you grab a skill and{' '}
-                        <span className="text-accent-light font-medium">
-                            your AI is instantly better at that task.
+                    {/* Header — always visible */}
+                    <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-2 pb-6 text-center">
+                        <span className="inline-block font-satoshi text-sm font-medium tracking-widest uppercase text-accent/70 mb-4">
+                            What are AI Skills?
                         </span>
-                    </p>
-                </div>
+                        <h2 className="font-clash font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.1]">
+                            Think of it like apps,
+                            <br />
+                            <span className="italic text-accent glow-text">but for AI</span>
+                        </h2>
+                        <p className="font-satoshi text-base sm:text-lg text-white/50 leading-relaxed mt-4 max-w-2xl mx-auto">
+                            You know how your phone has apps that make it smarter?{' '}
+                            <span className="text-white/80 font-medium">AI skills work the same way.</span>{' '}
+                            Grab a skill and{' '}
+                            <span className="text-accent-light font-medium">your AI is instantly better at that task.</span>
+                        </p>
+                    </div>
 
-                {/* ── Use-case Cards ──────────────────────── */}
-                <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
-                    {USE_CASES.map((useCase, i) => (
-                        <div
-                            key={useCase.title}
-                            className={`scroll-reveal scroll-reveal-delay-${i + 1} group relative rounded-2xl overflow-hidden border bg-gradient-to-br ${useCase.gradient} ${useCase.borderColor} ${useCase.glowColor} transition-all duration-500`}
-                        >
-                            <div className="p-7 sm:p-8">
-                                {/* Icon */}
+                    {/* Use-case cards */}
+                    <div className="max-w-7xl mx-auto px-6 lg:px-8 pb-4">
+                        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+                            {USE_CASES.map((useCase, i) => (
                                 <div
-                                    className={`w-14 h-14 rounded-2xl ${useCase.iconBg} border flex items-center justify-center ${useCase.iconColor} mb-6 group-hover:scale-110 transition-transform duration-300`}
+                                    key={useCase.title}
+                                    ref={el => { cardRefs.current[i] = el }}
+                                    style={{ opacity: 0, willChange: 'transform, opacity', transition: 'transform 0.06s linear, opacity 0.06s linear, box-shadow 500ms, border-color 500ms' }}
+                                    className={`group relative rounded-2xl overflow-hidden border bg-gradient-to-br ${useCase.gradient} ${useCase.borderColor} ${useCase.glowColor} transition-all duration-500`}
                                 >
-                                    {useCase.icon}
-                                </div>
-
-                                {/* Title */}
-                                <h3 className="font-clash font-semibold text-xl sm:text-2xl mb-3 text-white">
-                                    {useCase.title}
-                                </h3>
-
-                                {/* Description */}
-                                <p className="font-satoshi text-[0.95rem] text-white/45 leading-relaxed mb-6">
-                                    {useCase.description}
-                                </p>
-
-                                {/* Before → After pill */}
-                                <div className="space-y-2.5">
-                                    <div className="flex items-start gap-2.5">
-                                        <span className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-white/5 flex items-center justify-center">
-                                            <span className="text-white/25 text-[0.6rem] font-bold">✕</span>
-                                        </span>
-                                        <span className="font-satoshi text-sm text-white/25 line-through decoration-white/10">
-                                            {useCase.before}
-                                        </span>
+                                    <div className="p-7 sm:p-8">
+                                        {/* Icon */}
+                                        <div className={`w-14 h-14 rounded-2xl ${useCase.iconBg} border flex items-center justify-center ${useCase.iconColor} mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                                            {useCase.icon}
+                                        </div>
+                                        {/* Title */}
+                                        <h3 className="font-clash font-semibold text-xl sm:text-2xl mb-3 text-white">
+                                            {useCase.title}
+                                        </h3>
+                                        {/* Description */}
+                                        <p className="font-satoshi text-[0.95rem] text-white/45 leading-relaxed mb-6">
+                                            {useCase.description}
+                                        </p>
+                                        {/* Before → After */}
+                                        <div className="space-y-2.5">
+                                            <div className="flex items-start gap-2.5">
+                                                <span className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-white/5 flex items-center justify-center">
+                                                    <span className="text-white/25 text-[0.6rem] font-bold">✕</span>
+                                                </span>
+                                                <span className="font-satoshi text-sm text-white/25 line-through decoration-white/10">
+                                                    {useCase.before}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-start gap-2.5">
+                                                <span className={`shrink-0 mt-0.5 w-5 h-5 rounded-full ${useCase.iconBg} flex items-center justify-center`}>
+                                                    <span className={`${useCase.iconColor} text-[0.6rem] font-bold`}>✓</span>
+                                                </span>
+                                                <span className={`font-satoshi text-sm ${useCase.iconColor} font-medium`}>
+                                                    {useCase.after}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="flex items-start gap-2.5">
-                                        <span className={`shrink-0 mt-0.5 w-5 h-5 rounded-full ${useCase.iconBg} flex items-center justify-center`}>
-                                            <span className={`${useCase.iconColor} text-[0.6rem] font-bold`}>✓</span>
-                                        </span>
-                                        <span className={`font-satoshi text-sm ${useCase.iconColor} font-medium`}>
-                                            {useCase.after}
-                                        </span>
+                                    {/* Decorative corner accent */}
+                                    <div className="absolute top-0 right-0 w-24 h-24 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                                        <div className={`absolute top-5 right-5 w-10 h-[1px] ${useCase.dotColor} opacity-30`} />
+                                        <div className={`absolute top-5 right-5 w-[1px] h-10 ${useCase.dotColor} opacity-30`} />
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Decorative corner accent */}
-                            <div className="absolute top-0 right-0 w-24 h-24 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                                <div className={`absolute top-5 right-5 w-10 h-[1px] ${useCase.dotColor} opacity-30`} />
-                                <div className={`absolute top-5 right-5 w-[1px] h-10 ${useCase.dotColor} opacity-30`} />
-                            </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
+                    </div>
 
-                {/* ── Bottom tagline ──────────────────────── */}
-                <div className="scroll-reveal scroll-reveal-delay-4 text-center mt-14">
-                    <p className="font-satoshi text-base text-white/30">
-                        No setup. No learning curve. Just{' '}
-                        <span className="text-accent font-medium">instant results.</span>
-                    </p>
                 </div>
             </div>
         </section>

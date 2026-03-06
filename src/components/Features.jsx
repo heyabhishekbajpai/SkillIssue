@@ -1,98 +1,244 @@
-import { useScrollAnimation } from '../hooks/useScrollAnimation'
+import { useEffect, useRef } from 'react'
+
+// i = 0,2 → left column (slides from left); i = 1,3 → right column (slides from right)
+const slideDir = (i) => i % 2 === 0 ? 'from-left' : 'from-right'
+
+// Animation windows as [start, end] fractions of total scroll ratio (0→1)
+// Header is always visible — only cards animate in
+// With earlyStart=0.7vh: pin begins at ratio≈0.24, ends at ratio≈1
+const CARD_WINDOWS  = [
+    [0.00, 0.28],  // 01 — from left
+    [0.09, 0.36],  // 02 — from right
+    [0.28, 0.66],  // 03 — from left  (starts as 01 lands)
+    [0.40, 0.90],  // 04 — from right (starts as 02 lands, pin releases ~here)
+]
 
 const FEATURES = [
     {
+        number: '01',
         title: 'Private Vault',
         description: 'Securely store your personal skill collection. Organize, tag, and access your skills anytime — they stay yours.',
+        detail: 'End-to-end encrypted storage with version history and private team sharing built right in.',
         icon: (
-            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
             </svg>
         ),
+        accentColor: '#4ba9ff',
+        cardBg: 'linear-gradient(140deg, #0d1830 0%, #0a1220 60%, #09101c 100%)',
+        borderColor: 'rgba(75, 169, 255, 0.22)',
+        glowColor: 'rgba(75, 169, 255, 0.07)',
+        iconBg: 'rgba(75, 169, 255, 0.12)',
+        pillBg: 'rgba(75, 169, 255, 0.1)',
+        pills: ['Encrypted', 'Version history', 'Team access'],
     },
     {
+        number: '02',
         title: 'Public Marketplace',
         description: 'Discover skills published by the community. Rate, review, and download the best skill files for every AI agent.',
+        detail: 'Thousands of curated skills across coding, writing, research, and dozens of specialized domains.',
         icon: (
-            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016A3.001 3.001 0 0021 9.349m-18 0a2.998 2.998 0 00-1.5-2.599V5.25A2.25 2.25 0 013.75 3h16.5A2.25 2.25 0 0122.5 5.25v1.5a2.997 2.997 0 00-1.5 2.599" />
             </svg>
         ),
+        accentColor: '#a78bfa',
+        cardBg: 'linear-gradient(140deg, #110e2e 0%, #0d0a22 60%, #0a081a 100%)',
+        borderColor: 'rgba(167, 139, 250, 0.22)',
+        glowColor: 'rgba(167, 139, 250, 0.07)',
+        iconBg: 'rgba(167, 139, 250, 0.12)',
+        pillBg: 'rgba(167, 139, 250, 0.1)',
+        pills: ['Community rated', 'All AI agents', 'One-click copy'],
     },
     {
+        number: '03',
         title: 'AI Skill Editor',
         description: 'Create and edit skill files with an intelligent markdown editor. Preview how your skills will work before publishing.',
+        detail: 'Live preview, syntax highlighting, and AI-assisted writing to craft the perfect skill file.',
         icon: (
-            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
             </svg>
         ),
+        accentColor: '#2dd4bf',
+        cardBg: 'linear-gradient(140deg, #091e28 0%, #081420 60%, #060f18 100%)',
+        borderColor: 'rgba(45, 212, 191, 0.22)',
+        glowColor: 'rgba(45, 212, 191, 0.07)',
+        iconBg: 'rgba(45, 212, 191, 0.12)',
+        pillBg: 'rgba(45, 212, 191, 0.1)',
+        pills: ['Live preview', 'AI-assisted', 'Syntax highlight'],
     },
     {
+        number: '04',
         title: 'Skill Combining',
         description: 'Merge multiple skills into powerful combos. Stack capabilities to create the ultimate AI agent configuration.',
+        detail: 'Visual drag-and-drop combiner with conflict detection and smart optimization suggestions.',
         icon: (
-            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875S10.5 3.09 10.5 4.125c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.421 48.421 0 01-4.185-.428.64.64 0 00-.74.587c-.01.093-.02.186-.028.28-.036.477.264.897.6 1.228a2.1 2.1 0 01.634 1.507v0c0 .572-.312 1.07-.77 1.334a2.14 2.14 0 01-1.16.346c-.574 0-1.07-.312-1.334-.77a2.14 2.14 0 01-.346-1.16v-.001c0-.461.186-.887.493-1.207a1.803 1.803 0 00.504-1.297v0c0-.373-.187-.708-.49-.938A48.394 48.394 0 003 7.848v-.038c0-.345.268-.636.61-.66A48.66 48.66 0 0112 6.75c2.836 0 5.607.244 8.29.715a45.38 45.38 0 01.1.717v0c.059.396-.222.747-.614.8a48.474 48.474 0 01-4.186.428A.64.64 0 0115 8.957v0c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 12.75c-2.472 0-4.9.184-7.274.54a.836.836 0 00-.476.345 48.202 48.202 0 00-.634 1.028.836.836 0 00.16.933A47.561 47.561 0 0012 18.75c3.016 0 5.934-.28 8.724-.84a.837.837 0 00.596-.68c.052-.328.098-.656.138-.986a.836.836 0 00-.278-.806 48.196 48.196 0 00-1.906-1.595.836.836 0 00-.652-.194A47.764 47.764 0 0012 14.25v-1.5" />
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
             </svg>
         ),
+        accentColor: '#fb923c',
+        cardBg: 'linear-gradient(140deg, #1c1008 0%, #140c06 60%, #0f0904 100%)',
+        borderColor: 'rgba(251, 146, 60, 0.22)',
+        glowColor: 'rgba(251, 146, 60, 0.07)',
+        iconBg: 'rgba(251, 146, 60, 0.12)',
+        pillBg: 'rgba(251, 146, 60, 0.1)',
+        pills: ['Drag & drop', 'Conflict detect', 'Smart optimize'],
     },
 ]
 
 export default function Features() {
-    const sectionRef = useScrollAnimation()
+    const trackRef = useRef(null)
+
+    useEffect(() => {
+        const track = trackRef.current
+        if (!track) return
+
+        const update = () => {
+            // Static on mobile — no scroll animation
+            if (window.innerWidth < 768) {
+                const cards = track.querySelectorAll('.feature-slide-card')
+                cards.forEach(card => {
+                    card.style.transform  = 'none'
+                    card.style.opacity    = '1'
+                    card.style.willChange = 'auto'
+                })
+                return
+            }
+            const rect       = track.getBoundingClientRect()
+            const trackH     = track.offsetHeight
+            const vh         = window.innerHeight
+            const scrollDist = trackH - vh
+
+            // Start animating when the section top is 70vh below viewport top
+            // (well before pinning, which starts at rect.top === 0)
+            const earlyStart = vh * 0.7
+            const scrolled   = earlyStart - rect.top        // positive once close
+            const totalDist  = scrollDist + earlyStart
+            const ratio = Math.max(0, Math.min(1, scrolled / totalDist))
+
+            // ── Cards only ──────────────────────────────────────────
+            const cards = track.querySelectorAll('.feature-slide-card')
+            cards.forEach((card, i) => {
+                const [start, end] = CARD_WINDOWS[i] ?? [0, 1]
+                const p   = Math.max(0, Math.min(1, (ratio - start) / (end - start)))
+                const dir = card.classList.contains('from-left') ? -1 : 1
+                card.style.transform = `translateX(${dir * 110 * (1 - p)}%)`
+                card.style.opacity   = p
+            })
+        }
+
+        update()
+        window.addEventListener('scroll', update, { passive: true })
+        window.addEventListener('resize', update, { passive: true })
+        return () => {
+            window.removeEventListener('scroll', update)
+            window.removeEventListener('resize', update)
+        }
+    }, [])
+
+    // Pair cards into rows of 2
+    const rows = []
+    for (let i = 0; i < FEATURES.length; i += 2) rows.push(FEATURES.slice(i, i + 2))
 
     return (
-        <section id="features" ref={sectionRef} className="relative py-16">
-            <div className="section-divider mb-16" />
+        <section id="features" className="relative">
+            <div className="section-divider" />
 
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                {/* Header */}
-                <div className="scroll-reveal text-center mb-12">
-                    <span className="font-satoshi text-sm font-medium text-accent tracking-widest uppercase">
-                        Features
-                    </span>
-                    <h2 className="font-clash font-bold text-4xl sm:text-5xl lg:text-6xl mt-4 tracking-tight">
-                        Everything you need to
-                        <br />
-                        <span className="italic text-accent">master AI skills</span>
-                    </h2>
-                    <p className="font-satoshi text-lg text-white/40 mt-6 max-w-2xl mx-auto">
-                        A complete toolkit for discovering, creating, and managing the skill files
-                        that make AI agents truly powerful.
-                    </p>
-                </div>
+            {/* ── Tall scroll track — provides scroll distance for the pin ── */}
+            <div ref={trackRef} className="features-pin-track">
 
-                {/* Feature Cards Grid */}
-                <div className="grid sm:grid-cols-2 gap-6">
-                    {FEATURES.map((feature, i) => (
-                        <div
-                            key={feature.title}
-                            className={`scroll-reveal scroll-reveal-delay-${i + 1} glass-card rounded-2xl p-8 group`}
-                        >
-                            {/* Icon */}
-                            <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/15 flex items-center justify-center text-accent mb-6 group-hover:bg-accent/20 group-hover:scale-110 transition-all duration-300">
-                                {feature.icon}
-                            </div>
+                {/* ── Sticky viewport — pinned until track is fully scrolled ── */}
+                <div className="features-pin-sticky">
 
-                            {/* Title */}
-                            <h3 className="font-clash font-semibold text-xl mb-3 text-white group-hover:text-accent-light transition-colors duration-300">
-                                {feature.title}
-                            </h3>
+                    {/* Header — always visible, no opacity animation */}
+                    <div className="features-pin-header max-w-7xl mx-auto px-6 lg:px-8 pt-2 pb-6 text-center">
+                        <span className="font-satoshi text-sm font-medium text-accent tracking-widest uppercase">
+                            Features
+                        </span>
+                        <h2 className="font-clash font-bold text-4xl sm:text-5xl lg:text-6xl mt-4 tracking-tight">
+                            Everything you need to
+                            <br />
+                            <span className="italic text-accent">master AI skills</span>
+                        </h2>
+                        <p className="font-satoshi text-lg text-white/40 mt-4 max-w-2xl mx-auto">
+                            A complete toolkit for discovering, creating, and managing the skill files
+                            that make AI agents truly powerful.
+                        </p>
+                    </div>
 
-                            {/* Description */}
-                            <p className="font-satoshi text-sm text-white/40 leading-relaxed">
-                                {feature.description}
-                            </p>
+                    {/* Cards grid — overflowX hidden here to clip card slides */}
+                    <div style={{ overflowX: 'hidden' }}>
+                        <div className="max-w-7xl mx-auto px-6 lg:px-8 pb-4 flex flex-col gap-5">
+                            {rows.map((row, rowIdx) => (
+                                <div key={rowIdx} className="feature-reveal-row">
+                                    {row.map((feature, colIdx) => (
+                                        <div
+                                            key={feature.title}
+                                            className={`feature-slide-card ${slideDir(rowIdx * 2 + colIdx)}`}
+                                            style={{
+                                                background:   feature.cardBg,
+                                                borderColor:  feature.borderColor,
+                                                opacity:      0,
+                                            }}
+                                        >
+                                            {/* Radial glow */}
+                                            <div
+                                                className="feature-card-glow"
+                                                style={{ background: `radial-gradient(400px circle at top right, ${feature.glowColor}, transparent 70%)` }}
+                                            />
 
-                            {/* Decorative corner accent */}
-                            <div className="absolute top-0 right-0 w-20 h-20 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                                <div className="absolute top-4 right-4 w-8 h-[1px] bg-accent/30" />
-                                <div className="absolute top-4 right-4 w-[1px] h-8 bg-accent/30" />
-                            </div>
+                                            <div className="feature-card-body">
+                                                {/* Text */}
+                                                <div className="feature-card-left">
+                                                    <div className="feature-card-meta">
+                                                        <span className="feature-card-number font-clash">{feature.number}</span>
+                                                        <div
+                                                            className="feature-card-icon-wrap"
+                                                            style={{ background: feature.iconBg, color: feature.accentColor }}
+                                                        >
+                                                            {feature.icon}
+                                                        </div>
+                                                    </div>
+
+                                                    <h3 className="feature-card-title font-clash" style={{ color: feature.accentColor }}>
+                                                        {feature.title}
+                                                    </h3>
+
+                                                    <p className="feature-card-desc font-satoshi">{feature.description}</p>
+
+                                                    <div className="feature-card-pills">
+                                                        {feature.pills.map(pill => (
+                                                            <span
+                                                                key={pill}
+                                                                className="feature-pill font-satoshi"
+                                                                style={{ background: feature.pillBg, color: feature.accentColor, borderColor: feature.borderColor }}
+                                                            >
+                                                                {pill}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Decorative icon */}
+                                                <div className="feature-card-deco" style={{ color: feature.accentColor }} aria-hidden="true">
+                                                    <div className="feature-deco-bg" style={{ background: feature.iconBg }} />
+                                                    <div className="feature-deco-icon">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={0.8} className="w-full h-full opacity-60">
+                                                            {feature.icon.props.children}
+                                                        </svg>
+                                                    </div>
+                                                    <div className="feature-deco-dots" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
                         </div>
-                    ))}
+                    </div>
+
                 </div>
             </div>
         </section>

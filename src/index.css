@@ -2,48 +2,267 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-@layer utilities {
-  @keyframes stack-scale-down {
-    0% {
-      transform: scale(1);
-      filter: brightness(1) drop-shadow(0 0 0 rgba(0,0,0,0));
-    }
-    100% {
-      transform: scale(0.92);
-      filter: brightness(0.6) drop-shadow(0 -10px 20px rgba(0,0,0,0.5));
-    }
-  }
+/* ── Feature Cards — Two-column slide-in rows ───────────────── */
 
-  .stacking-card-wrapper {
-    position: sticky;
-    top: 80px; 
-    height: auto;
-    min-height: calc(100vh - 80px);
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
-    will-change: transform;
-    /* Optional: scale-down is driven by scroll view */
-  }
-  
-  .stacking-card-inner {
-    width: 100%;
-    min-height: calc(100vh - 80px);
-    transform-origin: top center;
-    border-top-left-radius: 2rem;
-    border-top-right-radius: 2rem;
-    will-change: transform;
-    background-color: var(--color-navy);
-  }
+/* Tall track that provides the scroll distance for the pin effect.
+   210vh total → 110vh of actual scroll (210 - 100vh sticky height)    */
+.features-pin-track {
+  position: relative;
+  height: 185vh;
+}
 
-  @supports (animation-timeline: view()) {
-    .stacking-card-inner {
-      animation: stack-scale-down linear both;
-      animation-timeline: view();
-      /* Animate while the element is exiting the scrollport upward */
-      animation-range: exit-crossing 0% exit-crossing 100%;
-    }
+/* Sticky container that stays pinned to the viewport top while the
+   track scrolls underneath it                                          */
+.features-pin-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem 0 2rem;
+}
+
+/* Header — always visible, no JS-driven animation */
+.features-pin-header {}
+
+/* Two-column grid row — align-items:stretch makes both cards equal height */
+.feature-reveal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+@media (max-width: 640px) {
+  .feature-reveal-row {
+    grid-template-columns: 1fr;
   }
+}
+
+/* ── Mobile: disable all pin/sticky scroll animations ────────── */
+@media (max-width: 767px) {
+  .features-pin-track {
+    height: auto !important;
+    overflow: hidden;   /* clip off-screen cards on mobile */
+  }
+  .features-pin-sticky {
+    position: static !important;
+    height: auto !important;
+    /* Keep overflow hidden on mobile so card transforms don't leak */
+    overflow: hidden !important;
+    padding: 2rem 0;
+  }
+  /* Ensure ALL animated cards are visible on mobile — covers
+     .feature-slide-card (Features) and generic scroll-anim cards */
+  .feature-slide-card,
+  [style*="will-change"] {
+    opacity: 1 !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+}
+
+/* ── Individual slide card ───────────────────────────────────── */
+.feature-slide-card {
+  position: relative;
+  border-radius: 1.5rem;
+  border: 1px solid;
+  overflow: hidden;
+  will-change: transform, opacity;
+  /* Short transition smooths the scroll-event gaps without lagging behind */
+  transition: transform 0.08s linear, opacity 0.08s linear;
+  /* JS sets these — start hidden so there's no flash before first update */
+  opacity: 0;
+  transform: translateX(0);
+}
+
+/* Direction classes — read by JS to know which way to slide; no CSS transform here */
+.feature-slide-card.from-left  {}
+.feature-slide-card.from-right {}
+
+/* Shine sweep on hover */
+.feature-slide-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.06) 55%,
+    transparent 70%
+  );
+  transform: translateX(-100%) skewX(-12deg);
+  transition: transform 0s;
+}
+.feature-slide-card:hover::after {
+  transform: translateX(200%) skewX(-12deg);
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Radial accent glow overlay (absolutely positioned) */
+.feature-card-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Inner layout wrapper */
+.feature-card-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem 1.75rem;
+  min-height: unset;
+  height: 100%;   /* fills the stretch so all cards in a row match height */
+}
+
+@media (max-width: 768px) {
+  .feature-card-body {
+    flex-direction: column;
+    padding: 1.25rem 1.25rem;
+    gap: 1rem;
+  }
+}
+
+/* ── Left: text column ──────────────────────────────────────── */
+.feature-card-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+}
+
+.feature-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.feature-card-number {
+  font-size: 3.25rem;
+  line-height: 1;
+  font-weight: 700;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.04em;
+}
+
+@media (max-width: 640px) {
+  .feature-card-number { font-size: 2.5rem; }
+}
+
+.feature-card-icon-wrap {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.feature-card-title {
+  font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.75rem;
+}
+
+.feature-card-desc {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.55);
+  max-width: 420px;
+  margin-bottom: 1rem;
+}
+
+.feature-card-detail {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.3);
+  max-width: 400px;
+  margin-bottom: 1.125rem;
+}
+
+/* Feature tag pills */
+.feature-card-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.feature-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid;
+}
+
+/* ── Right: decorative column ───────────────────────────────── */
+.feature-card-deco {
+  position: relative;
+  width: 140px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .feature-card-deco { display: none; }
+}
+
+.feature-deco-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  opacity: 0.35;
+}
+
+.feature-deco-icon {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  z-index: 1;
+}
+
+/* Subtle dot-grid pattern in the deco area */
+.feature-deco-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 16px 16px;
+  border-radius: 1rem;
+  z-index: 0;
+}
+
+/* Bottom peek line — visible as the next card slides in above */
+.feature-card-edge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  border-top: 1px solid;
+  opacity: 0.4;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -69,15 +288,25 @@
 
 html {
     scroll-behavior: smooth;
+    overflow-x: clip;  /* clip (not hidden) — prevents horizontal scroll
+                          WITHOUT creating a scroll container that would
+                          break position:fixed on Safari */
 }
 
 body {
     font-family: var(--font-satoshi);
     background-color: var(--color-navy);
     color: #ffffff;
-    overflow-x: hidden;
+    overflow-x: clip;
+    width: 100%;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* Belt-and-suspenders: clip at React root too */
+#root {
+    overflow-x: clip;
+    width: 100%;
 }
 
 /* ── Grid Background Texture ────────────────────────────────── */
