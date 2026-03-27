@@ -19,13 +19,47 @@ import OnboardingModal from './components/OnboardingModal'
 import SkillDetailPage from './pages/SkillDetailPage'
 import GitHubSkillPage from './pages/GitHubSkillPage'
 import Community from './pages/Community'
+import About from './pages/About'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 import BottomNav from './components/BottomNav'
 import SplashScreen from './components/SplashScreen'
 import InstallPrompt from './components/InstallPrompt'
+import SEO, { jsonLdSchemas } from './components/SEO'
 
 function LandingPage() {
     return (
         <>
+            <SEO
+                title={null}
+                description="Skill Issue is the marketplace for AI skill files. Discover, save, share and combine .md skill files for Claude, ChatGPT, Gemini, Cursor and more. 8,000+ skills available."
+                path="/"
+                jsonLd={{
+                    '@graph': [
+                        jsonLdSchemas.organization(),
+                        jsonLdSchemas.website(),
+                        jsonLdSchemas.softwareApplication(),
+                        jsonLdSchemas.faqPage([
+                            {
+                                question: 'What is a skill file?',
+                                answer: 'A skill file is a structured markdown (.md) document that gives an AI agent precise, actionable instructions for a specific task or domain. Think of it as an "app" for your AI — install a skill file and your agent instantly gains expert-level capability.',
+                            },
+                            {
+                                question: 'Which AI agents work with skill files?',
+                                answer: 'Skill files work with Claude, ChatGPT, Gemini, Cursor, GitHub Copilot, and most AI agents that accept system prompts or instruction files.',
+                            },
+                            {
+                                question: 'Is Skill Issue free to use?',
+                                answer: 'Yes, Skill Issue is free. You can browse, save, share, and build skill files at no cost. Sign in with GitHub to access all features.',
+                            },
+                            {
+                                question: 'How do I install a skill file?',
+                                answer: 'Copy the skill file markdown content and paste it into your AI agent\'s system prompt, custom instructions, or .md file directory. Each AI platform has specific instructions — browse our skills to see platform-specific guides.',
+                            },
+                        ]),
+                    ],
+                }}
+            />
             <Hero />
             <VideoAndPlatforms />
             <Testimonials />
@@ -62,6 +96,9 @@ export default function App() {
                         <Route path="/skill/github" element={<GitHubSkillPage />} />
                         <Route path="/skill/:id" element={<SkillDetailPage />} />
                         <Route path="/community" element={<Community />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/privacy" element={<Privacy />} />
+                        <Route path="/terms" element={<Terms />} />
                     </Routes>
                 </div>
             </div>

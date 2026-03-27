@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import JSZip from 'jszip'
 import { useAuth } from '../context/AuthContext'
+import SEO, { jsonLdSchemas } from '../components/SEO'
+import Breadcrumbs from '../components/Breadcrumbs'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
@@ -1149,10 +1151,20 @@ export default function BrowseSkills() {
 
     return (
         <div className="relative min-h-screen pt-32 pb-20">
+            <SEO
+                title="Browse AI Skills — Discover Skill Files for Claude, ChatGPT, Gemini & Cursor"
+                description="Explore 8,000+ AI skill files from leading companies and the community. Find skills for coding, writing, design, marketing and more."
+                path="/browse"
+                jsonLd={jsonLdSchemas.breadcrumb([
+                    { name: 'Home', url: '/' },
+                    { name: 'Browse Skills', url: '/browse' },
+                ])}
+            />
             {/* Ambient glow */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-accent/[0.04] rounded-full blur-[140px] pointer-events-none" />
 
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                <Breadcrumbs items={[{ label: 'Browse Skills' }]} />
 
                 {/* ── Header ─────────────────────────── */}
                 <div className="text-center mb-12 max-w-3xl mx-auto">
@@ -1308,7 +1320,7 @@ export default function BrowseSkills() {
                                     <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
                                     <div className="flex items-center gap-2 shrink-0">
                                         <img
-                                            src="/skill issue white .png"
+                                            src="/skill-issue-white.png"
                                             alt="Skill Issue"
                                             className="h-6 w-auto object-contain opacity-60"
                                         />

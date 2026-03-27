@@ -9,6 +9,8 @@ import {
     downloadSkillAsZip,
     getOrgAvatarUrl,
 } from '../lib/githubService'
+import SEO, { jsonLdSchemas } from '../components/SEO'
+import Breadcrumbs from '../components/Breadcrumbs'
 
 // ── Shared markdown component map (mirrors SkillDetailPage) ────────────────
 const MD = {
@@ -191,13 +193,25 @@ export default function GitHubSkillPage() {
 
     return (
         <>
+            <SEO
+                title={`${displayName} — GitHub Skill File`}
+                description={`${displayName} skill file from ${repoOwner} on GitHub. Browse, copy, and use this AI skill file with Claude, ChatGPT, Gemini, Cursor and more.`}
+                path={`/skill/github?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`}
+                jsonLd={jsonLdSchemas.breadcrumb([
+                    { name: 'Home', url: '/' },
+                    { name: 'Browse Skills', url: '/browse' },
+                    { name: displayName },
+                ])}
+            />
             <main className="relative min-h-screen pt-28 pb-24">
                 {/* Ambient glow */}
                 <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-accent/[0.04] rounded-full blur-[140px] pointer-events-none" />
 
                 <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6">
-
-                    {/* Back */}
+                    <Breadcrumbs items={[
+                        { label: 'Browse Skills', to: '/browse' },
+                        { label: displayName },
+                    ]} />
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 mb-8 text-white/30 hover:text-white/60 font-satoshi text-sm transition-colors group"

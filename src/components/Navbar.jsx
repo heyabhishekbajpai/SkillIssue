@@ -79,7 +79,7 @@ export default function Navbar() {
                     {/* Logo */}
                     <Link to="/" className="flex items-center group">
                         <img
-                            src="/skill issue white .png"
+                            src="/skill-issue-white.png"
                             alt="Skill Issue"
                             className="h-9 w-auto transition-transform duration-300 group-hover:scale-105"
                         />

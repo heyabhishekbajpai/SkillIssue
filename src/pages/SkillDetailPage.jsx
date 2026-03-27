@@ -7,6 +7,8 @@ import { getSkillById, deleteSkill, toggleVisibility, starSkill, unstarSkill } f
 import { invalidateProfileCache } from '../lib/profileCache'
 import { getProfile, toggleSavedSkill } from '../lib/userService'
 import ConfirmDialog from '../components/ConfirmDialog'
+import SEO, { jsonLdSchemas } from '../components/SEO'
+import Breadcrumbs from '../components/Breadcrumbs'
 
 const SITE = import.meta.env.VITE_SITE_URL || 'https://skillissue.bajpai.tech'
 
@@ -246,13 +248,33 @@ export default function SkillDetailPage() {
 
     return (
         <>
+            <SEO
+                title={skill.title}
+                description={skill.description || `${skill.title} — AI skill file on Skill Issue. Copy, save, and use this skill with Claude, ChatGPT, Gemini, Cursor and more.`}
+                path={`/skill/${skill.id}`}
+                jsonLd={{
+                    '@graph': [
+                        jsonLdSchemas.skillPage({
+                            ...skill,
+                            authorName,
+                        }),
+                        jsonLdSchemas.breadcrumb([
+                            { name: 'Home', url: '/' },
+                            { name: 'Browse Skills', url: '/browse' },
+                            { name: skill.title },
+                        ]),
+                    ],
+                }}
+            />
             <main className="relative min-h-screen pt-28 pb-24">
                 {/* Ambient glow */}
                 <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-accent/[0.04] rounded-full blur-[140px] pointer-events-none" />
 
                 <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6">
-
-                    {/* Back */}
+                    <Breadcrumbs items={[
+                        { label: 'Browse Skills', to: '/browse' },
+                        { label: skill.title },
+                    ]} />
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 mb-8 text-white/30 hover:text-white/60 font-satoshi text-sm transition-colors group"

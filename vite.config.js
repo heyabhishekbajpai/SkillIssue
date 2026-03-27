@@ -379,11 +379,12 @@ export default defineConfig({
         groqApiPlugin(),
         Sitemap({
             hostname: 'https://skillissue.bajpai.tech',
-            dynamicRoutes: ['/build', '/browse', '/skill/github', '/community'],
+            dynamicRoutes: ['/build', '/browse', '/skill/github', '/community', '/about', '/privacy', '/terms'],
+            generateRobotsTxt: false,
         }),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['favicon.png', 'skill issue white .png'],
+            includeAssets: ['favicon.png', 'skill-issue-white.png'],
             manifest: {
                 name: 'Skill Issue',
                 short_name: 'SkillIssue',

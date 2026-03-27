@@ -8,6 +8,8 @@ import SkillCard from '../components/SkillCard'
 import EditProfileModal from '../components/EditProfileModal'
 import UserSkillModal from '../components/UserSkillModal'
 import { profileCache, invalidateProfileCache, CACHE_TTL, isCacheStale } from '../lib/profileCache'
+import SEO, { jsonLdSchemas } from '../components/SEO'
+import Breadcrumbs from '../components/Breadcrumbs'
 
 const PAGE_SIZE = 12
 
@@ -410,6 +412,22 @@ export default function UserProfile() {
 
     return (
         <>
+            <SEO
+                title={displayName ? `${displayName} (@${profile?.username || username})` : `@${username}`}
+                description={profile?.bio || `View ${displayName || username}'s AI skill files and profile on Skill Issue.`}
+                path={`/user/${username}`}
+                image={avatarUrl || undefined}
+                jsonLd={profile ? {
+                    '@graph': [
+                        jsonLdSchemas.profilePage(profile),
+                        jsonLdSchemas.breadcrumb([
+                            { name: 'Home', url: '/' },
+                            { name: 'Community', url: '/community' },
+                            { name: displayName || username },
+                        ]),
+                    ],
+                } : undefined}
+            />
             <main className="relative min-h-screen">
                 {/* ── Ambient background effects ── */}
                 <div className="absolute top-0 left-0 right-0 h-[500px] overflow-hidden pointer-events-none">
@@ -420,6 +438,10 @@ export default function UserProfile() {
                 </div>
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-24">
+                    <Breadcrumbs items={[
+                        { label: 'Community', to: '/community' },
+                        { label: displayName || username },
+                    ]} />
                     <div className="flex flex-col lg:flex-row gap-10 lg:gap-14 profile-fade-in">
 
                         {/* ══ LEFT SIDEBAR ════════════════════════════════════ */}

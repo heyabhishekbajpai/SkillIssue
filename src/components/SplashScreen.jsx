@@ -115,7 +115,7 @@ export default function SplashScreen({ onDone }) {
                 <img
                     id="si-logo"
                     ref={logoRef}
-                    src="/skill issue white .png"
+                    src="/skill-issue-white.png"
                     alt="Skill Issue"
                     style={{ height: 48, width: 'auto' }}
                 />

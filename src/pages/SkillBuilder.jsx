@@ -6,6 +6,8 @@ import { saveSkill } from '../lib/skillService'
 import { invalidateProfileCache } from '../lib/profileCache'
 import { submitTestimonial } from '../lib/userService'
 import TextareaAutosize from 'react-textarea-autosize'
+import SEO, { jsonLdSchemas } from '../components/SEO'
+import Breadcrumbs from '../components/Breadcrumbs'
 
 // ── Google icon SVG (reusable) ──────────────────────
 function GoogleIcon({ className = 'w-4 h-4' }) {
@@ -442,10 +444,20 @@ export default function SkillBuilder() {
 
     return (
         <div className="min-h-screen pt-28 pb-20 relative">
+            <SEO
+                title="Build Custom AI Skill Files — AI Skill Builder"
+                description="Create custom AI skill files in seconds. Describe what you want your AI to do, and our builder generates a ready-to-use .md skill file for Claude, ChatGPT, Gemini, Cursor and more."
+                path="/build"
+                jsonLd={jsonLdSchemas.breadcrumb([
+                    { name: 'Home', url: '/' },
+                    { name: 'Skill Builder', url: '/build' },
+                ])}
+            />
             {/* Ambient glow */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-accent/[0.04] rounded-full blur-[140px] pointer-events-none" />
 
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                <Breadcrumbs items={[{ label: 'Skill Builder' }]} />
                 {/* ── Header (centered) ──── */}
                 <div className="text-center mb-10 max-w-3xl mx-auto">
                     <span className="inline-block font-satoshi text-sm font-medium tracking-widest uppercase text-accent/70 mb-4">

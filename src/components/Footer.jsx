@@ -4,12 +4,12 @@ export default function Footer() {
     return (
         <footer className="relative pt-16 pb-10 bg-[#05070d] border-t border-accent/10">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
-                    {/* Brand — spans 2 cols on large */}
-                    <div className="lg:col-span-2 max-w-sm">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                    {/* Brand */}
+                    <div className="lg:col-span-1">
                         <div className="flex items-center mb-4">
                             <img
-                                src="/skill issue white .png"
+                                src="/skill-issue-white.png"
                                 alt="Skill Issue"
                                 className="h-8 w-auto"
                             />
@@ -37,55 +37,56 @@ export default function Footer() {
 
                     {/* Product */}
                     <div>
-                        <h4 className="font-clash font-semibold text-sm text-white/80 mb-5 tracking-wide uppercase">
+                        <h4 className="font-clash font-semibold text-sm text-white/80 mb-5 tracking-wide">
                             Product
                         </h4>
                         <ul className="space-y-3">
                             {[
-                                { label: 'Home', to: '/' },
                                 { label: 'Browse Skills', to: '/browse' },
-                                { label: 'Build a Skill', to: '/build' },
-                                { label: 'Community', to: '/community' },
-                                { label: 'Features', href: '/#features' },
-                                { label: 'How it Works', href: '/#how-it-works' },
-                            ].map(({ label, to, href }) => (
+                                { label: 'Skill Editor', to: '/build' },
+                                { label: 'Public Marketplace', to: '/browse' },
+                                { label: 'Private Vault', to: null },
+                                { label: 'Pricing', to: null },
+                            ].map(({ label, to }) => (
                                 <li key={label}>
                                     {to ? (
-                                        <Link to={to} className="font-satoshi text-sm text-white/40 hover:text-white transition-colors duration-300">
+                                        <Link to={to} className="font-satoshi text-sm text-white/30 hover:text-accent-light transition-colors duration-300">
                                             {label}
                                         </Link>
                                     ) : (
-                                        <a href={href} className="font-satoshi text-sm text-white/40 hover:text-white transition-colors duration-300">
-                                            {label}
-                                        </a>
+                                        <span className="font-satoshi text-sm text-white/30 cursor-default">{label}</span>
                                     )}
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    {/* Connect */}
+                    {/* Resources */}
                     <div>
-                        <h4 className="font-clash font-semibold text-sm text-white/80 mb-5 tracking-wide uppercase">
-                            Connect
+                        <h4 className="font-clash font-semibold text-sm text-white/80 mb-5 tracking-wide">
+                            Resources
                         </h4>
                         <ul className="space-y-3">
-                            {[
-                                { label: 'LinkedIn', href: 'https://www.linkedin.com/company/bajpaitech/' },
-                                { label: 'GitHub', href: 'https://github.com/heyabhishekbajpai' },
-                                { label: 'X (Twitter)', href: 'https://x.com/BajpaiX' },
-                                { label: 'Instagram', href: 'https://www.instagram.com/bajpai.tech/' },
-                                { label: 'YouTube', href: 'https://www.youtube.com/@abhishek.bajpai' },
-                                { label: 'Email', href: 'mailto:bajpai.connect@gmail.com' },
-                            ].map(({ label, href }) => (
-                                <li key={label}>
-                                    <a
-                                        href={href}
-                                        target={href.startsWith('mailto') ? '_self' : '_blank'}
-                                        rel="noopener noreferrer"
-                                        className="font-satoshi text-sm text-white/40 hover:text-white transition-colors duration-300"
-                                    >
-                                        {label}
+                            {['Documentation', 'API Reference', 'Skill Format Guide', 'Blog', 'Changelog'].map((link) => (
+                                <li key={link}>
+                                    <a href="#" className="font-satoshi text-sm text-white/30 hover:text-accent-light transition-colors duration-300">
+                                        {link}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Company */}
+                    <div>
+                        <h4 className="font-clash font-semibold text-sm text-white/80 mb-5 tracking-wide">
+                            Company
+                        </h4>
+                        <ul className="space-y-3">
+                            {['About', 'Discord Community', 'Twitter / X', 'GitHub', 'Contact'].map((link) => (
+                                <li key={link}>
+                                    <a href="#" className="font-satoshi text-sm text-white/30 hover:text-accent-light transition-colors duration-300">
+                                        {link}
                                     </a>
                                 </li>
                             ))}
@@ -109,15 +110,15 @@ export default function Footer() {
                         <span className="font-clash text-lg sm:text-xl text-white/50 group-hover:text-white transition-colors">Developed by</span>
                         <img
                             src="/bajpailogo.png"
-                            alt="Developed by"
+                            alt="Bajpai Tech logo — developed by Abhishek Bajpai"
                             className="h-6 sm:h-7 w-auto opacity-70 group-hover:opacity-100 transition-opacity duration-300"
                         />
                     </a>
 
                     <div className="flex gap-6 justify-center md:justify-end order-3">
-                        <a href="#" className="font-satoshi text-xs text-white/20 hover:text-white/40 transition-colors">Privacy</a>
-                        <a href="#" className="font-satoshi text-xs text-white/20 hover:text-white/40 transition-colors">Terms</a>
-                        <a href="#" className="font-satoshi text-xs text-white/20 hover:text-white/40 transition-colors">Cookies</a>
+                        <Link to="/about" className="font-satoshi text-xs text-white/20 hover:text-white/40 transition-colors">About</Link>
+                        <Link to="/privacy" className="font-satoshi text-xs text-white/20 hover:text-white/40 transition-colors">Privacy</Link>
+                        <Link to="/terms" className="font-satoshi text-xs text-white/20 hover:text-white/40 transition-colors">Terms</Link>
                     </div>
                 </div>
             </div>

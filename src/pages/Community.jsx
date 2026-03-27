@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getCommunityUsers, getPublicSkillsStatsByUser } from '../lib/userService'
+import SEO, { jsonLdSchemas } from '../components/SEO'
+import Breadcrumbs from '../components/Breadcrumbs'
 
 // ── Module-level page cache (5 min TTL) ────────────────────────────────
 // First 12 users + stats are cached so revisiting the page is instant.
@@ -291,7 +293,17 @@ export default function Community() {
 
     return (
         <div className="min-h-screen pt-28 pb-20 px-6">
+            <SEO
+                title="AI Skills Community — Discover Skill File Creators"
+                description="Meet the community of developers and creators building AI skill files. Browse profiles, discover skills, and connect with fellow AI enthusiasts."
+                path="/community"
+                jsonLd={jsonLdSchemas.breadcrumb([
+                    { name: 'Home', url: '/' },
+                    { name: 'Community', url: '/community' },
+                ])}
+            />
             <div className="max-w-3xl mx-auto">
+                <Breadcrumbs items={[{ label: 'Community' }]} />
 
                 {/* Page header */}
                 <div className="mb-4">
