@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useAuth } from '../context/AuthContext'
@@ -534,24 +535,6 @@ export default function SkillBuilder() {
     const canSubmit = skillName.trim().length > 0 && description.trim().length > 0
     const canRefine = refinementInstruction.trim().length > 0 && !isRefining
 
-    // Auth check - redirect if not logged in
-    if (!isLoggedIn) {
-        return (
-            <div className="min-h-screen pt-40 pb-20 relative flex items-center justify-center px-6">
-                <div className="text-center">
-                    <h1 className="font-clash font-bold text-5xl text-white mb-4">Sign in to Build</h1>
-                    <p className="font-satoshi text-white/60 mb-8 max-w-md">You need to be logged in to create custom AI skills.</p>
-                    <button
-                        onClick={openAuthModal}
-                        className="px-8 py-3 rounded-xl bg-accent text-navy font-satoshi font-semibold hover:bg-[#6bbcff]"
-                    >
-                        Sign In with Google
-                    </button>
-                </div>
-            </div>
-        )
-    }
-
     return (
         <div className="min-h-screen pt-28 pb-20 relative">
             <SEO
@@ -647,16 +630,25 @@ export default function SkillBuilder() {
                         Tell us what you want your AI to do, and we'll turn it into a
                         ready-to-use skill file in seconds.
                     </p>
+                    <Link
+                        to="/upload"
+                        className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-xl border border-accent/20 bg-accent/[0.06] text-accent font-satoshi text-sm font-semibold hover:bg-accent/15 hover:border-accent/35 transition-all duration-300 group"
+                    >
+                        <svg className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                        Or upload a skill file
+                    </Link>
                 </div>
 
                 {/* ── Two-column grid ──────── */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-6 lg:gap-8 lg:h-[calc(100vh-12rem)]">
 
                     {/* ── LEFT — Form Card ─── */}
-                    <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.03] via-transparent to-transparent p-6 sm:p-8">
+                    <div className={`rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.03] via-transparent to-transparent flex flex-col lg:overflow-hidden ${showOutput ? 'p-5 sm:p-6' : 'p-6 sm:p-8'}`}>
 
-                        <div className="mb-6">
-                            <label className="block font-clash font-semibold text-sm text-white/60 mb-2.5">
+                        <div className={showOutput ? 'mb-3' : 'mb-6'}>
+                            <label className={`block font-clash font-semibold text-white/60 ${showOutput ? 'text-xs mb-1.5' : 'text-sm mb-2.5'}`}>
                                 Skill Name
                             </label>
                             <input
@@ -664,28 +656,28 @@ export default function SkillBuilder() {
                                 value={skillName}
                                 onChange={(e) => setSkillName(e.target.value)}
                                 placeholder="e.g. Blog Post Writer, Study Buddy, Brand Designer"
-                                className="w-full px-4 py-3.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi text-[0.95rem] outline-none transition-all duration-300"
+                                className={`w-full rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi outline-none transition-all duration-300 ${showOutput ? 'px-3 py-2.5 text-sm' : 'px-4 py-3.5 text-[0.95rem]'}`}
                             />
                         </div>
 
                         {/* Description */}
-                        <div className="mb-6">
-                            <label className="block font-clash font-semibold text-sm text-white/60 mb-2.5">
+                        <div className={`flex flex-col ${showOutput ? 'mb-3 lg:flex-1 lg:min-h-0' : 'mb-6'}`}>
+                            <label className={`block font-clash font-semibold text-white/60 ${showOutput ? 'text-xs mb-1.5' : 'text-sm mb-2.5'}`}>
                                 What should this skill do?
                             </label>
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder={`Describe what you want your AI to do. Be as detailed as possible — the more you describe, the better the skill.\n\nFor example: 'I want my AI to write blog posts in a conversational, friendly tone...'`}
-                                rows={7}
-                                className="w-full px-4 py-3.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi text-[0.95rem] outline-none transition-all duration-300 resize-y min-h-[160px]"
+                                rows={showOutput ? undefined : 7}
+                                className={`w-full rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi outline-none transition-all duration-300 resize-none ${showOutput ? 'px-3 py-2.5 text-sm flex-1 min-h-0' : 'px-4 py-3.5 text-[0.95rem] resize-y min-h-[160px]'}`}
                             />
                         </div>
 
                         {/* ── Reference images ────────────── */}
-                        <div className="mb-8">
-                            <div className="flex items-center gap-2 mb-3">
-                                <label className="font-clash font-semibold text-sm text-white/60">
+                        <div className={showOutput ? 'mb-3' : 'mb-8'}>
+                            <div className={`flex items-center gap-2 ${showOutput ? 'mb-2' : 'mb-3'}`}>
+                                <label className={`font-clash font-semibold text-white/60 ${showOutput ? 'text-xs' : 'text-sm'}`}>
                                     Reference images
                                 </label>
                                 <span className="font-satoshi text-xs text-white/25 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">
@@ -699,7 +691,7 @@ export default function SkillBuilder() {
                                     onDragLeave={handleDragLeave}
                                     onDragOver={handleDragOver}
                                     onDrop={handleDrop}
-                                    className={`flex flex-wrap gap-3 mb-4 p-3 rounded-xl border border-dashed transition-all ${
+                                    className={`flex flex-wrap gap-2 p-2 rounded-xl border border-dashed transition-all ${
                                         dragActive
                                             ? 'border-accent/40 bg-accent/[0.08]'
                                             : 'border-transparent'
@@ -710,7 +702,7 @@ export default function SkillBuilder() {
                                             <img
                                                 src={img.base64DataUri}
                                                 alt={img.fileName}
-                                                className="h-20 w-20 object-cover rounded-xl border border-white/10"
+                                                className={`object-cover rounded-lg border border-white/10 ${showOutput ? 'h-12 w-12' : 'h-20 w-20 rounded-xl'}`}
                                             />
                                             <button
                                                 type="button"
@@ -721,21 +713,23 @@ export default function SkillBuilder() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
                                             </button>
-                                            <p className="mt-1 font-satoshi text-[10px] text-white/25 truncate w-20 text-center">{img.fileName}</p>
+                                            {!showOutput && <p className="mt-1 font-satoshi text-[10px] text-white/25 truncate w-20 text-center">{img.fileName}</p>}
                                         </div>
                                     ))}
                                     <button
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="h-20 w-20 flex flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.12] hover:border-accent/40 bg-white/[0.02] hover:bg-accent/[0.03] transition-all duration-200 group"
+                                        className={`flex flex-col items-center justify-center rounded-lg border border-dashed border-white/[0.12] hover:border-accent/40 bg-white/[0.02] hover:bg-accent/[0.03] transition-all duration-200 group ${showOutput ? 'h-12 w-12' : 'h-20 w-20 rounded-xl'}`}
                                         title="Drag and drop or click to upload more images"
                                     >
-                                        <svg className="w-5 h-5 text-white/25 group-hover:text-accent/60 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                        <svg className={`text-white/25 group-hover:text-accent/60 transition-colors ${showOutput ? 'w-4 h-4' : 'w-5 h-5'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                         </svg>
-                                        <span className="text-white/20 group-hover:text-accent/50 font-satoshi text-[9px] mt-1 font-semibold transition-colors text-center leading-tight">
-                                            ADD MORE
-                                        </span>
+                                        {!showOutput && (
+                                            <span className="text-white/20 group-hover:text-accent/50 font-satoshi text-[9px] mt-1 font-semibold transition-colors text-center leading-tight">
+                                                ADD MORE
+                                            </span>
+                                        )}
                                     </button>
                                 </div>
                             )}
@@ -755,13 +749,13 @@ export default function SkillBuilder() {
                                     <button
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="w-full flex flex-col items-center justify-center gap-2 px-6 py-6 transition-all duration-300 group"
+                                        className={`w-full flex items-center justify-center gap-2 transition-all duration-300 group ${showOutput ? 'flex-row px-4 py-3' : 'flex-col px-6 py-6'}`}
                                     >
-                                        <svg className={`w-6 h-6 transition-colors ${dragActive ? 'text-accent/60' : 'text-white/25 group-hover:text-accent/60'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                        <svg className={`transition-colors ${showOutput ? 'w-4 h-4' : 'w-6 h-6'} ${dragActive ? 'text-accent/60' : 'text-white/25 group-hover:text-accent/60'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 9.75h18M3 5.25A2.25 2.25 0 015.25 3h13.5A2.25 2.25 0 0121 5.25v13.5A2.25 2.25 0 0118.75 21H5.25A2.25 2.25 0 013 18.75V5.25z" />
                                         </svg>
-                                        <span className={`font-satoshi text-sm transition-colors ${dragActive ? 'text-accent/60' : 'text-white/30 group-hover:text-white/50'}`}>
-                                            {dragActive ? 'Drop images here' : 'DRAG and DROP or Click to Upload'} <span className={dragActive ? 'text-accent/50' : 'text-white/50'}>(JPG, PNG, WEBP)</span>
+                                        <span className={`font-satoshi transition-colors ${showOutput ? 'text-xs' : 'text-sm'} ${dragActive ? 'text-accent/60' : 'text-white/30 group-hover:text-white/50'}`}>
+                                            {dragActive ? 'Drop images here' : showOutput ? 'Add images' : 'DRAG and DROP or Click to Upload'}{!showOutput && <span className={dragActive ? 'text-accent/50' : 'text-white/50'}> (JPG, PNG, WEBP)</span>}
                                         </span>
                                     </button>
                                 </div>
@@ -778,11 +772,11 @@ export default function SkillBuilder() {
                         </div>
 
                         {/* Submit button */}
-                        <div className="pt-4 mt-8 border-t border-white/[0.05]">
+                        <div className={`border-t border-white/[0.05] mt-auto ${showOutput ? 'pt-3 pb-1' : 'pt-5'}`}>
                             <button
                                 onClick={handleGenerate}
                                 disabled={!canSubmit || isGenerating}
-                                className={`w-full flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl font-satoshi font-bold text-[0.95rem] transition-all duration-300 ${canSubmit && !isGenerating
+                                className={`w-full flex items-center justify-center gap-2.5 rounded-xl font-satoshi font-bold transition-all duration-300 ${showOutput ? 'px-6 py-2.5 text-sm' : 'px-8 py-3.5 text-[0.95rem]'} ${canSubmit && !isGenerating
                                     ? 'bg-accent text-navy hover:bg-[#6bbcff] hover:shadow-[0_0_30px_rgba(75,169,255,0.3)] hover:-translate-y-0.5 cursor-pointer'
                                     : 'bg-white/5 text-white/20 cursor-not-allowed'
                                     }`}
@@ -807,23 +801,23 @@ export default function SkillBuilder() {
 
                             {/* ── Refinement section (Moved to Left Side) ── */}
                             {showOutput && (
-                                <div className="mt-8 pt-8 border-t border-white/5 animate-fade-in-up">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-6 h-6 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center">
-                                            <svg className="w-3.5 h-3.5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <div className="mt-4 pt-4 border-t border-white/5 animate-fade-in-up">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-5 h-5 rounded-md bg-accent/10 border border-accent/20 flex items-center justify-center">
+                                            <svg className="w-3 h-3 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                                             </svg>
                                         </div>
-                                        <h3 className="font-clash font-semibold text-base text-white/80">Refine with AI</h3>
+                                        <h3 className="font-clash font-semibold text-sm text-white/80">Refine with AI</h3>
                                     </div>
                                     <div className="relative">
                                         <TextareaAutosize
                                             value={refinementInstruction}
                                             onChange={(e) => setRefinementInstruction(e.target.value)}
-                                            placeholder="Need changes? e.g. 'Make the tone more professional'"
+                                            placeholder="e.g. 'Make the tone more professional'"
                                             minRows={1}
                                             maxRows={4}
-                                            className="w-full px-5 py-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi text-[0.95rem] outline-none transition-all duration-300 resize-none pr-32 overflow-hidden"
+                                            className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi text-sm outline-none transition-all duration-300 resize-none pr-24 overflow-hidden"
                                         />
                                         <div className="absolute right-3 bottom-3">
                                             <button
@@ -848,18 +842,82 @@ export default function SkillBuilder() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Action buttons — under form/refine */}
+                            {showOutput && (
+                                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/5 animate-fade-in-up">
+                                    <button
+                                        onClick={handleCopy}
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:border-accent/30 hover:bg-white/[0.06] transition-all duration-300 group"
+                                    >
+                                        {copied ? (
+                                            <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-3.5 h-3.5 text-white/40 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                                            </svg>
+                                        )}
+                                        <span className="font-satoshi text-xs text-white/60 group-hover:text-white/80 transition-colors">
+                                            {copied ? 'Copied!' : 'Copy'}
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        onClick={handleDownload}
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:border-accent/30 hover:bg-white/[0.06] transition-all duration-300 group"
+                                    >
+                                        <svg className="w-3.5 h-3.5 text-white/40 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                        </svg>
+                                        <span className="font-satoshi text-xs text-white/60 group-hover:text-white/80 transition-colors">
+                                            Download
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => savedAs ? null : setShowSaveModal(true)}
+                                        disabled={isSaving || !!savedAs}
+                                        className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg border transition-all duration-300 group ${savedAs
+                                            ? 'bg-emerald-500/10 border-emerald-500/30 cursor-default'
+                                            : isSaving
+                                                ? 'bg-accent/10 border-accent/20 opacity-50 cursor-wait'
+                                                : 'bg-accent/10 border-accent/20 hover:bg-accent/20 hover:border-accent/40'
+                                            }`}
+                                    >
+                                        {isSaving ? (
+                                            <svg className="w-3.5 h-3.5 text-accent animate-spin" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                        ) : savedAs ? (
+                                            <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-3.5 h-3.5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                                            </svg>
+                                        )}
+                                        <span className={`font-satoshi text-xs font-medium ${savedAs ? 'text-emerald-400' : 'text-accent'}`}>
+                                            {isSaving ? 'Saving…' : savedAs ? `Saved ✓` : 'Save'}
+                                        </span>
+                                    </button>
+                                </div>
+                            )}
                         </div> {/* end sticky bottom wrapper */}
                     </div>
 
                     {/* ── RIGHT — Output Panel (Sticky Sidebar) ───── */}
-                    <div className="lg:sticky lg:top-28 flex flex-col gap-6" style={{ height: 'calc(100vh - 140px)' }}>
+                    <div className="flex flex-col lg:overflow-hidden">
 
                         {/* Loading */}
                         {isGenerating && <LoadingState />}
 
                         {/* Empty placeholder */}
                         {!isGenerating && !showOutput && (
-                            <div className="h-full rounded-2xl border border-white/[0.05] bg-white/[0.01] flex flex-col items-center justify-center gap-4 px-8 text-center">
+                            <div className="h-full min-h-[300px] rounded-2xl border border-white/[0.05] bg-white/[0.01] flex flex-col items-center justify-center gap-4 px-8 text-center">
                                 <div className="w-12 h-12 rounded-2xl bg-accent/5 border border-accent/10 flex items-center justify-center">
                                     <svg className="w-5 h-5 text-accent/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
@@ -874,17 +932,9 @@ export default function SkillBuilder() {
 
                         {/* Generated output */}
                         {showOutput && (
-                            <div ref={outputRef} className="flex flex-col h-full animate-fade-in-up">
-                                {/* Output header */}
-                                <div className="flex items-center gap-3 mb-4 flex-shrink-0">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" style={{ boxShadow: '0 0 12px rgba(52,211,153,0.6)' }} />
-                                    <span className="font-clash font-semibold text-lg text-white/80">
-                                        Your skill is ready
-                                    </span>
-                                </div>
-
+                            <div ref={outputRef} className="flex flex-col flex-1 min-h-0 animate-fade-in-up">
                                 {/* Editor */}
-                                <div className="flex-1 rounded-2xl border border-accent/15 bg-[#0a0d17] overflow-hidden flex flex-col">
+                                <div className="flex-1 min-h-0 rounded-2xl border border-accent/15 bg-[#0a0d17] overflow-hidden flex flex-col">
                                     {/* Editor bar */}
                                     <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-white/[0.02]">
                                         <div className="flex items-center gap-2">
@@ -920,7 +970,7 @@ export default function SkillBuilder() {
 
                                     {/* Rendered view */}
                                     {viewMode === 'rendered' && (
-                                        <div className="p-6 overflow-y-auto styled-scrollbar h-full">
+                                        <div className="p-6 lg:overflow-y-auto styled-scrollbar lg:flex-1 lg:min-h-0">
                                             <ReactMarkdown
                                                 remarkPlugins={[remarkGfm]}
                                                 components={{
@@ -958,72 +1008,9 @@ export default function SkillBuilder() {
                                         <textarea
                                             value={generatedMarkdown}
                                             onChange={(e) => setGeneratedMarkdown(e.target.value)}
-                                            className="skill-editor w-full bg-transparent resize-none overflow-y-auto styled-scrollbar h-full"
+                                            className="skill-editor w-full bg-transparent resize-none lg:overflow-y-auto styled-scrollbar lg:flex-1 lg:min-h-0"
                                         />
                                     )}
-                                </div>
-
-                                {/* Action buttons */}
-                                <div className="flex-shrink-0 flex flex-wrap gap-3 mt-4">
-                                    <button
-                                        onClick={handleCopy}
-                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] hover:border-accent/30 hover:bg-white/[0.06] transition-all duration-300 group"
-                                    >
-                                        {copied ? (
-                                            <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                            </svg>
-                                        ) : (
-                                            <svg className="w-4 h-4 text-white/40 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
-                                            </svg>
-                                        )}
-                                        <span className="font-satoshi text-sm text-white/60 group-hover:text-white/80 transition-colors">
-                                            {copied ? 'Copied!' : 'Copy'}
-                                        </span>
-                                    </button>
-
-                                    <button
-                                        onClick={handleDownload}
-                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] hover:border-accent/30 hover:bg-white/[0.06] transition-all duration-300 group"
-                                    >
-                                        <svg className="w-4 h-4 text-white/40 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                        </svg>
-                                        <span className="font-satoshi text-sm text-white/60 group-hover:text-white/80 transition-colors">
-                                            Download .md
-                                        </span>
-                                    </button>
-
-                                    <button
-                                        onClick={() => savedAs ? null : setShowSaveModal(true)}
-                                        disabled={isSaving || !!savedAs}
-                                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition-all duration-300 group ${savedAs
-                                            ? 'bg-emerald-500/10 border-emerald-500/30 cursor-default'
-                                            : isSaving
-                                                ? 'bg-accent/10 border-accent/20 opacity-50 cursor-wait'
-                                                : 'bg-accent/10 border-accent/20 hover:bg-accent/20 hover:border-accent/40'
-                                            }`}
-                                    >
-                                        {isSaving ? (
-                                            <svg className="w-4 h-4 text-accent animate-spin" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                            </svg>
-                                        ) : savedAs ? (
-                                            <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                            </svg>
-                                        ) : (
-                                            <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
-                                            </svg>
-                                        )}
-                                        <span className={`font-satoshi text-sm font-medium ${savedAs ? 'text-emerald-400' : 'text-accent'
-                                            }`}>
-                                            {isSaving ? 'Saving…' : savedAs ? `Saved as ${savedAs} ✓` : 'Save to Profile'}
-                                        </span>
-                                    </button>
                                 </div>
 
 

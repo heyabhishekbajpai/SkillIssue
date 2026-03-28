@@ -122,27 +122,142 @@ function extractTags(metadata, content) {
 }
 
 /**
- * Extract category from metadata or content keywords
+ * All recognised categories.
+ * Exported so UI components can re-use the same list.
+ */
+export const SKILL_CATEGORIES = [
+    'Coding',
+    'Writing',
+    'Design',
+    'Analysis',
+    'Research',
+    'Marketing',
+    'Education',
+    'Productivity',
+    'Business',
+    'DevOps',
+    'Security',
+    'Data Science',
+    'Other',
+]
+
+/**
+ * Weighted keyword map — each keyword carries a score.
+ * Uses word-boundary matching (\b) so "css" won't false-positive on "discuss".
+ * Higher total score wins.
+ */
+const CATEGORY_KEYWORDS = {
+    'Coding': [
+        'code', 'coding', 'programming', 'developer', 'software', 'function',
+        'variable', 'algorithm', 'typescript', 'javascript', 'python', 'java',
+        'rust', 'golang', 'ruby', 'swift', 'kotlin', 'react', 'vue', 'angular',
+        'svelte', 'nextjs', 'node', 'api', 'backend', 'frontend', 'fullstack',
+        'compiler', 'debugger', 'refactor', 'lint', 'test', 'unit test',
+        'component', 'jsx', 'tsx', 'html', 'css', 'sql', 'graphql', 'rest',
+        'git', 'github', 'codebase', 'repository', 'pull request', 'commit',
+    ],
+    'Writing': [
+        'writing', 'writer', 'copywriting', 'blog', 'article', 'essay',
+        'storytelling', 'narrative', 'prose', 'editing', 'proofread',
+        'grammar', 'tone of voice', 'headline', 'content strategy',
+        'newsletter', 'email copy', 'script', 'screenplay', 'poem',
+        'technical writing', 'documentation',
+    ],
+    'Design': [
+        'design', 'designer', 'ui', 'ux', 'user interface', 'user experience',
+        'figma', 'sketch', 'wireframe', 'prototype', 'mockup', 'layout',
+        'typography', 'color palette', 'illustration', 'icon', 'graphic',
+        'branding', 'logo', 'visual', 'responsive', 'accessibility',
+        'tailwind', 'styled-components', 'animation', 'motion',
+    ],
+    'Analysis': [
+        'analysis', 'analytics', 'analyze', 'insight', 'metrics', 'kpi',
+        'dashboard', 'report', 'trend', 'forecast', 'statistics',
+        'benchmark', 'audit', 'evaluate', 'assessment', 'diagnosis',
+    ],
+    'Research': [
+        'research', 'researcher', 'study', 'literature review', 'survey',
+        'experiment', 'hypothesis', 'methodology', 'peer review', 'citation',
+        'academic', 'paper', 'journal', 'thesis', 'findings',
+    ],
+    'Marketing': [
+        'marketing', 'seo', 'sem', 'social media', 'campaign', 'ads',
+        'advertising', 'conversion', 'funnel', 'brand', 'audience',
+        'engagement', 'influencer', 'content marketing', 'growth',
+        'landing page', 'cta', 'lead generation', 'email marketing',
+    ],
+    'Education': [
+        'education', 'teaching', 'teacher', 'tutor', 'lesson',
+        'curriculum', 'student', 'learning', 'course', 'quiz',
+        'flashcard', 'explanation', 'mentor', 'training', 'workshop',
+        'study guide', 'homework', 'exam',
+    ],
+    'Productivity': [
+        'productivity', 'workflow', 'automation', 'template', 'planner',
+        'schedule', 'organizer', 'task', 'to-do', 'time management',
+        'notion', 'obsidian', 'calendar', 'reminder', 'habit',
+        'summarize', 'summarizer', 'note-taking', 'minutes',
+    ],
+    'Business': [
+        'business', 'startup', 'entrepreneur', 'strategy', 'pitch',
+        'investor', 'revenue', 'profit', 'market', 'customer',
+        'sales', 'negotiation', 'proposal', 'contract', 'invoice',
+        'consulting', 'stakeholder', 'roadmap', 'okr',
+    ],
+    'DevOps': [
+        'devops', 'ci/cd', 'pipeline', 'docker', 'kubernetes', 'k8s',
+        'terraform', 'ansible', 'aws', 'azure', 'gcp', 'cloud',
+        'deploy', 'deployment', 'infrastructure', 'monitoring',
+        'logging', 'nginx', 'linux', 'server', 'container', 'helm',
+    ],
+    'Security': [
+        'security', 'cybersecurity', 'encryption', 'auth', 'oauth',
+        'vulnerability', 'penetration', 'firewall', 'malware', 'phishing',
+        'compliance', 'gdpr', 'threat', 'incident response', 'zero trust',
+    ],
+    'Data Science': [
+        'data science', 'machine learning', 'deep learning', 'neural network',
+        'model', 'training', 'dataset', 'pandas', 'numpy', 'tensorflow',
+        'pytorch', 'scikit', 'regression', 'classification', 'nlp',
+        'computer vision', 'embedding', 'vector', 'llm', 'fine-tune',
+        'prompt engineering', 'rag', 'transformer', 'ai model',
+    ],
+}
+
+// Pre-compile regexes once at module load
+const _categoryRegexes = Object.fromEntries(
+    Object.entries(CATEGORY_KEYWORDS).map(([cat, words]) => [
+        cat,
+        words.map(w => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')),
+    ])
+)
+
+/**
+ * Extract category from metadata or content keywords.
+ * Scoring-based: counts how many keyword hits each category gets,
+ * highest score wins. No AI needed — fast & deterministic.
  */
 function extractCategory(metadata, content) {
     if (metadata.category) return metadata.category
 
-    const categoryKeywords = {
-        'Writing': ['writing', 'content', 'copy', 'blog', 'article'],
-        'Coding': ['code', 'programming', 'developer', 'python', 'javascript'],
-        'Analysis': ['analysis', 'analytics', 'data', 'research'],
-        'Design': ['design', 'ui', 'css', 'layout', 'graphic'],
-        'Other': ['skill']
-    }
-
     const contentLower = content.toLowerCase()
-    for (const [category, keywords] of Object.entries(categoryKeywords)) {
-        if (keywords.some(kw => contentLower.includes(kw))) {
-            return category
+    let bestCategory = 'Other'
+    let bestScore = 0
+
+    for (const [category, regexes] of Object.entries(_categoryRegexes)) {
+        let score = 0
+        for (const re of regexes) {
+            const matches = contentLower.match(re)
+            if (matches) score += matches.length
+        }
+        if (score > bestScore) {
+            bestScore = score
+            bestCategory = category
         }
     }
 
-    return 'Other'
+    // Require at least 2 keyword hits to avoid noisy single-word matches
+    return bestScore >= 2 ? bestCategory : 'Other'
 }
 
 /**

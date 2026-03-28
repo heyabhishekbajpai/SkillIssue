@@ -41,7 +41,7 @@ const MD = {
 export default function GitHubSkillPage() {
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
-    const { user: authUser, signIn } = useAuth()
+    const { user: authUser, openAuthModal } = useAuth()
 
     const repo = searchParams.get('repo') || ''
     const path = searchParams.get('path') || ''
@@ -136,6 +136,7 @@ export default function GitHubSkillPage() {
     }
 
     async function handleDownload() {
+        if (!authUser) { openAuthModal(); return }
         if (!repo || !path) return
         setDownloading(true)
         try {
@@ -303,7 +304,7 @@ export default function GitHubSkillPage() {
                                 <span className="font-satoshi text-xs text-white/50 group-hover:text-white/75 transition-colors">GitHub</span>
                             </a>
                             {isGuest && (
-                                <button onClick={signIn} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-accent/20 bg-accent/[0.06] text-accent font-satoshi font-semibold text-xs hover:bg-accent/15 hover:border-accent/40 transition-all duration-200">
+                                <button onClick={openAuthModal} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-accent/20 bg-accent/[0.06] text-accent font-satoshi font-semibold text-xs hover:bg-accent/15 hover:border-accent/40 transition-all duration-200">
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>
                                     Sign in to Save
                                 </button>
@@ -376,7 +377,7 @@ export default function GitHubSkillPage() {
                                         <p className="font-satoshi text-sm text-white/40">Free account required to access the complete content.</p>
                                     </div>
                                     <button
-                                        onClick={signIn}
+                                        onClick={openAuthModal}
                                         className="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-navy font-satoshi font-bold text-sm hover:bg-[#6bbcff] hover:shadow-[0_0_24px_rgba(75,169,255,0.35)] transition-all duration-300"
                                     >
                                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" /></svg>

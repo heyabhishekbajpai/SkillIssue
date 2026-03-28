@@ -243,6 +243,9 @@ export default function SkillUploader() {
     const [dragActive, setDragActive] = useState(false)
 
     const fileInputRef = useRef(null)
+    const stepRef = useRef(step)
+    stepRef.current = step
+    const processFileRef = useRef(null)
 
     // Global drag and drop handlers
     useEffect(() => {
@@ -250,8 +253,8 @@ export default function SkillUploader() {
             e.preventDefault()
             e.stopPropagation()
 
-            // Check if dragging files
-            if (e.dataTransfer?.items) {
+            // Check if dragging files — only show overlay during upload step
+            if (e.dataTransfer?.items && stepRef.current === 'upload') {
                 for (let item of e.dataTransfer.items) {
                     if (item.kind === 'file') {
                         setGlobalDragActive(true)
@@ -281,8 +284,8 @@ export default function SkillUploader() {
             setGlobalDragActive(false)
 
             const files = e.dataTransfer.files
-            if (files && files.length > 0) {
-                processFile(files[0])
+            if (files && files.length > 0 && stepRef.current === 'upload') {
+                processFileRef.current?.(files[0])
             }
         }
 
@@ -303,26 +306,24 @@ export default function SkillUploader() {
     function handleDragEnter(e) {
         e.preventDefault()
         e.stopPropagation()
-        if (!isLoggedIn) return
         setDragActive(true)
     }
 
     function handleDragLeave(e) {
         e.preventDefault()
         e.stopPropagation()
-        if (!isLoggedIn) return
         setDragActive(false)
     }
 
     function handleDragOver(e) {
         e.preventDefault()
         e.stopPropagation()
-        if (!isLoggedIn) return
     }
 
     function handleDrop(e) {
         e.preventDefault()
         e.stopPropagation()
+        setGlobalDragActive(false)
         if (!isLoggedIn) {
             openAuthModal()
             setDragActive(false)
@@ -347,6 +348,9 @@ export default function SkillUploader() {
     }
 
     // Process uploaded file
+    // Keep ref in sync so global drop handler always uses latest function
+    processFileRef.current = processFile
+
     function processFile(file) {
         setParseError('')
         setValidationErrors([])
@@ -445,26 +449,8 @@ export default function SkillUploader() {
 
     const canSave = extractedSkill && extractedSkill.title && extractedSkill.title.trim().length > 0
 
-    // Simple auth check - redirect to login
-    if (!isLoggedIn) {
-        return (
-            <div className="min-h-screen pt-40 pb-20 relative flex items-center justify-center px-6">
-                <div className="text-center">
-                    <h1 className="font-clash font-bold text-5xl text-white mb-4">Sign in to Upload</h1>
-                    <p className="font-satoshi text-white/60 mb-8 max-w-md">You need to be logged in to upload SKILL.md files.</p>
-                    <button
-                        onClick={openAuthModal}
-                        className="px-8 py-3 rounded-xl bg-accent text-navy font-satoshi font-semibold hover:bg-[#6bbcff]"
-                    >
-                        Sign In with Google
-                    </button>
-                </div>
-            </div>
-        )
-    }
-
     return (
-        <div className="min-h-screen pt-28 pb-20 relative">
+        <div className="min-h-screen pt-28 pb-10 relative">
             <SEO
                 title="Upload Skill Files — Skill Issue Marketplace"
                 description="Upload pre-written SKILL.md files directly to Skill Issue. Share your skills with the community or keep them private."
@@ -477,31 +463,6 @@ export default function SkillUploader() {
 
             {/* Ambient glow */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-accent/[0.04] rounded-full blur-[140px] pointer-events-none" />
-
-            {/* Login Required Banner */}
-            {!isLoggedIn && (
-                <div className="fixed top-20 left-0 right-0 z-40 px-6 py-4">
-                    <div className="max-w-6xl mx-auto bg-accent/10 border border-accent/30 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-accent/30 border border-accent/50 flex items-center justify-center shrink-0">
-                                <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p className="font-satoshi font-semibold text-sm text-accent">Sign in to upload skills</p>
-                                <p className="font-satoshi text-xs text-accent/60">You need to be logged in to upload your SKILL.md files</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={openAuthModal}
-                            className="px-4 py-2 rounded-lg bg-accent text-navy font-satoshi font-semibold text-sm hover:bg-[#6bbcff] transition-all duration-300 shrink-0"
-                        >
-                            Sign In
-                        </button>
-                    </div>
-                </div>
-            )}
 
             {/* Global Drag & Drop Overlay */}
             {globalDragActive && (
@@ -572,16 +533,16 @@ export default function SkillUploader() {
                 <Breadcrumbs />
 
                 {/* Header */}
-                <div className="mb-12 text-center">
-                    <span className="inline-block px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent font-satoshi text-xs font-semibold mb-3">
-                        Upload Your Skills
+                <div className="text-center mb-10 max-w-3xl mx-auto">
+                    <span className="inline-block font-satoshi text-sm font-medium tracking-widest uppercase text-accent/70 mb-4">
+                        Upload Skill
                     </span>
                     <h1 className="font-clash font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.1] mb-5">
                         Show us.{' '}
                         <span className="italic text-accent glow-text">What you built.</span>
                     </h1>
-                    <p className="font-satoshi text-lg text-white/60 max-w-2xl mx-auto">
-                        Already have a skill file? Upload your .md file directly and we'll parse it for you. No need to rebuild from scratch.
+                    <p className="font-satoshi text-lg text-white/40 max-w-xl mx-auto">
+                        Already have a skill file? Upload your .md file directly and we'll parse it for you.
                     </p>
                 </div>
 
@@ -593,10 +554,10 @@ export default function SkillUploader() {
                         onDragLeave={handleDragLeave}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
-                        className={`mt-10 rounded-2xl border-2 border-dashed transition-all duration-300 p-12 text-center ${dragActive && isLoggedIn
+                        className={`mt-10 rounded-2xl border-2 border-dashed transition-all duration-300 p-12 text-center ${dragActive
                             ? 'border-accent bg-accent/[0.08] bg-opacity-50'
                             : 'border-white/[0.12] bg-white/[0.02] hover:border-accent/30 hover:bg-white/[0.04]'
-                        } ${!isLoggedIn ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                        } cursor-pointer`}
                     >
                         <input
                             ref={fileInputRef}
@@ -658,9 +619,10 @@ export default function SkillUploader() {
 
                 {step === 'preview' && extractedSkill && (
                     // ── PREVIEW STEP ────────────────────────────
-                    <div className="mt-10 scroll-reveal revealed grid lg:grid-cols-2 gap-8">
-                        {/* Left Panel — Extracted Data */}
-                        <div className="rounded-2xl border border-accent/15 bg-gradient-to-br from-accent/[0.04] via-transparent to-transparent p-8">
+                    <div className="mt-10 scroll-reveal revealed grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-6 lg:gap-8 lg:items-start">
+                        {/* Left Column — Extracted Data + Action Buttons */}
+                        <div className="flex flex-col gap-4 lg:gap-6">
+                        <div className="rounded-2xl border border-accent/15 bg-gradient-to-br from-accent/[0.04] via-transparent to-transparent p-4 sm:p-6 lg:p-8">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-3 h-3 rounded-full bg-accent/60" />
                                 <span className="font-clash font-semibold text-lg text-accent">
@@ -772,8 +734,40 @@ export default function SkillUploader() {
                             )}
                         </div>
 
-                        {/* Right Panel — Preview */}
-                        <div className="rounded-2xl border border-accent/15 bg-gradient-to-br from-accent/[0.04] via-transparent to-transparent p-8 flex flex-col">
+                        {/* Action Buttons — under extracted data on desktop */}
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <button
+                                onClick={() => {
+                                    setStep('upload')
+                                    setSelectedFile(null)
+                                    setExtractedSkill(null)
+                                    setEditMode(false)
+                                }}
+                                className="flex-1 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 font-satoshi font-semibold hover:bg-white/10 hover:border-white/20 transition-all duration-300"
+                            >
+                                Upload Different File
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (!isLoggedIn) {
+                                        openAuthModal()
+                                        return
+                                    }
+                                    setShowSaveModal(true)
+                                }}
+                                disabled={!canSave || isSaving}
+                                className={`flex-1 px-6 py-3 rounded-xl font-satoshi font-semibold transition-all duration-300 ${canSave && !isSaving
+                                    ? 'bg-accent text-navy hover:bg-[#6bbcff]'
+                                    : 'bg-white/5 text-white/30 cursor-not-allowed'
+                                }`}
+                            >
+                                {isSaving ? 'Saving...' : 'Save Skill'}
+                            </button>
+                        </div>
+                        </div>
+
+                        {/* Right Panel — Preview (sticky with internal scroll on desktop) */}
+                        <div className="rounded-2xl border border-accent/15 bg-gradient-to-br from-accent/[0.04] via-transparent to-transparent p-4 sm:p-6 lg:p-8 flex flex-col lg:sticky lg:top-28 lg:max-h-[85vh]">
                             <div className="flex items-center justify-between gap-4 mb-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-3 h-3 rounded-full bg-accent/60" />
@@ -803,7 +797,7 @@ export default function SkillUploader() {
                                 </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto bg-white/[0.01] border border-white/[0.08] rounded-xl p-6">
+                            <div className="lg:flex-1 lg:overflow-y-auto lg:min-h-0 bg-white/[0.01] border border-white/[0.08] rounded-xl p-3 sm:p-4 lg:p-6">
                                 {viewMode === 'rendered' ? (
                                     <div className="prose prose-invert max-w-none text-white/80 leading-relaxed">
                                         <ReactMarkdown
@@ -829,39 +823,6 @@ export default function SkillUploader() {
                                 )}
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {/* Action Buttons */}
-                {step === 'preview' && (
-                    <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-                        <button
-                            onClick={() => {
-                                setStep('upload')
-                                setSelectedFile(null)
-                                setExtractedSkill(null)
-                                setEditMode(false)
-                            }}
-                            className="px-8 py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 font-satoshi font-semibold hover:bg-white/10 hover:border-white/20 transition-all duration-300"
-                        >
-                            Upload Different File
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (!isLoggedIn) {
-                                    openAuthModal()
-                                    return
-                                }
-                                setShowSaveModal(true)
-                            }}
-                            disabled={!canSave || isSaving}
-                            className={`px-8 py-3 rounded-xl font-satoshi font-semibold transition-all duration-300 ${canSave && !isSaving
-                                ? 'bg-accent text-navy hover:bg-[#6bbcff]'
-                                : 'bg-white/5 text-white/30 cursor-not-allowed'
-                            }`}
-                        >
-                            {isSaving ? 'Saving...' : 'Save Skill'}
-                        </button>
                     </div>
                 )}
             </div>

@@ -172,7 +172,7 @@ function ReviewModal({ onClose, authUser, onSubmitted }) {
 // ════════════════════════════════════════════════════════════
 export default function UserProfile() {
     const { username } = useParams()
-    const { user: authUser, profile: authProfile } = useAuth()
+    const { user: authUser, profile: authProfile, signOut } = useAuth()
 
     const isMockMode = import.meta.env.VITE_MOCK_AUTH === 'true'
 
@@ -556,6 +556,17 @@ export default function UserProfile() {
                                                     Add Review
                                                 </button>
                                             )}
+
+                                            {/* Sign out — visible on mobile where navbar logout is hidden */}
+                                            <button
+                                                onClick={signOut}
+                                                className="md:hidden w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-500/15 bg-red-500/[0.04] text-red-400/70 font-satoshi text-sm font-semibold hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/[0.08] transition-all duration-400 group/logout"
+                                            >
+                                                <svg className="w-3.5 h-3.5 group-hover/logout:translate-x-0.5 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                                </svg>
+                                                Sign Out
+                                            </button>
                                         </div>
                                     )}
                                 </div>

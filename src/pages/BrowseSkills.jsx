@@ -224,7 +224,7 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
     const [fileLoading, setFileLoading] = useState(false)
 
     // ── Auth ─────────────────────────────────────────────────────────────
-    const { signIn } = useAuth()
+    const { openAuthModal } = useAuth()
     const isGuest = !authUser
 
     // ── Resize state ──────────────────────────────────────────────────────
@@ -586,7 +586,7 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
                                             <p className="font-satoshi text-sm text-white/40">Free account required to access the complete content.</p>
                                         </div>
                                         <button
-                                            onClick={signIn}
+                                            onClick={openAuthModal}
                                             className="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-navy font-satoshi font-bold text-sm hover:bg-[#6bbcff] hover:shadow-[0_0_24px_rgba(75,169,255,0.35)] transition-all duration-300"
                                         >
                                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" /></svg>
@@ -694,7 +694,7 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
                         {/* Left group: Copy + Share + Download */}
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={isGuest ? signIn : handleCopy}
+                                onClick={isGuest ? openAuthModal : handleCopy}
                                 title={isGuest ? 'Sign in to copy' : undefined}
                                 className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl border transition-all duration-300 group ${isGuest ? 'border-white/[0.06] bg-white/[0.01] opacity-40 cursor-not-allowed' : 'border-white/10 bg-white/[0.03] hover:border-accent/30 hover:bg-white/[0.06]'}`}
                             >
@@ -727,7 +727,7 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
                             </button>
 
                             <button
-                                onClick={isGuest ? signIn : handleDownload}
+                                onClick={isGuest ? openAuthModal : handleDownload}
                                 disabled={downloading}
                                 title={isGuest ? 'Sign in to download' : undefined}
                                 className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-satoshi font-bold text-sm transition-all duration-300 disabled:opacity-50 ${isGuest ? 'bg-accent/30 text-navy/60 cursor-not-allowed' : 'bg-accent text-navy hover:bg-[#6bbcff] hover:shadow-[0_0_20px_rgba(75,169,255,0.3)]'}`}
@@ -768,7 +768,7 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
                             {/* Guest: Sign in to Save */}
                             {isGuest && (
                                 <button
-                                    onClick={signIn}
+                                    onClick={openAuthModal}
                                     className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl border border-accent/20 bg-accent/[0.06] text-accent font-satoshi font-semibold text-sm hover:bg-accent/15 hover:border-accent/40 transition-all duration-300"
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>
@@ -848,7 +848,7 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
 /** Card for skills stored in Appwrite (user-uploaded). Matches OpenClaw CommunityCard design. */
 function DbSkillCard({ skill, uploaderProfile, onClick, index = 0 }) {
     const navigate = useNavigate()
-    const { authUser } = useAuth()
+    const { user, openAuthModal } = useAuth()
     const [downloading, setDownloading] = useState(false)
     const { title, description, category, star_count = 0, copy_count = 0, $createdAt, created_at } = skill
 
@@ -897,6 +897,13 @@ function DbSkillCard({ skill, uploaderProfile, onClick, index = 0 }) {
         research: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
         analysis: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
         design: 'bg-pink-500/10 text-pink-300 border-pink-500/20',
+        marketing: 'bg-orange-500/10 text-orange-300 border-orange-500/20',
+        education: 'bg-teal-500/10 text-teal-300 border-teal-500/20',
+        productivity: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
+        business: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20',
+        devops: 'bg-sky-500/10 text-sky-300 border-sky-500/20',
+        security: 'bg-red-500/10 text-red-300 border-red-500/20',
+        'data science': 'bg-violet-500/10 text-violet-300 border-violet-500/20',
     }
     const catStyle = categoryColors[category?.toLowerCase()] ?? 'bg-white/5 text-white/40 border-white/10'
 
@@ -970,7 +977,7 @@ function DbSkillCard({ skill, uploaderProfile, onClick, index = 0 }) {
                 <div className="flex items-center gap-1.5">
                     {/* Download zip */}
                     <button
-                        onClick={(e) => !authUser ? navigate('/login') : handleDownloadZip(e)}
+                        onClick={(e) => { e.stopPropagation(); if (!user) { openAuthModal(); return; } handleDownloadZip(e); }}
                         title="Download .zip"
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/[0.06] border border-accent/15 text-accent/80 font-satoshi text-xs font-semibold hover:bg-accent/15 hover:border-accent/30 hover:text-accent hover:shadow-[0_0_12px_rgba(75,169,255,0.12)] transition-all duration-300 disabled:opacity-40"
                         disabled={downloading}
@@ -1003,7 +1010,7 @@ function DbSkillCard({ skill, uploaderProfile, onClick, index = 0 }) {
 export default function BrowseSkills() {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
-    const { user: authUser, profile: authProfile } = useAuth()
+    const { user: authUser, profile: authProfile, openAuthModal } = useAuth()
 
     // ── Per-source state: { [key]: { skills, loading, error } } ──────────
     // Keys: company name for official (Anthropic etc), 'OpenClaw', label for community flat
@@ -1187,6 +1194,7 @@ export default function BrowseSkills() {
     const totalCount = officialSkills.length + communitySkills.length + openClawSkills.length + indexedTotal
 
     const handleDownload = useCallback(async (skill) => {
+        if (!authUser) { openAuthModal(); return }
         const id = `${skill.repo}:${skill.path}`
         setDownloadingId(id)
         try {
@@ -1196,7 +1204,7 @@ export default function BrowseSkills() {
         } finally {
             setDownloadingId(null)
         }
-    }, [])
+    }, [authUser])
 
     return (
         <div className="relative min-h-screen pt-32 pb-20">
