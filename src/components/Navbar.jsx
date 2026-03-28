@@ -101,6 +101,7 @@ export default function Navbar() {
                         )}
                         <NavLink to="/community">Community</NavLink>
                         <NavLink to="/build">Build a Skill</NavLink>
+                        <NavLink to="/upload">Upload Skill</NavLink>
                     </div>
 
                     {/* Auth Button */}
@@ -182,6 +183,9 @@ export default function Navbar() {
                         </Link>
                         <Link to="/build" className={`block font-satoshi text-sm py-2 ${location.pathname === '/build' ? 'text-accent font-medium' : 'text-white/60 hover:text-accent-light'}`}>
                             Build a Skill
+                        </Link>
+                        <Link to="/upload" className={`block font-satoshi text-sm py-2 ${location.pathname === '/upload' ? 'text-accent font-medium' : 'text-white/60 hover:text-accent-light'}`}>
+                            Upload Skill
                         </Link>
 
                         {isLoggedIn ? (

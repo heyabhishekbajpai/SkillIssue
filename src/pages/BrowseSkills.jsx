@@ -848,6 +848,7 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
 /** Card for skills stored in Appwrite (user-uploaded). Matches OpenClaw CommunityCard design. */
 function DbSkillCard({ skill, uploaderProfile, onClick, index = 0 }) {
     const navigate = useNavigate()
+    const { authUser } = useAuth()
     const [downloading, setDownloading] = useState(false)
     const { title, description, category, star_count = 0, copy_count = 0, $createdAt, created_at } = skill
 
@@ -969,7 +970,7 @@ function DbSkillCard({ skill, uploaderProfile, onClick, index = 0 }) {
                 <div className="flex items-center gap-1.5">
                     {/* Download zip */}
                     <button
-                        onClick={handleDownloadZip}
+                        onClick={(e) => !authUser ? navigate('/login') : handleDownloadZip(e)}
                         title="Download .zip"
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/[0.06] border border-accent/15 text-accent/80 font-satoshi text-xs font-semibold hover:bg-accent/15 hover:border-accent/30 hover:text-accent hover:shadow-[0_0_12px_rgba(75,169,255,0.12)] transition-all duration-300 disabled:opacity-40"
                         disabled={downloading}

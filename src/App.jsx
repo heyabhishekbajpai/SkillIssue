@@ -11,6 +11,7 @@ import Features from './components/Features'
 import CTA from './components/CTA'
 import Footer from './components/Footer'
 import SkillBuilder from './pages/SkillBuilder'
+import SkillUploader from './pages/SkillUploader'
 import BrowseSkills from './pages/BrowseSkills'
 import UserProfile from './pages/UserProfile'
 import AuthCallback from './pages/AuthCallback'
@@ -65,6 +66,7 @@ export default function App() {
                     <Routes>
                         <Route path="/" element={<LandingPage />} />
                         <Route path="/build" element={<SkillBuilder />} />
+                        <Route path="/upload" element={<SkillUploader />} />
                         <Route path="/browse" element={<BrowseSkills />} />
                         <Route path="/auth/callback" element={<AuthCallback />} />
                         <Route path="/user/:username" element={<UserProfile />} />

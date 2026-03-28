@@ -529,6 +529,24 @@ export default function SkillBuilder() {
     const canSubmit = skillName.trim().length > 0 && description.trim().length > 0
     const canRefine = refinementInstruction.trim().length > 0 && !isRefining
 
+    // Auth check - redirect if not logged in
+    if (!isLoggedIn) {
+        return (
+            <div className="min-h-screen pt-40 pb-20 relative flex items-center justify-center px-6">
+                <div className="text-center">
+                    <h1 className="font-clash font-bold text-5xl text-white mb-4">Sign in to Build</h1>
+                    <p className="font-satoshi text-white/60 mb-8 max-w-md">You need to be logged in to create custom AI skills.</p>
+                    <button
+                        onClick={openAuthModal}
+                        className="px-8 py-3 rounded-xl bg-accent text-navy font-satoshi font-semibold hover:bg-[#6bbcff]"
+                    >
+                        Sign In with Google
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="min-h-screen pt-28 pb-20 relative">
             <SEO
