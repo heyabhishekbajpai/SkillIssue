@@ -279,6 +279,9 @@ export default function SkillBuilder() {
         }
     }, [isLoggedIn, pendingGenerate])
 
+    // Ref to always point at the latest handleImageSelect (avoids stale closure)
+    const handleImageSelectRef = useRef(null)
+
     // Global drag and drop handlers
     useEffect(() => {
         const handleGlobalDragEnter = (e) => {
@@ -317,8 +320,7 @@ export default function SkillBuilder() {
 
             const files = e.dataTransfer.files
             if (files && files.length > 0) {
-                // Create a synthetic event to pass to handleImageSelect
-                handleImageSelect({ target: { files } })
+                handleImageSelectRef.current?.({ target: { files } })
             }
         }
 
@@ -349,9 +351,12 @@ export default function SkillBuilder() {
             }
             reader.readAsDataURL(file)
         })
-        // Reset so the same files can be re-selected after removal
-        e.target.value = ''
+        // Reset so the same files can be re-selected after removal (only for real inputs)
+        if (e.target && e.target.tagName) e.target.value = ''
     }
+
+    // Keep ref in sync so the global drop handler always uses the latest function
+    handleImageSelectRef.current = handleImageSelect
 
     function removeReferenceImage(id) {
         setReferenceImages((prev) => prev.filter((img) => img.id !== id))

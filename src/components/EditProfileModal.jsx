@@ -85,6 +85,9 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
     const [globalDragActive, setGlobalDragActive] = useState(false)
     const fileInputRef = useRef(null)
 
+    // Ref to always point at the latest processImageFile (avoids stale closure in global handler)
+    const processImageFileRef = useRef(null)
+
     // Global drag and drop handlers
     useEffect(() => {
         const handleGlobalDragEnter = (e) => {
@@ -125,7 +128,7 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
             if (files && files.length > 0) {
                 // Process first image only for profile pic
                 const file = files[0]
-                processImageFile(file)
+                processImageFileRef.current?.(file)
             }
         }
 
@@ -143,6 +146,9 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
     }, [])
 
     // ── Validate and process file ────────────────────────────
+    // Keep ref in sync so global drop handler always uses the latest function
+    processImageFileRef.current = processImageFile
+
     function processImageFile(file) {
         if (!file) return
 
