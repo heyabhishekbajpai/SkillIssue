@@ -17,7 +17,7 @@ A `.md` file with instructions that tell your AI how to behave for a specific ta
 No code. No prompt engineering degree required.
 
 <p align="center">
-  <img src="diagrams/what%20are%20ai%20skills.png" alt="How AI skills work - the LLM matches a user query against a skill index, loads only the matched SKILL.md, and produces an expert-level response" width="500" />
+  <img src="diagrams/what%20are%20ai%20skills.png" alt="How AI skills work - the LLM matches a user query against a skill index, loads only the matched SKILL.md, and produces an expert-level response" style="max-width:100%;" />
 </p>
 
 The LLM reads only the skill name and a short description to decide relevance. The full SKILL.md (often thousands of tokens) loads only when it actually matches. Token efficient by design.
@@ -48,7 +48,7 @@ All of them end up here for the same reason: they want their AI to be better at 
 The system has two separate data pipelines. The crawler finds skills on GitHub and stores metadata in MongoDB. The frontend fetches actual skill content directly from GitHub when you open one. Content is never stored, only metadata.
 
 <p align="center">
-  <img src="diagrams/skillissue-system-architecture.png" alt="Skill Issue system architecture - GitHub crawler pipeline, MongoDB Atlas, Vercel serverless APIs, React frontend, and Appwrite backend" width="700" />
+  <img src="diagrams/skillissue-system-architecture.png" alt="Skill Issue system architecture - GitHub crawler pipeline, MongoDB Atlas, Vercel serverless APIs, React frontend, and Appwrite backend" style="max-width:100%;" />
 </p>
 
 **How the crawler works:**
