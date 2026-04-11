@@ -173,5 +173,5 @@ Your AI has a skill issue. This fixes that.
 <p align="center">
   <img src="public/skill-issue-white.png" width="200" alt="Skill Issue Logo" />
   <br/>
-  <i>boost your AI productivity by up to 70%</i>
+  
 </p>
