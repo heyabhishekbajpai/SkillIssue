@@ -28,7 +28,7 @@ const TWITTER_HANDLE = '@BajpaiX'
 
 // ── Per-route SEO data ─────────────────────────────────────────
 // These match exactly what each page's <SEO /> component renders.
-let ROUTES = [
+const ROUTES = [
     {
         path: '/',
         title: `${SITE_NAME} — AI Skills Marketplace for Claude, ChatGPT, Gemini & Cursor`,
@@ -240,7 +240,7 @@ function generateHead(route) {
     </script>`
 }
 
-async function prerender() {
+function prerender() {
     console.log('\n🚀 Pre-rendering static routes (no-browser mode)...\n')
 
     // Read the base index.html produced by Vite
@@ -291,71 +291,6 @@ async function prerender() {
         } catch (err) {
             console.error(`  ❌ ${route.path} failed: ${err.message}`)
         }
-    }
-
-    // ── Attempt to prerender GitHub skill pages when MongoDB is configured
-    // This fetches a limited number of indexed GitHub skills and creates
-    // lightweight prerendered pages containing title/description metadata.
-    if (process.env.MONGODB_URI) {
-        try {
-            console.log('\n🔎 Attempting to prerender GitHub skill pages from MongoDB...')
-            // Lazy import mongodb to avoid forcing dependency in environments without it
-            const { MongoClient } = await import('mongodb')
-            const client = new MongoClient(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 5000 })
-            await client.connect()
-            const dbName = process.env.MONGODB_DB || 'skillissue'
-            const db = client.db(dbName)
-            const coll = db.collection('github_skills')
-
-            // Fetch a reasonable number of skills to prerender (e.g., 200)
-            const skills = await coll.find({}, { projection: { repo: 1, folder_path: 1, skill_name: 1, repo_description: 1, indexed_at: 1 } })
-                .sort({ stars: -1 })
-                .limit(200)
-                .toArray()
-
-            console.log(`    Found ${skills.length} skills to prerender (limited).`)
-
-            let added = 0
-            for (const skill of skills) {
-                const repo = skill.repo
-                const folder = skill.folder_path || ''
-                const display = skill.skill_name || folder.split('/').pop() || repo
-                const skillPath = `/skill/github?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(folder)}`
-                const routeObj = {
-                    path: skillPath,
-                    title: `${display} — GitHub Skill File`,
-                    description: skill.repo_description || `${display} skill file from ${repo} on GitHub. Browse, copy, and use this AI skill file.`,
-                    jsonLd: {
-                        '@context': 'https://schema.org',
-                        '@type': 'CreativeWork',
-                        name: display,
-                        description: skill.repo_description || '',
-                    },
-                }
-
-                try {
-                    const newHead = generateHead(routeObj)
-                    const html = baseHtml.replace(headBlockRegex, newHead)
-                    const outDir = join(DIST_DIR, 'skill', 'github')
-                    if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true })
-                    // Use a stable filename derived from repo and folder
-                    const fileName = `${repo.replace(/\//g, '__')}__${(folder || 'root').replace(/\//g, '__')}.html`
-                    const outFile = join(outDir, fileName)
-                    writeFileSync(outFile, html, 'utf-8')
-                    added++
-                } catch (err) {
-                    // don't fail the whole prerender on a single skill
-                    console.error(`    Failed to prerender skill ${repo}/${folder}: ${err.message}`)
-                }
-            }
-
-            console.log(`    Prerendered ${added}/${skills.length} GitHub skill pages to dist/skill/github/`)
-            await client.close()
-        } catch (err) {
-            console.error('    Could not prerender GitHub skills (continuing):', err.message)
-        }
-    } else {
-        console.log('\nℹ️  MONGODB_URI not set — skipping prerender of GitHub skill pages.')
     }
 
     console.log(`\n🎉 Pre-rendered ${successCount}/${ROUTES.length} routes.\n`)
