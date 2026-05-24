@@ -1,7 +1,9 @@
 import { getOrgAvatarUrl, getUserAvatarUrl } from '../lib/githubService'
+import { useTheme } from '../context/ThemeContext'
 
 // ── Official card (Anthropic, Vercel, OpenAI, HuggingFace) ──────────────
 function OfficialCard({ skill, onClick, onDownload, isDownloading }) {
+    const { theme } = useTheme()
     const { displayName, company, stars, repo } = skill
 
     const companyColors = {
@@ -20,7 +22,7 @@ function OfficialCard({ skill, onClick, onDownload, isDownloading }) {
     return (
         <div
             onClick={() => onClick(skill)}
-            className={`group relative bg-gradient-to-b from-navy-50 to-navy border border-white/[0.06] rounded-2xl p-5 hover:border-emerald-400/25 transition-all duration-400 hover:-translate-y-1 flex flex-col gap-4 cursor-pointer ${cc.glow}`}
+            className={`group relative ${theme === 'light' ? 'bg-white border-black/10' : 'bg-gradient-to-b from-navy-50 to-navy border-white/[0.06]'} rounded-2xl p-5 hover:border-emerald-400/25 transition-all duration-400 hover:-translate-y-1 flex flex-col gap-4 cursor-pointer ${cc.glow}`}
         >
             {/* Top edge highlight */}
             <div className="absolute top-0 left-6 right-6 h-[1px] bg-gradient-to-r from-transparent via-emerald-400/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

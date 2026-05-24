@@ -131,7 +131,7 @@ export default function Hero() {
     }, [])
 
     return (
-        <section className="relative lg:min-h-[100dvh] pt-32 pb-20 lg:pt-20 lg:pb-0 flex flex-col lg:flex-row lg:items-center overflow-hidden">
+        <section id="hero-section" className="relative lg:min-h-[100dvh] pt-32 pb-20 lg:pt-20 lg:pb-0 flex flex-col lg:flex-row lg:items-center overflow-hidden">
             {/* Squares Background */}
             <div className="absolute inset-0 z-0">
                 <Squares
@@ -202,7 +202,7 @@ export default function Hero() {
                                     The marketplace for AI skill files
                                 </span>
                             </div>
-                            <h1 className="font-clash font-bold text-5xl sm:text-6xl lg:text-7xl leading-[1.05] tracking-tight">
+                            <h1 className="font-clash font-bold text-5xl sm:text-6xl lg:text-7xl leading-[1.05] tracking-tight !text-white">
                                 Does your AI
                                 <br />
                                 agent have a
@@ -217,7 +217,7 @@ export default function Hero() {
 
                         {/* Animated Stat */}
                         <div className="py-3 pl-5 border-l-[3px] border-accent/40 flex flex-col justify-center animate-fade-in-up items-center lg:items-start lg:border-l-[3px] lg:border-t-0 border-t-[3px] border-l-0 pt-5 lg:pt-3 lg:pl-5" style={{ animationDelay: '0.2s' }}>
-                            <span className="font-satoshi text-[0.7rem] sm:text-xs font-bold tracking-[0.2em] uppercase text-white/50 mb-1 lg:mb-1">
+                            <span className="font-satoshi text-[0.7rem] sm:text-xs font-bold tracking-[0.2em] uppercase !text-white/50 mb-1 lg:mb-1">
                                 Boost your AI productivity by up to
                             </span>
                             <div className="font-clash font-black text-6xl sm:text-7xl lg:text-8xl text-accent leading-none tracking-tighter" style={{ textShadow: '0 0 40px rgba(75, 169, 255, 0.5)' }}>
@@ -232,7 +232,7 @@ export default function Hero() {
                                 </svg>
                                 Browse Skills
                             </Link>
-                            <a href="#get-started" className="btn-outline w-full sm:w-auto justify-center text-center">
+                            <a href="#get-started" className="btn-outline w-full sm:w-auto justify-center text-center !text-white !border-white/30">
                                 Get Started Free
                                 <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />

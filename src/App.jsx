@@ -67,7 +67,7 @@ export default function App() {
     const [splashDone, setSplashDone] = useState(isBot)
 
     return (
-        <div className="relative min-h-screen bg-navy text-white">
+        <div className="relative min-h-screen" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }} data-theme-root>
             {!splashDone && !isBot && <SplashScreen onDone={() => setSplashDone(true)} />}
             <InstallPrompt />
             {/* Grid Background */}

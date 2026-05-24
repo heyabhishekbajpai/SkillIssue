@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 /** Small self-contained avatar that falls back to initials on image error. */
 function AvatarImg({ src, name, size = 'w-8 h-8', textSize = 'text-xs' }) {
@@ -31,6 +32,7 @@ export default function Navbar() {
     const [scrolled, setScrolled] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
     const { user, profile, isLoggedIn, openAuthModal, signOut } = useAuth()
+    const { theme, toggleTheme } = useTheme()
     const location = useLocation()
     const isHome = location.pathname === '/'
 
@@ -137,7 +139,24 @@ export default function Navbar() {
                             ))}
                         </div>
 
-                        {/* Auth */}
+                        {/* Auth + Theme Toggle */}
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={toggleTheme}
+                                aria-label="Toggle theme"
+                                className="p-2 rounded-xl border border-white/10 hover:border-accent/30 hover:bg-white/10 transition-all duration-300 text-white/60 hover:text-white"
+                            >
+                                {theme === 'dark' ? (
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <circle cx="12" cy="12" r="5"/>
+                                        <path strokeLinecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                                    </svg>
+                                ) : (
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/>
+                                    </svg>
+                                )}
+                            </button>
                         <div>
                             {isLoggedIn ? (
                                 <div className="flex items-center gap-3">
@@ -179,6 +198,7 @@ export default function Navbar() {
                             )}
                         </div>
                     </div>
+                        </div>
                 </div>
             </div>
 

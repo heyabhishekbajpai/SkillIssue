@@ -9,6 +9,8 @@
  */
 :root {
   --card-initial-opacity: 1;
+  --bg-primary: #0a0e1a;
+  --text-primary: #ffffff;
 }
 
 /* Hide scrollbar but keep scrollable */
@@ -395,8 +397,8 @@ html {
 
 body {
     font-family: var(--font-satoshi);
-    background-color: var(--color-navy);
-    color: #ffffff;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     overflow-x: clip;
     width: 100%;
     -webkit-font-smoothing: antialiased;
@@ -1003,4 +1005,135 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+}
+/* ── Light/Dark Theme Variables ─────────────────────────────── */
+:root {
+  --bg-primary: #0a0e1a;
+  --text-primary: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #0d1225;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --nav-bg: rgba(10, 14, 26, 0.9);
+  --card-bg: rgba(255, 255, 255, 0.03);
+}
+
+:root[data-theme="light"] {
+  --bg-primary: #f5f7ff;
+  --bg-secondary: #eef1fb;
+  --text-primary: #0a0e1a;
+  --text-secondary: rgba(10, 14, 26, 0.6);
+  --border-color: rgba(10, 14, 26, 0.1);
+  --nav-bg: rgba(245, 247, 255, 0.9);
+  --card-bg: rgba(10, 14, 26, 0.03);
+}
+
+/* Smooth transition on theme switch */
+*, *::before, *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* ── Light mode — Navbar ─────────────────────────────────────── */
+[data-theme="light"] nav > div {
+  background-color: rgba(245, 247, 255, 0.95) !important;
+  border-bottom-color: rgba(10, 14, 26, 0.1) !important;
+}
+
+[data-theme="light"] nav a,
+[data-theme="light"] nav button,
+[data-theme="light"] nav span {
+  color: #0a0e1a !important;
+}
+
+/* ── Light mode — Logo ───────────────────────────────────────── */
+[data-theme="light"] nav img[alt="Skill Issue"] {
+  filter: brightness(0);
+}
+
+/* ── Light mode — Navbar pill ────────────────────────────────── */
+[data-theme="light"] nav .rounded-full {
+  background-color: rgba(10, 14, 26, 0.06) !important;
+  border-color: rgba(10, 14, 26, 0.1) !important;
+}
+
+/* ── Light mode — Footer ─────────────────────────────────────── */
+[data-theme="light"] footer {
+  background-color: #eef1fb !important;
+  color: #0a0e1a !important;
+}
+
+[data-theme="light"] footer a,
+[data-theme="light"] footer p,
+[data-theme="light"] footer span {
+  color: rgba(10, 14, 26, 0.7) !important;
+}
+
+/* ── Light mode — All text ───────────────────────────────────── */
+[data-theme="light"] *:not(#hero-section):not(#hero-section *) {
+  color: #0a0e1a !important;
+}
+
+/* Keep accent colors intact */
+[data-theme="light"] .text-accent,
+[data-theme="light"] .text-accent-light,
+[data-theme="light"] a {
+  color: #4ba9ff !important;
+}
+
+/* Keep button text readable */
+[data-theme="light"] .btn-primary {
+  color: #0a0e1a !important;
+}
+
+/* ── Light mode — Cards ──────────────────────────────────────── */
+[data-theme="light"] .glass-card {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(75, 169, 255, 0.2) !important;
+}
+
+[data-theme="light"] .feature-slide-card {
+  background-color: #ffffff !important;
+  border-color: rgba(10, 14, 26, 0.1) !important;
+}
+
+[data-theme="light"] .feature-card-desc,
+[data-theme="light"] .feature-card-detail {
+  color: rgba(10, 14, 26, 0.6) !important;
+}
+/* ── Light mode — Inputs & Textareas ────────────────────────── */
+[data-theme="light"] input,
+[data-theme="light"] textarea {
+  background-color: #ffffff !important;
+  color: #0a0e1a !important;
+  border-color: rgba(10, 14, 26, 0.2) !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: rgba(10, 14, 26, 0.4) !important;
+}
+
+/* ── Light mode — All card/box borders ───────────────────────── */
+[data-theme="light"] .border,
+[data-theme="light"] .border-white\/10,
+[data-theme="light"] .border-white\/\[0\.08\] {
+  border-color: rgba(10, 14, 26, 0.15) !important;
+}
+
+/* ── Light mode — Dark background boxes ─────────────────────── */
+[data-theme="light"] .bg-navy\/90,
+[data-theme="light"] .bg-navy\/80,
+[data-theme="light"] .bg-white\/\[0\.03\],
+[data-theme="light"] .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ── Light mode — Section backgrounds ───────────────────────── */
+[data-theme="light"] section,
+[data-theme="light"] .relative.min-h-screen {
+  background-color: transparent !important;
 }

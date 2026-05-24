@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTheme } from '../context/ThemeContext'
 
 // i = 0,2 → left column (slides from left); i = 1,3 → right column (slides from right)
 const slideDir = (i) => i % 2 === 0 ? 'from-left' : 'from-right'
@@ -89,6 +90,7 @@ const FEATURES = [
 ]
 
 export default function Features() {
+    const { theme } = useTheme()
     const trackRef = useRef(null)
 
     useEffect(() => {
@@ -178,8 +180,8 @@ export default function Features() {
                                             key={feature.title}
                                             className={`feature-slide-card ${slideDir(rowIdx * 2 + colIdx)}`}
                                             style={{
-                                                background:   feature.cardBg,
-                                                borderColor:  feature.borderColor,
+                                                background:   theme === 'light' ? '#ffffff' : feature.cardBg,
+                                                borderColor:  theme === 'light' ? 'rgba(10,14,26,0.1)' : feature.borderColor,
                                                 opacity:      'var(--card-initial-opacity, 0)',
                                             }}
                                         >

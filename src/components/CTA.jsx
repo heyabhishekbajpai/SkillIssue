@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
 import { useScrollAnimation } from '../hooks/useScrollAnimation'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 export default function CTA() {
     const sectionRef = useScrollAnimation()
     const { openAuthModal } = useAuth()
+    const { theme } = useTheme()
 
     return (
         <section id="get-started" ref={sectionRef} className="relative py-16">
@@ -13,7 +15,7 @@ export default function CTA() {
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
                 <div className="scroll-reveal relative rounded-3xl overflow-hidden">
                     {/* Background */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-navy-100 to-accent/5" />
+                    <div className={`absolute inset-0 ${theme === 'light' ? 'bg-gradient-to-br from-accent/10 via-white to-accent/5' : 'bg-gradient-to-br from-accent/10 via-navy-100 to-accent/5'}`} />
                     <div className="absolute inset-0 border border-accent/10 rounded-3xl" />
 
                     {/* Glow orbs */}
@@ -27,7 +29,7 @@ export default function CTA() {
                             <br />
                             <span className="italic text-accent glow-text">skill issue?</span>
                         </h2>
-                        <p className="font-satoshi text-lg text-white/40 max-w-xl mx-auto mb-10">
+                        <p className={`font-satoshi text-lg max-w-xl mx-auto mb-10 ${theme === 'light' ? 'text-navy/60' : 'text-white/40'}`}>
                             Join thousands of developers and AI enthusiasts who are already
                             building smarter agents with curated skill files.
                         </p>
