@@ -1,6 +1,97 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+/* ── Light Mode Overrides ───────────────────────────────────── */
+[data-theme="light"] {
+  /* Core color flips */
+  --si-bg: #f5f5f0;
+  --si-surface: #ffffff;
+  --si-surface-2: #eeeee8;
+  --si-text: #1a1a2e;
+  --si-text-muted: rgba(26,26,46,0.55);
+  --si-border: rgba(26,26,46,0.1);
+  --si-accent: #185fa5;
+
+  /* Force bg-navy class to become light */
+  --color-navy: #f5f5f0;
+}
+
+[data-theme="light"] body,
+[data-theme="light"] #root {
+  background-color: #f5f5f0;
+  color: #1a1a2e;
+}
+
+/* Override Tailwind bg-navy */
+[data-theme="light"] .bg-navy {
+  background-color: #f5f5f0!important;
+}
+
+/* Text overrides */
+[data-theme="light"] .text-white {
+  color: #1a1a2e!important;
+}
+[data-theme="light"] .text-white\/55,
+[data-theme="light"] .text-white\/60,
+[data-theme="light"] .text-white\/70,
+[data-theme="light"] .text-white\/80 {
+  color: rgba(26,26,46,0.7)!important;
+}
+[data-theme="light"] .text-white\/30,
+[data-theme="light"] .text-white\/40 {
+  color: rgba(26,26,46,0.45)!important;
+}
+
+/* Navbar backgrounds */
+[data-theme="light"] .bg-navy\/90 {
+  background-color: rgba(255,255,255,0.92)!important;
+}
+[data-theme="light"] .bg-navy\/80 {
+  background-color: rgba(255,255,255,0.85)!important;
+}
+
+/* Card/surface backgrounds */
+[data-theme="light"] .bg-white\/\[0\.03\],
+[data-theme="light"] .bg-white\/\[0\.04\],
+[data-theme="light"] .bg-white\/\[0\.05\],
+[data-theme="light"] .bg-white\/5 {
+  background-color: rgba(26,26,46,0.04)!important;
+}
+[data-theme="light"] .bg-white\/10 {
+  background-color: rgba(26,26,46,0.08)!important;
+}
+
+/* Borders */
+[data-theme="light"] .border-white\/5,
+[data-theme="light"] .border-white\/\[0\.05\],
+[data-theme="light"] .border-white\/\[0\.06\] {
+  border-color: rgba(26,26,46,0.1)!important;
+}
+[data-theme="light"] .border-white\/10,
+[data-theme="light"] .border-white\/\[0\.08\] {
+  border-color: rgba(26,26,46,0.15)!important;
+}
+
+/* Grid background */
+[data-theme="light"] .grid-bg {
+  background-image:
+    linear-gradient(rgba(26,46,100,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,46,100,0.05) 1px, transparent 1px);
+}
+
+/* Hover states */
+[data-theme="light"] .hover\:text-white\/90:hover {
+  color: rgba(26,26,46,0.9)!important;
+}
+[data-theme="light"] .hover\:text-accent-light:hover {
+  color: #185fa5!important;
+}
+[data-theme="light"] .hover\:bg-white\/\[0\.04\]:hover {
+  background-color: rgba(26,26,46,0.06)!important;
+}
+[data-theme="light"] img[src*="skill-issue-white"] {
+  filter: invert(1) hue-rotate(180deg) brightness(0.15);
+}
 
 /*
  * SEO: Ensure scroll-animated cards are visible to crawlers/prerenderers.
