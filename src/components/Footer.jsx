@@ -48,8 +48,8 @@ export default function Footer() {
                                 { label: 'Browse Skills', to: '/browse' },
                                 { label: 'Skill Editor', to: '/build' },
                                 { label: 'Public Marketplace', to: '/browse' },
-                                { label: 'Private Vault', to: null },
-                                { label: 'Pricing', to: null },
+                                { label: 'Private Vault', to: '/coming-soon?feature=Private%20Vault' },
+                                { label: 'Pricing', to: '/coming-soon?feature=Pricing' },
                             ].map(({ label, to }) => (
                                 <li key={label}>
                                     {to ? (

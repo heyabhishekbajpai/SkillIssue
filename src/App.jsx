@@ -29,6 +29,7 @@ import SplashScreen from './components/SplashScreen'
 import InstallPrompt from './components/InstallPrompt'
 import BackToTop from './components/BackToTop'
 import NotFound from './pages/NotFound'
+import ComingSoon from './pages/ComingSoon'
 import SEO, { jsonLdSchemas } from './components/SEO'
 
 function LandingPage() {
@@ -90,6 +91,7 @@ export default function App() {
                         <Route path="/about" element={<About />} />
                         <Route path="/privacy" element={<Privacy />} />
                         <Route path="/terms" element={<Terms />} />
+                        <Route path="/coming-soon" element={<ComingSoon />} />
                         <Route path="*" element={<NotFound />} />
                     </Routes>
                 </main>
