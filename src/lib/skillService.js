@@ -63,7 +63,7 @@ export async function saveSkill({ title, content, tags = [], visibility = 'priva
 
 /** Fetch all skills belonging to the currently signed-in user. */
 export async function getUserSkills() {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return []
     const user = await account.get()
     if (!user) return []
 
@@ -82,7 +82,7 @@ export async function getUserSkills() {
 /** Fetch PUBLIC skills for a given user with optional sort and pagination.
  *  Returns { docs: SkillDoc[], total: number } */
 export async function getPublicSkillsByUser(userId, sort = 'recent', limit = 12, offset = 0) {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return { docs: [], total: 0 }
     const sortQuery = {
         'recent': Query.orderDesc('$createdAt'),
         'most-rated': Query.orderDesc('star_count'),
@@ -107,7 +107,7 @@ export async function getPublicSkillsByUser(userId, sort = 'recent', limit = 12,
 
 /** Fetch ALL public skills across all users (for the community browse section). */
 export async function getAllPublicSkills(sort = 'recent', limit = 100, search = '') {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return []
     const sortQuery = {
         'recent': Query.orderDesc('$createdAt'),
         'most-rated': Query.orderDesc('star_count'),
@@ -148,7 +148,7 @@ export async function getAllPublicSkills(sort = 'recent', limit = 100, search = 
 
 /** Fetch all PRIVATE skills for the owner of a profile. */
 export async function getPrivateSkillsByUser(userId) {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return []
     const res = await databases.listDocuments(
         DATABASE_ID,
         SKILLS_TABLE_ID,
@@ -230,14 +230,14 @@ export async function updateSkill(id, { title, content, tags }) {
  *  Public skills are readable by anyone.
  *  Private skills will throw a 401/403 from Appwrite if not the owner. */
 export async function getSkillById(id) {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return null
     const data = await databases.getDocument(DATABASE_ID, SKILLS_TABLE_ID, id)
     return normalise(data)
 }
 
 /** Fetch profile stats for a user. */
 export async function getProfileStats(userId) {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return { total_skills: 0, total_copies: 0, total_downloads: 0, total_stars: 0 }
     const res = await databases.listDocuments(
         DATABASE_ID,
         SKILLS_TABLE_ID,

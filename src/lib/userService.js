@@ -46,8 +46,7 @@ export async function submitTestimonial({ name, username, body, img }) {
 }
 
 export async function hasSubmittedTestimonial(userId) {
-    if (!userId) return false;
-    requireAppwrite()
+    if (!isAppwriteConfigured || !userId) return false;
     try {
         const res = await databases.listDocuments(
             DATABASE_ID,
@@ -65,7 +64,7 @@ export async function hasSubmittedTestimonial(userId) {
 
 /** Fetch a user's public profile by their auth user ID (stored as user_id attribute). */
 export async function getProfile(userId) {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return null;
     try {
         const res = await databases.listDocuments(
             DATABASE_ID,
@@ -81,7 +80,7 @@ export async function getProfile(userId) {
 
 /** Fetch a user's public profile by username (for profile page URL). */
 export async function getProfileByUsername(username) {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return null;
     try {
         const res = await databases.listDocuments(
             DATABASE_ID,
@@ -98,8 +97,7 @@ export async function getProfileByUsername(username) {
 /** Batch-fetch profiles for an array of auth user_ids.
  *  Returns a map of { [user_id]: profile } for quick lookup. */
 export async function getProfilesByUserIds(userIds) {
-    if (!userIds || userIds.length === 0) return {}
-    requireAppwrite()
+    if (!isAppwriteConfigured || !userIds || userIds.length === 0) return {}
     try {
         const unique = [...new Set(userIds)]
         const res = await databases.listDocuments(
@@ -119,7 +117,7 @@ export async function getProfilesByUserIds(userIds) {
 
 /** Returns aggregate stats for a user's public skills. */
 export async function getProfileStats(userId) {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return { total_skills: 0, total_copies: 0, total_downloads: 0, total_stars: 0 }
     const res = await databases.listDocuments(
         DATABASE_ID,
         SKILLS_TABLE_ID,
@@ -186,7 +184,7 @@ export async function toggleSavedSkill(profileId, skillId, action) {
 
 /** Fetch skills saved by the user */
 export async function getSavedSkills(profileId) {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return []
     const profile = await databases.getDocument(DATABASE_ID, USERS_TABLE_ID, profileId)
     if (!profile.saved_skills || profile.saved_skills.length === 0) return []
 
@@ -199,8 +197,7 @@ export async function getSavedSkills(profileId) {
 
 /** Fetch saved skills when you already have the skill-ID list (avoids extra profile re-fetch). */
 export async function getSavedSkillsByIds(skillIds) {
-    if (!skillIds || skillIds.length === 0) return []
-    requireAppwrite()
+    if (!isAppwriteConfigured || !skillIds || skillIds.length === 0) return []
     const res = await databases.listDocuments(DATABASE_ID, SKILLS_TABLE_ID, [
         Query.equal('$id', skillIds),
         Query.limit(100)
@@ -211,7 +208,7 @@ export async function getSavedSkillsByIds(skillIds) {
 
 /** Returns true if the username is not taken. */
 export async function isUsernameAvailable(username) {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return true;
     const res = await databases.listDocuments(
         DATABASE_ID,
         USERS_TABLE_ID,
@@ -240,7 +237,7 @@ export async function createProfile({ id, username, email, avatar_url, display_n
 /** Derive a safe username suggestion from an email address. */
 /** Fetch total user count + the 4 most recently joined avatars for social proof. */
 export async function getRecentUsers() {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return { total: 0, avatars: [] };
     try {
         const res = await databases.listDocuments(
             DATABASE_ID,
@@ -263,7 +260,7 @@ export async function getRecentUsers() {
 
 /** Fetch all users sorted by most recently joined, with optional cursor-based pagination. */
 export async function getAllUsers({ limit = 50, cursor = null } = {}) {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return { users: [], total: 0 };
     const queries = [
         Query.orderDesc('$createdAt'),
         Query.limit(limit),
@@ -281,7 +278,7 @@ export async function getAllUsers({ limit = 50, cursor = null } = {}) {
 const COMMUNITY_USER_FIELDS = ['$id', '$createdAt', 'user_id', 'username', 'display_name', 'avatar_url', 'bio']
 
 export async function getCommunityUsers({ limit = 12, cursor = null } = {}) {
-    requireAppwrite()
+    if (!isAppwriteConfigured) return { users: [], total: 0 };
     const queries = [
         Query.orderDesc('$createdAt'),
         Query.limit(limit),
@@ -301,10 +298,7 @@ let _skillStatsCache = null // { stats: {}, expiresAt: number }
 /** Fetch aggregated per-user stats (skills count + total stars) from public skills in one query.
  *  Result is cached for 5 minutes; pass force=true to bypass cache. */
 export async function getPublicSkillsStatsByUser({ force = false } = {}) {
-    if (!force && _skillStatsCache && Date.now() < _skillStatsCache.expiresAt) {
-        return _skillStatsCache.stats
-    }
-    requireAppwrite()
+    if (!isAppwriteConfigured) return {};
     try {
         const res = await databases.listDocuments(
             DATABASE_ID,
