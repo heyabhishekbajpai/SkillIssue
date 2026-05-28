@@ -67,8 +67,7 @@ export default function SkillCard({ skill, onCopy, onClick, onDelete, onMakePriv
 
     return (
         <div
-            className={`skill-card-enter group relative bg-gradient-to-b from-navy-50 to-navy border border-white/[0.06] rounded-2xl p-5 hover:border-accent/25 transition-all duration-400 hover:-translate-y-1 flex flex-col gap-4 ${cat.glow} ${onClick ? 'cursor-pointer' : ''}`}
-            style={{ animationDelay: `${index * 80}ms` }}
+            className={`skill-card-enter group relative bg-gradient-to-b from-navy-50 to-navy border border-white/[0.08] rounded-3xl p-6 hover:border-accent/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:scale-[1.02] flex flex-col gap-5 shadow-sm hover:shadow-[0_0_35px_rgba(75,169,255,0.08)] ${cat.glow} ${onClick ? 'cursor-pointer' : ''}`}
             onClick={() => onClick?.(skill)}
         >
             {/* Subtle top edge highlight */}
@@ -87,16 +86,16 @@ export default function SkillCard({ skill, onCopy, onClick, onDelete, onMakePriv
             {/* Header */}
             <div className="flex-1 min-w-0">
                 {category && (
-                    <span className={`inline-flex items-center gap-1 mb-3 px-2.5 py-1 rounded-lg text-[11px] font-satoshi font-bold border ${cat.badge} uppercase tracking-wider`}>
+                    <span className={`inline-flex items-center gap-1 mb-4 px-3 py-1.5 rounded-xlg text-[11px] font-satoshi font-bold border ${cat.badge} uppercase tracking-wider`}>
                         <span className="w-1 h-1 rounded-full bg-current opacity-60" />
                         {category}
                     </span>
                 )}
-                <h3 className="font-clash font-bold text-lg text-white leading-snug mb-2 group-hover:text-accent-light transition-colors duration-300 line-clamp-2">
+     <h3 className="font-clash font-bold text-xl text-white leading-snug mb-3 group-hover:text-accent-light group-hover:drop-shadow-[0_0_8px_rgba(75,169,255,0.2)] transition-colors duration-300 line-clamp-2">          
                     {title}
                 </h3>
-                {description && (
-                    <p className="font-satoshi text-sm text-white/40 leading-relaxed line-clamp-2">
+                {description && (<p className="font-satoshi text-sm text-white/70 leading-relaxed line-clamp-3">
+                    
                         {description}
                     </p>
                 )}
