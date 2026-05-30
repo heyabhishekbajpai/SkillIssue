@@ -30,6 +30,7 @@ import InstallPrompt from './components/InstallPrompt'
 import BackToTop from './components/BackToTop'
 import NotFound from './pages/NotFound'
 import SEO, { jsonLdSchemas } from './components/SEO'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function LandingPage() {
     return (
@@ -77,21 +78,23 @@ export default function App() {
             <div className="relative z-10">
                 <Navbar />
                 <main className="pb-20 md:pb-0">
-                    <Routes>
-                        <Route path="/" element={<LandingPage />} />
-                        <Route path="/build" element={<SkillBuilder />} />
-                        <Route path="/upload" element={<SkillUploader />} />
-                        <Route path="/browse" element={<BrowseSkills />} />
-                        <Route path="/auth/callback" element={<AuthCallback />} />
-                        <Route path="/user/:username" element={<UserProfile />} />
-                        <Route path="/skill/github" element={<GitHubSkillPage />} />
-                        <Route path="/skill/:id" element={<SkillDetailPage />} />
-                        <Route path="/community" element={<Community />} />
-                        <Route path="/about" element={<About />} />
-                        <Route path="/privacy" element={<Privacy />} />
-                        <Route path="/terms" element={<Terms />} />
-                        <Route path="*" element={<NotFound />} />
-                    </Routes>
+                    <ErrorBoundary>
+                        <Routes>
+                            <Route path="/" element={<LandingPage />} />
+                            <Route path="/build" element={<SkillBuilder />} />
+                            <Route path="/upload" element={<SkillUploader />} />
+                            <Route path="/browse" element={<BrowseSkills />} />
+                            <Route path="/auth/callback" element={<AuthCallback />} />
+                            <Route path="/user/:username" element={<UserProfile />} />
+                            <Route path="/skill/github" element={<GitHubSkillPage />} />
+                            <Route path="/skill/:id" element={<SkillDetailPage />} />
+                            <Route path="/community" element={<Community />} />
+                            <Route path="/about" element={<About />} />
+                            <Route path="/privacy" element={<Privacy />} />
+                            <Route path="/terms" element={<Terms />} />
+                            <Route path="*" element={<NotFound />} />
+                        </Routes>
+                    </ErrorBoundary>
                 </main>
             </div>
 
