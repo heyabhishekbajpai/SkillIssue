@@ -26,7 +26,9 @@ export default function SkillCard({ skill, onCopy, onClick, onDelete, onMakePriv
     })()
 
     async function handleShare(e) {
-        e.stopPropagation()
+        e.preventDefault();
+        e.stopPropagation();
+
         const url = `${import.meta.env.VITE_SITE_URL || 'https://www.skillissue.bajpai.tech'}/skill/${id}`
         if (navigator.share) {
             try { await navigator.share({ title, url }) } catch { /* cancelled */ }
@@ -102,7 +104,7 @@ export default function SkillCard({ skill, onCopy, onClick, onDelete, onMakePriv
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-white/[0.04]" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between pt-3 border-t border-white/[0.04]" onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
                 <div className="flex items-center gap-3">
                     {/* Stars */}
                     <span className="flex items-center gap-1.5 font-satoshi text-xs text-white/30 group-hover:text-white/40 transition-colors">
@@ -128,7 +130,11 @@ export default function SkillCard({ skill, onCopy, onClick, onDelete, onMakePriv
                     {/* Copy to clipboard (non-owner public) */}
                     {onCopy && !isPrivate && !isOwner && (
                         <button
-                            onClick={(e) => { e.stopPropagation(); onCopy(skill); }}
+                            onClick={(e) => { 
+                                e.preventDefault();
+                                e.stopPropagation(); 
+                                onCopy(skill); 
+                            }}
                             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-accent/[0.06] border border-accent/15 text-accent/80 font-satoshi text-xs font-semibold hover:bg-accent/15 hover:border-accent/30 hover:text-accent hover:shadow-[0_0_12px_rgba(75,169,255,0.12)] transition-all duration-300"
                         >
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -142,7 +148,11 @@ export default function SkillCard({ skill, onCopy, onClick, onDelete, onMakePriv
                     {/* Owner: Make private (only on public cards) */}
                     {isOwner && onMakePrivate && !isPrivate && (
                         <button
-                            onClick={(e) => { e.stopPropagation(); onMakePrivate(skill.id); }}
+                            onClick={(e) => { 
+                                e.preventDefault();
+                                e.stopPropagation(); 
+                                onMakePrivate(skill.id); 
+                            }}
                             title="Make private"
                             className="w-7 h-7 flex items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.02] text-white/25 hover:text-amber-400/70 hover:border-amber-500/20 hover:bg-amber-500/[0.05] transition-all duration-300"
                         >
@@ -168,7 +178,11 @@ export default function SkillCard({ skill, onCopy, onClick, onDelete, onMakePriv
                     {/* Owner: Delete */}
                     {isOwner && onDelete && (
                         <button
-                            onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
+                            onClick={(e) => { 
+                                e.preventDefault();
+                                e.stopPropagation(); 
+                                setShowDeleteConfirm(true); 
+                            }}
                             title="Delete skill"
                             className="w-7 h-7 flex items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.02] text-white/25 hover:text-red-400/70 hover:border-red-500/20 hover:bg-red-500/[0.05] transition-all duration-300"
                         >
