@@ -107,8 +107,12 @@ Users can also build and publish their own skills directly on the platform.
 
 ## running locally
 
+**Prerequisites:**
+- Node.js 18+ (Required for Vite 5)
+- npm
+
 ```bash
-git clone https://github.com/heyabhishekbajpai/SkillIssue
+git clone [https://github.com/heyabhishekbajpai/SkillIssue.git](https://github.com/heyabhishekbajpai/SkillIssue.git)
 cd SkillIssue
 npm install
 ```
