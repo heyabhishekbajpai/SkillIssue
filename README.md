@@ -124,8 +124,8 @@ VITE_APPWRITE_USERS_TABLE_ID=users
 VITE_APPWRITE_SKILLS_TABLE_ID=skills
 VITE_APPWRITE_AVATARS_BUCKET_ID=avatars
 
-# Groq - https://console.groq.com
-VITE_GROQ_API_KEY=your_groq_api_key
+# Groq - https://console.groq.com (server-side only — do not use VITE_ prefix)
+GROQ_API_KEY=your_groq_api_key
 
 # GitHub (optional, bumps rate limit from 60 to 5000 req/hr)
 VITE_GITHUB_TOKEN=your_github_token
