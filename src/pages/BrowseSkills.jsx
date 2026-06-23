@@ -191,7 +191,7 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
                     <svg className="w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+            <div className="flex-1 min-h-0 p-3 sm:p-6">
                 <SkillViewer
                     fill
                     files={skillFiles}

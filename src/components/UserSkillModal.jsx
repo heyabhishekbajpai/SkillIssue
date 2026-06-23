@@ -169,7 +169,7 @@ export default function UserSkillModal({ skill, onClose, isOwner = false, onDele
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+                <div className="flex-1 min-h-0 p-3 sm:p-6">
                     <SkillViewer
                         fill
                         rootName={slug(skill.title)}
