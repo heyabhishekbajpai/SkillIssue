@@ -207,6 +207,20 @@ export function AuthProvider({ children }) {
         setNeedsOnboarding(false)
     }
 
+    async function refreshUser() {
+        if (USE_MOCK_AUTH) return
+        try {
+            const u = await account.get()
+            const normalised = await enrichUser(u)
+            setUser(normalised)
+            await fetchProfile(u.$id)
+            setShowAuthModal(false)
+        } catch {
+            setUser(null)
+            setProfile(null)
+        }
+    }
+
     async function refreshProfile() {
         if (USE_MOCK_AUTH) return
         if (user) await fetchProfile(user.$id ?? user.id)
@@ -226,6 +240,7 @@ export function AuthProvider({ children }) {
         sendOtp,
         verifyOtp,
         signOut,
+        refreshUser,
         refreshProfile,
     }
 

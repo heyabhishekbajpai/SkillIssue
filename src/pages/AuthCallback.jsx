@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { account } from '../lib/appwrite'
+import { useAuth } from '../context/AuthContext'
 
 export default function AuthCallback() {
     const navigate = useNavigate()
+    const { refreshUser } = useAuth()
     const ran = useRef(false)
 
     useEffect(() => {
@@ -61,8 +63,10 @@ export default function AuthCallback() {
                 }
             }
 
-            // On success navigate home — account subscription in AuthContext
-            // will pick up the new session automatically
+            // Explicitly refresh auth state — the Realtime subscription is
+            // subscribed without an active session so it won't fire reliably
+            // for brand-new accounts.
+            await refreshUser()
             navigate('/', { replace: true })
         }
 
