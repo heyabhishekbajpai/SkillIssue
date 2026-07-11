@@ -1,6 +1,7 @@
 /**
  * Utility functions for parsing and validating SKILL.md files
  */
+import { validatePreviousMarkdown } from './skillInputValidation'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const MIN_CONTENT_LENGTH = 20
@@ -308,6 +309,11 @@ export function validateSkillFile(file, content) {
     // Check content length
     if (!content || content.trim().length < MIN_CONTENT_LENGTH) {
         errors.push('File is empty or too short')
+    }
+
+    const markdownValidation = validatePreviousMarkdown(content)
+    if (!markdownValidation.isValid) {
+        errors.push(markdownValidation.errors[0])
     }
 
     // Try parsing and validate structure

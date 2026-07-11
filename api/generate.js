@@ -1,3 +1,5 @@
+import { validateSkillGenerationInput } from '../src/lib/skillInputValidation.js';
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
@@ -10,19 +12,27 @@ export default async function handler(req, res) {
 
     try {
         const { skillName, description, previousMarkdown, refinementInstruction, images = [] } = req.body || {};
+        const validation = validateSkillGenerationInput({
+            skillName,
+            description,
+            previousMarkdown,
+            refinementInstruction,
+            images,
+        });
 
-        if (!skillName || !skillName.trim()) {
-            return res.status(400).json({ error: 'Missing skillName' });
+        if (!validation.isValid) {
+            return res.status(validation.status).json({ error: validation.errors[0] || 'Invalid request.' });
         }
 
-        const hasImages = Array.isArray(images) && images.length > 0;
+        const sanitized = validation.value;
+        const hasImages = sanitized.images.length > 0;
 
         // ── Model selection ──────────────────────────────────────
         const model = hasImages
             ? 'meta-llama/llama-4-scout-17b-16e-instruct'
             : 'llama-3.3-70b-versatile';
 
-        const isRefinement = !!refinementInstruction;
+        const isRefinement = !!sanitized.refinementInstruction;
 
         // ── System prompt ─────────────────────────────────────────
         const baseSystemPrompt = `You are an expert skill file generator for AI agents. A skill file is a markdown document that gives an AI agent precise, actionable instructions for a specific task or domain.
@@ -214,14 +224,14 @@ Output ONLY the raw markdown skill file. No preamble, no explanation, no code fe
         if (isRefinement) {
             userPromptText = `Improve this existing skill file based on the refinement request below.
 
-Skill Name: ${skillName}
+Skill Name: ${sanitized.skillName}
 
 Current Skill File:
-${previousMarkdown}
+${sanitized.previousMarkdown}
 
-Refinement Request: "${refinementInstruction}"
+Refinement Request: "${sanitized.refinementInstruction}"
 
-${hasImages ? `There are ${images.length} reference image(s) attached. Re-examine them thoroughly. Extract any details you may have missed in the previous version and encode them concretely. Do NOT reference the images in the output — all extracted information must be written as self-contained instructions.` : ''}
+${hasImages ? `There are ${sanitized.images.length} reference image(s) attached. Re-examine them thoroughly. Extract any details you may have missed in the previous version and encode them concretely. Do NOT reference the images in the output — all extracted information must be written as self-contained instructions.` : ''}
 
 Requirements for the refined version:
 - Apply the refinement request faithfully and specifically
@@ -233,12 +243,12 @@ Requirements for the refined version:
 
 Return ONLY the complete updated skill file markdown. Nothing else.`;
         } else if (hasImages) {
-            userPromptText = `I am attaching ${images.length} reference image${images.length > 1 ? 's' : ''} for you to analyze.
+            userPromptText = `I am attaching ${sanitized.images.length} reference image${sanitized.images.length > 1 ? 's' : ''} for you to analyze.
 
-Skill Name: ${skillName}
+Skill Name: ${sanitized.skillName}
 
 What this skill should do:
-${description}
+${sanitized.description}
 
 Before writing anything, mentally analyze each image in full detail:
 - Every color with precise descriptions (e.g. "deep navy #0a0d17", "electric blue accent #4ba9ff", "pure white/90 text")
@@ -260,10 +270,10 @@ Everything you extracted from the images goes into the Design System section of 
         } else {
             userPromptText = `Create a complete, detailed skill file for the following.
 
-Skill Name: ${skillName}
+Skill Name: ${sanitized.skillName}
 
 What it should do:
-${description}
+${sanitized.description}
 
 Requirements:
 - The description field must be trigger-aware: state what the skill does and when to use it, including specific phrase triggers
@@ -280,7 +290,7 @@ Produce a skill file that an AI agent could pick up and immediately use to produ
         let userMessage;
         if (hasImages) {
             // Build content array: all images first, then the text prompt
-            const contentParts = images.map((dataUri) => ({
+            const contentParts = sanitized.images.map((dataUri) => ({
                 type: 'image_url',
                 image_url: { url: dataUri },
             }));
@@ -291,6 +301,8 @@ Produce a skill file that an AI agent could pick up and immediately use to produ
             userMessage = { role: 'user', content: userPromptText };
         }
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 60000);
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -306,18 +318,19 @@ Produce a skill file that an AI agent could pick up and immediately use to produ
                 temperature: 0.7,
                 max_tokens: hasImages ? 8192 : 4096,
             }),
-        });
+            signal: controller.signal,
+        }).finally(() => clearTimeout(timeout));
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            return res.status(response.status).json({ error: `Groq API error: ${JSON.stringify(errorData)}` });
+            await response.json().catch(() => ({}));
+            return res.status(500).json({ error: 'Failed to generate skill. Please try again.' });
         }
 
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
         const markdown = data.choices?.[0]?.message?.content || '';
 
         return res.status(200).json({ markdown });
     } catch (err) {
-        return res.status(500).json({ error: `Server error: ${err.message}` });
+        return res.status(500).json({ error: 'Failed to generate skill. Please try again.' });
     }
 }

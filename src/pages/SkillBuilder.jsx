@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { saveSkill } from '../lib/skillService'
 import { invalidateProfileCache } from '../lib/profileCache'
 import { submitTestimonial } from '../lib/userService'
+import { parseImageDataUri, validateImageFile, validateSkillGenerationInput } from '../lib/skillInputValidation'
 import TextareaAutosize from 'react-textarea-autosize'
 import SEO, { jsonLdSchemas } from '../components/SEO'
 import Breadcrumbs from '../components/Breadcrumbs'
@@ -340,12 +341,26 @@ export default function SkillBuilder() {
     function handleImageSelect(e) {
         const files = Array.from(e.target.files || [])
         if (!files.length) return
+        const pendingImages = [...referenceImages]
         files.forEach((file) => {
+            const fileValidation = validateImageFile(file, pendingImages)
+            if (!fileValidation.isValid) {
+                setToast(fileValidation.errors[0])
+                return
+            }
+            pendingImages.push({ fileName: file.name, size: file.size })
+
             const reader = new FileReader()
             reader.onload = (ev) => {
+                const parsed = parseImageDataUri(ev.target.result)
+                if (!parsed.isValid) {
+                    setToast(parsed.error.message)
+                    return
+                }
+
                 setReferenceImages((prev) => [
                     ...prev,
-                    { base64DataUri: ev.target.result, fileName: file.name, id: `${file.name}-${Date.now()}-${Math.random()}` },
+                    { base64DataUri: ev.target.result, fileName: file.name, size: parsed.size, id: `${file.name}-${Date.now()}-${Math.random()}` },
                 ])
             }
             reader.readAsDataURL(file)
@@ -388,7 +403,20 @@ export default function SkillBuilder() {
     }
 
     async function handleGenerate() {
-        if (!skillName.trim() || !description.trim()) return
+        if (!description.trim()) {
+            setToast('Description is required.')
+            return
+        }
+
+        const validation = validateSkillGenerationInput({
+            skillName,
+            description,
+            images: referenceImages.map((img) => img.base64DataUri),
+        })
+        if (!validation.isValid) {
+            setToast(validation.errors[0])
+            return
+        }
 
         if (!isLoggedIn) {
             setPendingGenerate(true)
@@ -403,10 +431,10 @@ export default function SkillBuilder() {
 
         try {
             const payload = {
-                skillName: skillName.trim(),
-                description: description.trim(),
+                skillName: validation.value.skillName,
+                description: validation.value.description,
             }
-            if (referenceImages.length > 0) payload.images = referenceImages.map((img) => img.base64DataUri)
+            if (validation.value.images.length > 0) payload.images = validation.value.images
 
             const res = await fetch('/api/generate', {
                 method: 'POST',
@@ -441,15 +469,26 @@ export default function SkillBuilder() {
     async function handleRefine() {
         if (!refinementInstruction.trim() || isRefining) return
 
+        const validation = validateSkillGenerationInput({
+            skillName,
+            previousMarkdown: generatedMarkdown,
+            refinementInstruction,
+            images: referenceImages.map((img) => img.base64DataUri),
+        })
+        if (!validation.isValid) {
+            setToast(validation.errors[0])
+            return
+        }
+
         setIsRefining(true)
 
         try {
             const payload = {
-                skillName: skillName.trim(),
-                previousMarkdown: generatedMarkdown,
-                refinementInstruction: refinementInstruction.trim(),
+                skillName: validation.value.skillName,
+                previousMarkdown: validation.value.previousMarkdown,
+                refinementInstruction: validation.value.refinementInstruction,
             }
-            if (referenceImages.length > 0) payload.images = referenceImages.map((img) => img.base64DataUri)
+            if (validation.value.images.length > 0) payload.images = validation.value.images
 
             const res = await fetch('/api/generate', {
                 method: 'POST',
