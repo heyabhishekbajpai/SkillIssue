@@ -455,7 +455,7 @@ function DbSkillCard({ skill, uploaderProfile, onClick, index = 0 }) {
 // ── Main Page ───────────────────────────────────────────────────────────
 export default function BrowseSkills() {
     const navigate = useNavigate()
-    const [searchParams] = useSearchParams()
+   const [searchParams, setSearchParams] = useSearchParams()
     const { user: authUser, profile: authProfile, openAuthModal } = useAuth()
     const chipsRef = useRef(null)
     const [activeDot, setActiveDot] = useState(0)
@@ -474,10 +474,10 @@ export default function BrowseSkills() {
     const [expandedSources, setExpandedSources] = useState(new Set())
     const INITIAL_PER_SOURCE = 6
 
-    const [activeFilter, setActiveFilter] = useState('All')
+   const activeFilter = searchParams.get('filter') || 'All'
     const [selectedSkill, setSelectedSkill] = useState(null)
     const [downloadingId, setDownloadingId] = useState(null)
-    const [searchQuery, setSearchQuery] = useState('')
+    const searchQuery = searchParams.get('q') || ''
     const OC_PAGE_SIZE = 48
     const [ocPage, setOcPage] = useState(1)
 
@@ -502,6 +502,16 @@ export default function BrowseSkills() {
     const [indexedPage, setIndexedPage] = useState(1)          // current page (MongoDB page-based)
     const prevIndexedSearchRef = useRef(debouncedSearch)
     const INDEXED_PAGE_SIZE = 48
+
+    // Backward-compat: redirect old /browse?repo=...&path=... share links
+   // Restore scroll position after returning from a skill modal
+    useEffect(() => {
+        const saved = sessionStorage.getItem('browse-scroll')
+        if (saved) {
+            window.scrollTo(0, parseInt(saved))
+            sessionStorage.removeItem('browse-scroll')
+        }
+    }, [])
 
     // Backward-compat: redirect old /browse?repo=...&path=... share links
     useEffect(() => {
@@ -743,13 +753,25 @@ const q = debouncedSearch.toLowerCase().trim()
                         <input
                             type="text"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+  setSearchParams(prev => {
+    const next = new URLSearchParams(prev)
+    e.target.value ? next.set('q', e.target.value) : next.delete('q')
+    return next
+  })
+}}
                             placeholder="Search skills by name, company, or author..."
                             className="w-full pl-11 pr-11 py-3 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi text-sm outline-none transition-all duration-300"
                         />
                         {searchQuery && (
                             <button
-                                onClick={() => setSearchQuery('')}
+                                onClick={() => {
+  setSearchParams(prev => {
+    const next = new URLSearchParams(prev)
+    next.delete('q')
+    return next
+  })
+}}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/30 hover:text-white/60 transition-colors"
                             >
                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -840,7 +862,14 @@ const q = debouncedSearch.toLowerCase().trim()
                                         <span className="w-px h-5 bg-white/10 rounded-full mx-1 shrink-0" />
                                     )}
                                     <button
-                                        onClick={() => setActiveFilter(name)}
+                                        onClick={() => {
+  setSearchParams(prev => {
+    const next = new URLSearchParams(prev)
+    name === 'All' ? next.delete('filter') : next.set('filter', name)
+    next.delete('q') // clear search when switching filter
+    return next
+  })
+}}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-xl font-satoshi text-sm font-medium transition-all duration-300 border ${activeStyle}`}
                                     >
                                         {isDiscoveredTab ? (
@@ -948,7 +977,10 @@ const q = debouncedSearch.toLowerCase().trim()
                                         key={skill.id}
                                         skill={skill}
                                         uploaderProfile={dbProfiles[skill.user_id]}
-                                        onClick={setSelectedDbSkill}
+                                        onClick={(skill) => {
+                                            sessionStorage.setItem('browse-scroll', window.scrollY)
+                                            setSelectedDbSkill(skill)
+                                        }}
                                         index={i}
                                     />
                                 ))}
@@ -1004,7 +1036,10 @@ const q = debouncedSearch.toLowerCase().trim()
                                                 <FeaturedSkillCard
                                                     key={`${skill.repo}:${skill.path}`}
                                                     skill={skill}
-                                                    onClick={setSelectedSkill}
+                                                    onClick={(skill) => {
+  sessionStorage.setItem('browse-scroll', window.scrollY)
+  setSelectedSkill(skill)
+}}
                                                     onDownload={handleDownload}
                                                     isDownloading={downloadingId === `${skill.repo}:${skill.path}`}
                                                 />
