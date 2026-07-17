@@ -157,13 +157,13 @@ export default function SkillViewer({
                     </div>
                 )}
             </div>
-            <div className={`${fill ? 'flex-1 overflow-hidden' : ''}`}>
+            <div className={`${fill ? 'flex-1 overflow-hidden flex flex-col' : ''}`}>
                 {loading && <div className="flex items-center justify-center py-20"><Spinner /></div>}
                 {!loading && error && <div className="flex flex-col items-center justify-center py-20 gap-3 text-center"><div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center"><svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg></div><p className="font-satoshi text-sm text-white/40">{error}</p></div>}
                 {!loading && !error && !primaryContent && <div className="flex items-center justify-center py-16 px-6 text-center font-satoshi text-sm text-white/30">No markdown content is available for this skill.</div>}
                 {!loading && !error && primaryContent && hasPaywall && <Paywall markdown={primaryContent} onSignIn={onLockedAction} />}
                 {!loading && !error && primaryContent && !hasPaywall && activeTab === 'files' && (
-                    <div className="p-4 font-mono text-[12px] modal-view-enter overflow-y-auto styled-scrollbar">
+                    <div className={`p-4 font-mono text-[12px] modal-view-enter overflow-y-auto styled-scrollbar ${fill ? 'flex-1' : ''}`}>
                         <div className="flex items-center gap-1.5 px-2 py-1.5 text-violet-300/50"><FileIcon type="dir" /><span>{rootName}</span></div>
                         {normalizedFiles.length > 0 ? normalizedFiles.map((file) => (
                             <button key={file.path || file.name} type="button" disabled={file.type === 'dir'} onClick={() => selectFile(file)} className={`flex items-center gap-1.5 pl-7 pr-2 py-[5px] w-full rounded text-left transition-colors ${file.type !== 'dir' ? 'cursor-pointer hover:bg-white/[0.04]' : 'cursor-default'} ${activeFile?.path === file.path ? 'bg-accent/[0.07]' : ''}`}>
@@ -172,11 +172,15 @@ export default function SkillViewer({
                         )) : <div className="px-2 py-3 text-white/20">No files found.</div>}
                     </div>
                 )}
-                {!loading && !error && primaryContent && !hasPaywall && activeTab === 'rendered' && <div className="p-6 sm:p-8 overflow-y-auto styled-scrollbar modal-view-enter"><ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{primaryContent}</ReactMarkdown></div>}
+                {!loading && !error && primaryContent && !hasPaywall && activeTab === 'rendered' && (
+                    <div className={`p-6 sm:p-8 overflow-y-auto styled-scrollbar modal-view-enter ${fill ? 'flex-1' : ''}`}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{primaryContent}</ReactMarkdown>
+                    </div>
+                )}
                 {!loading && !error && primaryContent && !hasPaywall && activeTab === 'raw' && (
-                    <div className="flex flex-col modal-view-enter">
+                    <div className={`flex flex-col modal-view-enter ${fill ? 'flex-1 min-h-0' : ''}`}>
                         {activeFile && <div className="flex items-center gap-2 px-4 py-2 border-b border-white/[0.05] bg-white/[0.01] shrink-0"><button type="button" onClick={() => switchTab('files')} className="text-white/30 hover:text-accent transition-colors" title="Back to files" aria-label="Back to files"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg></button><span className="font-mono text-[11px] text-white/30 truncate">{activeFile.path || activeFile.name}</span>{fileLoading && <Spinner className="w-3 h-3 ml-auto" />}</div>}
-                        <pre className="p-5 sm:p-6 text-sm font-mono text-white/70 whitespace-pre-wrap overflow-x-auto leading-relaxed overflow-y-auto styled-scrollbar">{visibleRaw}</pre>
+                        <pre className={`p-5 sm:p-6 text-sm font-mono text-white/70 whitespace-pre-wrap overflow-x-auto leading-relaxed overflow-y-auto styled-scrollbar ${fill ? 'flex-1' : ''}`}>{visibleRaw}</pre>
                     </div>
                 )}
             </div>
