@@ -1,69 +1,98 @@
 /** @type {import('tailwindcss').Config} */
+
+// Every colour is a CSS variable holding "R G B" channels (see src/index.css),
+// so light/dark switch at runtime and Tailwind opacity modifiers still work.
+const v = (name) => `rgb(var(--${name}) / <alpha-value>)`
+
 export default {
-    content: [
-        "./index.html",
-        "./src/**/*.{js,ts,jsx,tsx}",
-    ],
+    content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+    darkMode: ['selector', '[data-theme="dark"]'],
     theme: {
         extend: {
             colors: {
-                navy: {
-                    DEFAULT: '#0a0e1a',
-                    50: '#0d1225',
-                    100: '#111730',
-                    200: '#161d3c',
-                    300: '#1c2548',
-                    400: '#232e55',
+                canvas: {
+                    DEFAULT: v('canvas'),
+                    subtle: v('canvas-subtle'),
+                    inset: v('canvas-inset'),
+                    overlay: v('canvas-overlay'),
+                },
+                fg: {
+                    DEFAULT: v('fg'),
+                    muted: v('fg-muted'),
+                    subtle: v('fg-subtle'),
+                    onemphasis: v('fg-onemphasis'),
+                },
+                line: {
+                    DEFAULT: v('line'),
+                    muted: v('line-muted'),
+                },
+                header: {
+                    DEFAULT: v('header'),
+                    fg: v('header-fg'),
+                    line: v('header-line'),
                 },
                 accent: {
-                    DEFAULT: '#4ba9ff',
-                    light: '#cae8ff',
-                    dark: '#2b7fd4',
-                    glow: 'rgba(75, 169, 255, 0.3)',
+                    DEFAULT: v('accent'),
+                    emphasis: v('accent-emphasis'),
+                    subtle: v('accent-subtle'),
+                    muted: v('accent-muted'),
+                },
+                success: {
+                    DEFAULT: v('success'),
+                    emphasis: v('success-emphasis'),
+                    subtle: v('success-subtle'),
+                },
+                attention: {
+                    DEFAULT: v('attention'),
+                    subtle: v('attention-subtle'),
+                },
+                danger: {
+                    DEFAULT: v('danger'),
+                    emphasis: v('danger-emphasis'),
+                    subtle: v('danger-subtle'),
+                },
+                done: {
+                    DEFAULT: v('done'),
+                    subtle: v('done-subtle'),
+                },
+                neutral: {
+                    muted: v('neutral-muted'),
+                    subtle: v('neutral-subtle'),
                 },
             },
             fontFamily: {
-                clash: ['"Clash Display"', 'sans-serif'],
-                satoshi: ['Satoshi', 'sans-serif'],
+                sans: ['"Mona Sans Variable"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Helvetica', 'Arial', 'sans-serif'],
+                display: ['"Hubot Sans Variable"', '"Mona Sans Variable"', '-apple-system', '"Segoe UI"', 'sans-serif'],
+                mono: ['"Monaspace Neon"', 'ui-monospace', 'SFMono-Regular', '"SF Mono"', 'Menlo', 'Consolas', 'monospace'],
             },
-            animation: {
-                'float': 'float 6s ease-in-out infinite',
-                'marquee': 'marquee var(--duration, 40s) linear infinite',
-                'marquee-vertical': 'marquee-vertical var(--duration, 40s) linear infinite',
-                'float-slow': 'float 8s ease-in-out infinite',
-                'float-slower': 'float 10s ease-in-out infinite',
-                'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
-                'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
-                'drift': 'drift 20s linear infinite',
+            fontSize: {
+                xxs: ['11px', '16px'],
+            },
+            borderRadius: {
+                DEFAULT: '6px',
+                md: '6px',
+                lg: '8px',
+                xl: '12px',
+            },
+            boxShadow: {
+                sm: '0 1px 0 rgb(var(--shadow) / 0.04)',
+                DEFAULT: '0 1px 3px rgb(var(--shadow) / 0.08), 0 1px 0 rgb(var(--shadow) / 0.04)',
+                overlay: '0 1px 3px rgb(var(--shadow) / 0.12), 0 8px 24px rgb(var(--shadow) / 0.12)',
+                modal: '0 0 0 1px rgb(var(--line) / 1), 0 16px 48px rgb(var(--shadow) / 0.24)',
+            },
+            maxWidth: {
+                page: '1280px',
             },
             keyframes: {
-                marquee: {
-                    from: { transform: 'translateX(0)' },
-                    to: { transform: 'translateX(calc(-100% - var(--gap, 1rem)))' },
+                'fade-in': { from: { opacity: '0' }, to: { opacity: '1' } },
+                'pop-in': {
+                    from: { opacity: '0', transform: 'scale(0.98) translateY(4px)' },
+                    to: { opacity: '1', transform: 'none' },
                 },
-                'marquee-vertical': {
-                    from: { transform: 'translateY(0)' },
-                    to: { transform: 'translateY(calc(-100% - var(--gap, 1rem)))' },
-                },
-                float: {
-                    '0%, 100%': { transform: 'translateY(0px)' },
-                    '50%': { transform: 'translateY(-20px)' },
-                },
-                'pulse-glow': {
-                    '0%, 100%': { opacity: '0.4', filter: 'blur(20px)' },
-                    '50%': { opacity: '0.8', filter: 'blur(30px)' },
-                },
-                fadeInUp: {
-                    '0%': { opacity: '0', transform: 'translateY(40px)' },
-                    '100%': { opacity: '1', transform: 'translateY(0)' },
-                },
-                drift: {
-                    '0%': { transform: 'translate(0, 0) rotate(0deg)' },
-                    '25%': { transform: 'translate(10px, -15px) rotate(2deg)' },
-                    '50%': { transform: 'translate(-5px, -25px) rotate(-1deg)' },
-                    '75%': { transform: 'translate(-15px, -10px) rotate(1deg)' },
-                    '100%': { transform: 'translate(0, 0) rotate(0deg)' },
-                },
+            },
+            animation: {
+                'fade-in': 'fade-in 120ms ease-out',
+                'pop-in': 'pop-in 160ms cubic-bezier(0.33, 1, 0.68, 1)',
             },
         },
     },

@@ -117,8 +117,8 @@ export default function ModalShell({
     }, [resizable, size])
 
     return (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center ${className}`} onClick={onClose}>
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        <div className={`fixed inset-0 z-[100] flex items-center justify-center p-2 ${className}`} onClick={onClose}>
+            <div className="absolute inset-0 bg-[rgb(var(--shadow)/0.5)] animate-fade-in" />
             <div
                 ref={panelRef}
                 role="dialog"
@@ -127,7 +127,7 @@ export default function ModalShell({
                 aria-label={ariaLabel}
                 tabIndex={-1}
                 onClick={(event) => event.stopPropagation()}
-                className={`relative rounded-2xl border border-white/10 bg-navy overflow-hidden flex flex-col animate-fade-in-up outline-none ${panelClassName}`}
+                className={`relative rounded-xl bg-canvas-overlay shadow-modal overflow-hidden flex flex-col animate-pop-in outline-none ${panelClassName}`}
                 style={resizable ? { width: size.width, height: size.height, maxWidth: 'calc(100vw - 16px)', maxHeight: 'calc(100vh - 16px)' } : undefined}
             >
                 <div className={`relative h-full ${contentClassName}`}>{children}</div>
@@ -138,7 +138,7 @@ export default function ModalShell({
                         title="Drag to resize"
                         aria-hidden="true"
                     >
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-white/40 group-hover:text-accent transition-colors duration-150 drop-shadow-[0_0_3px_rgba(75,169,255,0.4)] group-hover:drop-shadow-[0_0_6px_rgba(75,169,255,0.7)]">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-fg-subtle group-hover:text-fg-muted transition-colors">
                             <path d="M1 11 L11 11 L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                     </div>

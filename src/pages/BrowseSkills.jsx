@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import JSZip from 'jszip'
+import { Search, X, Download, MessageSquare, Star, Copy, Users, ChevronDown, AlertCircle, SearchX } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useDebounce } from '../hooks/useDebounce' 
+import { useDebounce } from '../hooks/useDebounce'
 import SEO, { jsonLdSchemas } from '../components/SEO'
-import Breadcrumbs from '../components/Breadcrumbs'
 import {
     fetchSkillFolders,
     fetchOpenClawSkills,
@@ -24,35 +24,28 @@ import { saveSkill, getAllPublicSkills } from '../lib/skillService'
 import { toggleSavedSkill, getProfilesByUserIds } from '../lib/userService'
 import { invalidateProfileCache } from '../lib/profileCache'
 import UserSkillModal from '../components/UserSkillModal'
-import SkillHoverPreview from '../components/SkillHoverPreview'
 import ModalShell from '../components/ModalShell'
 import SkillViewer from '../components/SkillViewer'
 import SkillActionBar from '../components/SkillActionBar'
 import CommentPanel, { StandaloneCommentDrawer } from '../components/CommentPanel'
 import { useComments } from '../hooks/useComments'
+import { Avatar, Blankslate, CategoryDot, Spinner, formatCount, timeAgo } from '../components/ui/primitives'
 
-// ── Skeleton loader ─────────────────────────────────────────────────────
-function SkeletonCard() {
+// ── Skeleton row ────────────────────────────────────────────────────────
+function SkeletonRow() {
     return (
-        <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-b from-navy-50 to-navy p-5 animate-pulse">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-white/5" />
-                    <div className="w-16 h-5 rounded-lg bg-white/5" />
-                </div>
-                <div className="w-14 h-4 rounded bg-white/5" />
-            </div>
-            <div className="w-3/4 h-5 rounded bg-white/5 mb-2" />
-            <div className="w-1/2 h-4 rounded bg-white/[0.03] mb-4" />
-            <div className="border-t border-white/[0.04] pt-3 flex justify-between">
-                <div className="w-16 h-4 rounded bg-white/[0.03]" />
-                <div className="w-12 h-6 rounded-lg bg-white/5" />
+        <div className="box-row flex gap-3 py-4">
+            <div className="skeleton-line h-5 w-5" />
+            <div className="flex-1 space-y-2">
+                <div className="skeleton-line h-4 w-1/3" />
+                <div className="skeleton-line h-3 w-2/3" />
+                <div className="skeleton-line h-3 w-1/4" />
             </div>
         </div>
     )
 }
 
-// ── Skill Detail Modal ───────────────────────────────────────────────────────────
+// ── GitHub skill detail modal ───────────────────────────────────────────
 function SkillModal({ skill, onClose, authUser, authProfile }) {
     const [content, setContent] = useState('')
     const [viewerContent, setViewerContent] = useState('')
@@ -110,6 +103,7 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
     const isOpenClaw = skill.isOpenClaw
     const isIndexed = skill.isIndexed
     const titleId = `github-skill-modal-${skill.repo}-${skill.path}`.replace(/[^a-z0-9_-]/gi, '-')
+    const owner = isOpenClaw ? skill.author : skill.company
 
     async function handleCopy() {
         if (isGuest) { openAuthModal(); return }
@@ -172,26 +166,30 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
 
     return (
         <ModalShell onClose={onClose} titleId={titleId} contentClassName="flex flex-col h-full">
-            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/[0.06] bg-white/[0.02] shrink-0">
-                <div className="flex items-center gap-3 min-w-0">
-                    <img
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line bg-canvas-subtle px-4 py-3">
+                <div className="flex min-w-0 items-center gap-3">
+                    <Avatar
                         src={isOpenClaw ? `https://avatars.githubusercontent.com/${skill.author}` : isIndexed ? (skill.ownerAvatar || `https://avatars.githubusercontent.com/${skill.company}`) : getOrgAvatarUrl(skill.repo)}
-                        alt={isOpenClaw ? skill.author : skill.company}
-                        loading="lazy"
-                        width={32}
-                        height={32}
-                        className={`w-8 h-8 border border-white/10 ${isOpenClaw ? 'rounded-full' : 'rounded-lg'}`}
+                        name={owner}
+                        size={24}
+                        square={!isOpenClaw}
                     />
                     <div className="min-w-0">
-                        <h2 id={titleId} className="font-clash font-bold text-lg text-white truncate">{skill.displayName}</h2>
-                        <p className="font-satoshi text-xs text-white/35 truncate">{isOpenClaw ? skill.attributionLabel : `${skill.company} · ${skill.stars?.toLocaleString() || 0} stars`}</p>
+                        <h2 id={titleId} className="truncate font-sans text-base">
+                            <span className="text-accent">{owner}</span>
+                            <span className="text-fg-muted"> / </span>
+                            <span className="font-semibold">{skill.displayName}</span>
+                        </h2>
+                        <p className="truncate text-xs text-fg-muted">
+                            {isOpenClaw ? skill.attributionLabel : `${skill.repo} · ${(skill.stars || 0).toLocaleString()} stars`}
+                        </p>
                     </div>
                 </div>
-                <button type="button" onClick={onClose} aria-label="Close skill modal" className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors shrink-0 ml-3">
-                    <svg className="w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                <button type="button" onClick={onClose} aria-label="Close skill modal" className="btn-invisible btn-icon shrink-0">
+                    <X className="h-4 w-4" />
                 </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4">
                 <SkillViewer
                     fill
                     files={skillFiles}
@@ -208,16 +206,16 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
             </div>
             {content && (
                 <SkillActionBar
-                    className="px-3 sm:px-6 py-3 sm:py-4 border-t border-white/[0.06] bg-white/[0.02] shrink-0"
+                    className="shrink-0 border-t border-line bg-canvas-subtle px-4 py-3"
                     actions={[
-                        { key: 'copy', icon: 'copy', label: copied ? 'Copied!' : 'Copy', ariaLabel: 'Copy skill markdown', onClick: handleCopy, status: copied ? 'success' : undefined },
-                        { key: 'share', icon: 'share', label: linkCopied ? 'Link copied!' : 'Share', ariaLabel: 'Share skill link', onClick: handleShare, status: linkCopied ? 'success' : undefined },
-                        { key: 'download', icon: 'download', label: downloading ? 'Zipping...' : 'Download .zip', ariaLabel: 'Download skill as zip', onClick: handleDownload, loading: downloading, primary: true },
-                        { key: 'comments', icon: 'comments', label: 'Comments', ariaLabel: 'View comments', onClick: () => setCommentsOpen(o => !o), active: commentsOpen },
+                        { key: 'copy', icon: 'copy', label: copied ? 'Copied' : 'Copy', ariaLabel: 'Copy skill markdown', onClick: handleCopy, status: copied ? 'success' : undefined },
+                        { key: 'share', icon: 'share', label: linkCopied ? 'Link copied' : 'Share', ariaLabel: 'Share skill link', onClick: handleShare, status: linkCopied ? 'success' : undefined },
+                        { key: 'download', icon: 'download', label: downloading ? 'Zipping…' : 'Download .zip', ariaLabel: 'Download skill as zip', onClick: handleDownload, loading: downloading, primary: true },
+                        { key: 'comments', icon: 'comments', label: 'Comments', ariaLabel: 'View comments', onClick: () => setCommentsOpen((o) => !o), active: commentsOpen },
                     ]}
                     secondaryActions={[
                         { key: 'github', icon: 'github', label: 'View on GitHub', ariaLabel: 'Open skill on GitHub', href: skill.htmlUrl || skill.attributionUrl },
-                        { key: 'save', icon: 'save', label: isGuest ? 'Sign in to Save' : saved ? 'Saved!' : saveError ? 'Already saved' : 'Save', ariaLabel: isGuest ? 'Sign in to save skill' : 'Save skill', onClick: isGuest ? openAuthModal : handleSave, loading: saving, status: saved ? 'success' : undefined, active: saved },
+                        { key: 'save', icon: 'save', label: isGuest ? 'Sign in to save' : saved ? 'Saved' : saveError ? 'Already saved' : 'Save', ariaLabel: isGuest ? 'Sign in to save skill' : 'Save skill', onClick: isGuest ? openAuthModal : handleSave, loading: saving, status: saved ? 'success' : undefined, active: saved },
                     ]}
                 />
             )}
@@ -238,9 +236,8 @@ function SkillModal({ skill, onClose, authUser, authProfile }) {
     )
 }
 
-// ── Community DB Skill Card ───────────────────────────────────────────────────
-/** Card for skills stored in Appwrite (user-uploaded). Matches OpenClaw CommunityCard design. */
-function DbSkillCard({ skill, uploaderProfile, onClick, index = 0 }) {
+// ── Community (Appwrite) skill row ──────────────────────────────────────
+function DbSkillCard({ skill, uploaderProfile, onClick }) {
     const navigate = useNavigate()
     const { user, profile, openAuthModal } = useAuth()
     const [downloading, setDownloading] = useState(false)
@@ -254,8 +251,7 @@ function DbSkillCard({ skill, uploaderProfile, onClick, index = 0 }) {
     })
     const { title, description, category, star_count = 0, copy_count = 0, $createdAt, created_at } = skill
 
-    async function handleDownloadZip(e) {
-        e.stopPropagation()
+    async function handleDownloadZip() {
         if (downloading) return
         setDownloading(true)
         try {
@@ -277,162 +273,67 @@ function DbSkillCard({ skill, uploaderProfile, onClick, index = 0 }) {
         }
     }
     const username = uploaderProfile?.username || 'unknown'
-    const displayName = uploaderProfile?.display_name || username
-    const avatarUrl = uploaderProfile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(username)}`
-
-    const ago = (() => {
-        const dateStr = $createdAt || created_at
-        if (!dateStr) return ''
-        const diff = Date.now() - new Date(dateStr).getTime()
-        const d = Math.floor(diff / 86400000)
-        if (Number.isNaN(d) || d < 0) return ''
-        if (d < 1) return 'today'
-        if (d === 1) return 'yesterday'
-        if (d < 30) return `${d}d ago`
-        if (d < 365) return `${Math.floor(d / 30)}mo ago`
-        return `${Math.floor(d / 365)}y ago`
-    })()
-
-    const categoryColors = {
-        coding: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
-        writing: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
-        research: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
-        analysis: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
-        design: 'bg-pink-500/10 text-pink-300 border-pink-500/20',
-        marketing: 'bg-orange-500/10 text-orange-300 border-orange-500/20',
-        education: 'bg-teal-500/10 text-teal-300 border-teal-500/20',
-        productivity: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
-        business: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20',
-        devops: 'bg-sky-500/10 text-sky-300 border-sky-500/20',
-        security: 'bg-red-500/10 text-red-300 border-red-500/20',
-        'data science': 'bg-violet-500/10 text-violet-300 border-violet-500/20',
-    }
-    const catStyle = categoryColors[category?.toLowerCase()] ?? 'bg-white/5 text-white/40 border-white/10'
+    const tags = Array.isArray(skill.tags) ? skill.tags : []
 
     return (
         <div
+            role="button"
+            tabIndex={0}
             onClick={() => onClick(skill)}
-            className="skill-card-enter skill-card-hover-wrap group relative bg-gradient-to-b from-navy-50 to-navy border border-white/[0.06] rounded-2xl p-5 hover:border-accent/20 hover:shadow-[0_0_30px_rgba(75,169,255,0.06)] transition-all duration-400 hover:-translate-y-1 flex flex-col gap-4 cursor-pointer"
-            style={{ animationDelay: `${index * 60}ms` }}
+            onKeyDown={(e) => { if (e.key === 'Enter') onClick(skill) }}
+            className="box-row box-row-hover flex cursor-pointer gap-3 py-4"
         >
-            {/* Top edge highlight */}
-            <div className="absolute top-0 left-6 right-6 h-[1px] bg-gradient-to-r from-transparent via-accent/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-            {/* ── Hover Preview Overlay ── */}
-            <SkillHoverPreview
-                title={title}
-                description={description}
-                subtitle={`by @${username}${category ? ` · ${category}` : ''}`}
-                author={`@${username}`}
-                avatarUrl={avatarUrl}
-                tags={Array.isArray(skill.tags) ? skill.tags : []}
-                category={category}
-                onDownload={() => handleDownloadZip({ stopPropagation: () => {} })}
-                position="top"
-            />
-
-            {/* Header row: user avatar + username + community tag */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                    <img
-                        src={avatarUrl}
-                        alt={username}
-                        loading="lazy"
-                        width={28}
-                        height={28}
-                        className="w-7 h-7 rounded-full border border-white/10 bg-white/5 object-cover"
-                    />
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/user/${username}`)
-                        }}
-                        className="font-mono text-[11px] text-accent/80 hover:text-accent transition-colors truncate max-w-[140px]"
-                        title={`@${username}`}
-                    >
-                        @{username}
-                    </button>
+            <Avatar src={uploaderProfile?.avatar_url} name={uploaderProfile?.display_name || username} size={20} className="mt-0.5" />
+            <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <h3 className="min-w-0 truncate font-sans text-[15px] leading-6">
+                        <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/user/${username}`) }}
+                            className="text-accent hover:underline"
+                        >
+                            {username}
+                        </button>
+                        <span className="text-fg-muted"> / </span>
+                        <span className="font-semibold text-accent hover:underline">{title}</span>
+                    </h3>
+                    <span className="label label-accent"><Users className="h-3 w-3" />Skill Issue</span>
                 </div>
-                {/* Community tag */}
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-satoshi font-bold border bg-accent/10 text-accent border-accent/20 uppercase tracking-wider">
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Community
-                </span>
-            </div>
-
-            {/* Skill name + description */}
-            <div className="flex-1 min-w-0">
-                <h3 className="font-clash font-bold text-lg text-white leading-snug mb-1 group-hover:text-accent-light transition-colors duration-300 line-clamp-2">
-                    {title}
-                </h3>
-                <p className="font-satoshi text-sm text-white/35 line-clamp-1">
-                    {description || `by ${displayName}`}
-                </p>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-white/[0.04]">
-                <div className="flex items-center gap-3">
-                    {/* Stars */}
-                    <span className="flex items-center gap-1.5 font-satoshi text-xs text-white/30 group-hover:text-white/40 transition-colors">
-                        <svg className="w-3.5 h-3.5 text-amber-400/50 group-hover:text-amber-400/70 transition-colors" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
-                        {star_count}
-                    </span>
-                    {/* Copies */}
-                    <span className="flex items-center gap-1.5 font-satoshi text-xs text-white/30 group-hover:text-white/40 transition-colors">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5" />
-                        </svg>
-                        {copy_count}
-                    </span>
-                    {ago && <span className="text-white/20 font-satoshi text-[10px]">{ago}</span>}
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                    {/* Download zip */}
-                    <button
-                        onClick={(e) => { e.stopPropagation(); if (!user) { openAuthModal(); return; } handleDownloadZip(e); }}
-                        title="Download .zip"
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/[0.06] border border-accent/15 text-accent/80 font-satoshi text-xs font-semibold hover:bg-accent/15 hover:border-accent/30 hover:text-accent hover:shadow-[0_0_12px_rgba(75,169,255,0.12)] transition-all duration-300 disabled:opacity-40"
-                        disabled={downloading}
-                    >
-                        {downloading ? (
-                            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                        ) : (
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                            </svg>
-                        )}
-                        <span>.zip</span>
-                    </button>
-                    
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setCommentsOpen(true); }}
-                        title="Comments"
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-satoshi text-xs font-semibold transition-all duration-300 ${commentsOpen ? 'bg-accent/20 border-accent/40 text-accent' : 'bg-white/[0.03] border-white/10 text-white/50 hover:border-accent/25 hover:bg-white/[0.06] hover:text-white/70'}`}
-                    >
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                        </svg>
-                        <span>Comments</span>
-                    </button>
-                    {/* Category badge */}
-                    {category && (
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-satoshi font-bold border ${catStyle} uppercase tracking-wider`}>
-                            {category}
-                        </span>
-                    )}
+                {description && <p className="mt-1 line-clamp-2 text-sm text-fg-muted">{description}</p>}
+                {tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                        {tags.slice(0, 5).map((t) => <span key={t} className="topic">{t}</span>)}
+                    </div>
+                )}
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-muted">
+                    <CategoryDot category={category} />
+                    <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5" />{formatCount(star_count)}</span>
+                    <span className="inline-flex items-center gap-1"><Copy className="h-3.5 w-3.5" />{formatCount(copy_count)}</span>
+                    {($createdAt || created_at) && <span>Updated {timeAgo($createdAt || created_at)}</span>}
                 </div>
             </div>
+            <div className="flex shrink-0 items-start gap-1" onClick={(e) => e.stopPropagation()}>
+                <button
+                    type="button"
+                    onClick={() => setCommentsOpen(true)}
+                    className={`btn btn-sm btn-icon ${commentsOpen ? 'bg-neutral-subtle' : ''}`}
+                    title="Comments"
+                    aria-label="Comments"
+                >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => { if (!user) { openAuthModal(); return } handleDownloadZip() }}
+                    disabled={downloading}
+                    className="btn btn-sm"
+                    title="Download .zip"
+                >
+                    {downloading ? <Spinner size={14} /> : <Download className="h-3.5 w-3.5" />}
+                    <span className="hidden sm:inline">.zip</span>
+                </button>
+            </div>
 
-            
             {commentsOpen && (
                 <StandaloneCommentDrawer
                     open={commentsOpen}
@@ -452,56 +353,102 @@ function DbSkillCard({ skill, uploaderProfile, onClick, index = 0 }) {
     )
 }
 
-// ── Main Page ───────────────────────────────────────────────────────────
+// ── Result group (bordered box with a header) ───────────────────────────
+function ResultGroup({ title, avatar, avatarRound, count, loading, href, children, footer }) {
+    return (
+        <section className="box overflow-hidden">
+            <header className="box-header py-2.5">
+                {avatar && <img src={avatar} alt="" width={20} height={20} loading="lazy" className={`h-5 w-5 ${avatarRound ? 'rounded-full' : 'rounded'} ring-1 ring-line-muted`} />}
+                {href ? (
+                    <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:text-accent hover:underline">{title}</a>
+                ) : (
+                    <h2 className="font-sans text-sm font-semibold">{title}</h2>
+                )}
+                <span className="ml-auto">
+                    {loading ? <Spinner size={14} /> : count != null && <span className="counter">{typeof count === 'number' ? count.toLocaleString() : count}</span>}
+                </span>
+            </header>
+            {children}
+            {footer && <div className="border-t border-line-muted bg-canvas-subtle px-4 py-2 text-center">{footer}</div>}
+        </section>
+    )
+}
+
+// ── Main page ───────────────────────────────────────────────────────────
 export default function BrowseSkills() {
     const navigate = useNavigate()
-    const [searchParams] = useSearchParams()
+    const [searchParams, setSearchParams] = useSearchParams()
     const { user: authUser, profile: authProfile, openAuthModal } = useAuth()
-    const chipsRef = useRef(null)
-    const [activeDot, setActiveDot] = useState(0)
-    const totalDots = 6
 
-    // ── Per-source state: { [key]: { skills, loading, error } } ──────────
+    // Per-source state: { [key]: { skills, loading, error } }
     // Keys: company name for official (Anthropic etc), 'OpenClaw', label for community flat
     const [sourceData, setSourceData] = useState(() => {
         const d = {}
-        FEATURED_SOURCES.forEach(s => { d[s.company] = { skills: [], loading: true, error: null } })
+        FEATURED_SOURCES.forEach((s) => { d[s.company] = { skills: [], loading: true, error: null } })
         d.OpenClaw = { skills: [], loading: true, error: null }
-        COMMUNITY_FLAT_SOURCES.forEach(s => { d[s.label] = { skills: [], loading: true, error: null } })
+        COMMUNITY_FLAT_SOURCES.forEach((s) => { d[s.label] = { skills: [], loading: true, error: null } })
         return d
     })
     // "See all" expansion per source (collapses to INITIAL_PER_SOURCE in All mode)
     const [expandedSources, setExpandedSources] = useState(new Set())
     const INITIAL_PER_SOURCE = 6
 
-    const [activeFilter, setActiveFilter] = useState('All')
+    const SKILL_ISSUE_FILTER = 'Skill Issue'
+    const DISCOVERED_FILTER = 'Discovered'
+
+    const [activeFilter, setActiveFilter] = useState(() => {
+        const src = searchParams.get('source')
+        if (src === 'github') return DISCOVERED_FILTER
+        if (src === 'community') return SKILL_ISSUE_FILTER
+        return searchParams.get('filter') || 'All'
+    })
     const [selectedSkill, setSelectedSkill] = useState(null)
     const [downloadingId, setDownloadingId] = useState(null)
-    const [searchQuery, setSearchQuery] = useState('')
+    const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '')
     const OC_PAGE_SIZE = 48
     const [ocPage, setOcPage] = useState(1)
 
-    // Clean custom hook for search debouncing (applied to both API and local filters)
     const debouncedSearch = useDebounce(searchQuery, 300)
-    
-    // True while user is still typing and UI hasn't updated yet
     const isSearchPending = searchQuery !== debouncedSearch
 
-    // ─ DB community skills state
+    // Community (Appwrite) skills
     const [dbSkills, setDbSkills] = useState([])
     const [dbProfiles, setDbProfiles] = useState({}) // user_id → profile
     const [dbLoading, setDbLoading] = useState(true)
     const [dbSort, setDbSort] = useState('recent')
     const [selectedDbSkill, setSelectedDbSkill] = useState(null)
 
-    // ─ Indexed skills state (GitHub crawler) — cursor-based pagination
+    // Indexed skills (GitHub crawler) — page-based pagination
     const [indexedSkills, setIndexedSkills] = useState([])
     const [indexedTotal, setIndexedTotal] = useState(0)
     const [indexedLoading, setIndexedLoading] = useState(true)
     const [indexedHasMore, setIndexedHasMore] = useState(true)
-    const [indexedPage, setIndexedPage] = useState(1)          // current page (MongoDB page-based)
+    const [indexedPage, setIndexedPage] = useState(1)
     const prevIndexedSearchRef = useRef(debouncedSearch)
     const INDEXED_PAGE_SIZE = 48
+
+    // Header search navigates here with ?q= — keep local state in sync
+    const urlQ = searchParams.get('q') || ''
+    const lastUrlQ = useRef(urlQ)
+    useEffect(() => {
+        if (urlQ !== lastUrlQ.current) {
+            lastUrlQ.current = urlQ
+            setSearchQuery(urlQ)
+        }
+    }, [urlQ])
+
+    // Reflect the debounced search + filter in the URL (shareable, back-button friendly)
+    useEffect(() => {
+        const next = new URLSearchParams(searchParams)
+        if (debouncedSearch.trim()) next.set('q', debouncedSearch.trim()); else next.delete('q')
+        if (activeFilter !== 'All') next.set('filter', activeFilter); else next.delete('filter')
+        next.delete('source')
+        if (next.toString() !== searchParams.toString()) {
+            lastUrlQ.current = next.get('q') || ''
+            setSearchParams(next, { replace: true })
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedSearch, activeFilter])
 
     // Backward-compat: redirect old /browse?repo=...&path=... share links
     useEffect(() => {
@@ -512,57 +459,48 @@ export default function BrowseSkills() {
         }
     }, [searchParams, navigate])
 
-    // Fetch GitHub featured skills — each source fires independently so cards appear
-    // as soon as that source resolves, not after ALL sources have finished.
+    // Fetch GitHub featured skills — each source resolves independently
     useEffect(() => {
-        const t0 = performance.now()
-        console.log('[Browse] Starting parallel GitHub fetches for all sources…')
-
         function resolveSource(key, skills) {
-            console.log(`[Browse] ${key}: ${(performance.now() - t0).toFixed(0)}ms — ${skills.length} skills loaded`)
-            setSourceData(prev => ({ ...prev, [key]: { skills, loading: false, error: null } }))
+            setSourceData((prev) => ({ ...prev, [key]: { skills, loading: false, error: null } }))
         }
         function rejectSource(key, err) {
-            console.error(`[Browse] ${key} failed (${(performance.now() - t0).toFixed(0)}ms):`, err.message)
-            setSourceData(prev => ({ ...prev, [key]: { skills: [], loading: false, error: err.message } }))
+            console.error(`[Browse] ${key} failed:`, err.message)
+            setSourceData((prev) => ({ ...prev, [key]: { skills: [], loading: false, error: err.message } }))
         }
 
-        // Official sources — all kicked off simultaneously
-        FEATURED_SOURCES.forEach(source => {
+        FEATURED_SOURCES.forEach((source) => {
             Promise.all([fetchSkillFolders(source), fetchRepoStars(source.repo)])
-                .then(([folders, stars]) => resolveSource(source.company, folders.map(f => ({ ...f, stars }))))
-                .catch(err => rejectSource(source.company, err))
+                .then(([folders, stars]) => resolveSource(source.company, folders.map((f) => ({ ...f, stars }))))
+                .catch((err) => rejectSource(source.company, err))
         })
 
-        // OpenClaw (tree-based single API call)
         Promise.all([fetchOpenClawSkills(OPENCLAW_SOURCE), fetchRepoStars(OPENCLAW_SOURCE.repo)])
-            .then(([skills, stars]) => resolveSource('OpenClaw', skills.map(s => ({ ...s, stars }))))
-            .catch(err => rejectSource('OpenClaw', err))
+            .then(([skills, stars]) => resolveSource('OpenClaw', skills.map((s) => ({ ...s, stars }))))
+            .catch((err) => rejectSource('OpenClaw', err))
 
-        // Community flat sources (Composio etc.)
-        COMMUNITY_FLAT_SOURCES.forEach(source => {
+        COMMUNITY_FLAT_SOURCES.forEach((source) => {
             fetchCommunityFlatSkills(source)
-                .then(skills => resolveSource(source.label, skills))
-                .catch(err => rejectSource(source.label, err))
+                .then((skills) => resolveSource(source.label, skills))
+                .catch((err) => rejectSource(source.label, err))
         })
     }, [])
 
-    // Derive flat arrays + loading/errors from per-source state
-    const officialSkills = FEATURED_SOURCES.flatMap(s => sourceData[s.company]?.skills ?? [])
+    const officialSkills = FEATURED_SOURCES.flatMap((s) => sourceData[s.company]?.skills ?? [])
     const openClawSkills = sourceData.OpenClaw?.skills ?? []
-    const communitySkills = COMMUNITY_FLAT_SOURCES.flatMap(s => sourceData[s.label]?.skills ?? [])
-    const loading = Object.values(sourceData).some(d => d.loading)
+    const communitySkills = COMMUNITY_FLAT_SOURCES.flatMap((s) => sourceData[s.label]?.skills ?? [])
+    const loading = Object.values(sourceData).some((d) => d.loading)
     const errors = Object.entries(sourceData)
         .filter(([, d]) => d.error)
         .map(([company, d]) => ({ company, error: d.error }))
 
-    // Fetch DB community skills + uploader profiles
+    // Fetch community skills + uploader profiles
     useEffect(() => {
         setDbLoading(true)
         getAllPublicSkills(dbSort, 100, debouncedSearch)
             .then(async (skills) => {
                 setDbSkills(skills)
-                const userIds = skills.map(s => s.user_id).filter(Boolean)
+                const userIds = skills.map((s) => s.user_id).filter(Boolean)
                 const profiles = await getProfilesByUserIds(userIds)
                 setDbProfiles(profiles)
             })
@@ -570,14 +508,10 @@ export default function BrowseSkills() {
             .finally(() => setDbLoading(false))
     }, [dbSort, debouncedSearch])
 
-    // Fetch indexed skills (from GitHub crawler via MongoDB API) — page-based pagination
-    // Single effect: handles first page, search resets, and load-more.
+    // Fetch indexed skills — first page, search resets, and load-more
     useEffect(() => {
-        // Detect search change → reset to page 1
         if (prevIndexedSearchRef.current !== debouncedSearch) {
             prevIndexedSearchRef.current = debouncedSearch
-            // If already on page 1, fetch still runs via the dependency.
-            // Otherwise, setting page=1 triggers the effect.
             if (indexedPage !== 1) { setIndexedPage(1); return }
         }
 
@@ -589,43 +523,30 @@ export default function BrowseSkills() {
             search: debouncedSearch,
             min_stars: 0,
         })
-            .then(data => {
+            .then((data) => {
                 const shaped = data.skills.map(toFeaturedSkillShape)
-                if (indexedPage === 1) {
-                    // First page (or reset) — replace
-                    setIndexedSkills(shaped)
-                } else {
-                    // Subsequent page — append
-                    setIndexedSkills(prev => [...prev, ...shaped])
-                }
-                setIndexedTotal(data.total)    // ← real count from MongoDB, no cap
+                if (indexedPage === 1) setIndexedSkills(shaped)
+                else setIndexedSkills((prev) => [...prev, ...shaped])
+                setIndexedTotal(data.total)
                 setIndexedHasMore(data.hasMore)
             })
-            .catch(err => console.error('[Browse] Indexed skills fetch failed:', err))
+            .catch((err) => console.error('[Browse] Indexed skills fetch failed:', err))
             .finally(() => setIndexedLoading(false))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [indexedPage, debouncedSearch])
 
-    // Reset pagination when search/filter changes
     useEffect(() => { setOcPage(1) }, [searchQuery, activeFilter])
-    // Reset indexed pagination when filter changes (search reset handled inside effect)
     useEffect(() => {
         setIndexedHasMore(true)
         setIndexedPage(1)
     }, [activeFilter])
 
-    // Special Skill Issue filter ID
-    const SKILL_ISSUE_FILTER = 'Skill Issue'
-    const DISCOVERED_FILTER = 'Discovered'
-
-    // All community filter IDs (OpenClaw + flat community labels)
     const communityFilterIds = ['OpenClaw', ...COMMUNITY_FLAT_SOURCES.map((s) => s.label)]
     const isCommunityFilter = communityFilterIds.includes(activeFilter)
     const isSkillIssueFilter = activeFilter === SKILL_ISSUE_FILTER
     const isDiscoveredFilter = activeFilter === DISCOVERED_FILTER
 
-    const companies = ['All', SKILL_ISSUE_FILTER, DISCOVERED_FILTER, ...FEATURED_SOURCES.map((s) => s.company), ...communityFilterIds]
-
-const q = debouncedSearch.toLowerCase().trim()
+    const q = debouncedSearch.toLowerCase().trim()
 
     const filteredOfficial = officialSkills.filter((s) => {
         if (isCommunityFilter || isSkillIssueFilter || isDiscoveredFilter) return false
@@ -646,7 +567,6 @@ const q = debouncedSearch.toLowerCase().trim()
         return matchesFilter && (!q || s.displayName.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.author.toLowerCase().includes(q) || s.attributionLabel.toLowerCase().includes(q))
     })
 
-    // Filter DB community skills — only show for All or Skill Issue filter
     const filteredDbSkills = dbSkills.filter((s) => {
         if (!isSkillIssueFilter && activeFilter !== 'All') return false
         if (!q) return true
@@ -660,15 +580,8 @@ const q = debouncedSearch.toLowerCase().trim()
         )
     })
 
-    // Filter indexed skills — show for All or Discovered filter
-    // Server (MongoDB) already does text search via debouncedSearch, so we
-    // ONLY filter by tab here. No client-side search filtering — that caused
-    // results to flash/disappear while typing because q (instant) diverged
-    // from debouncedSearch (delayed).
-    const filteredIndexed = indexedSkills.filter((s) => {
-        if (!isDiscoveredFilter && activeFilter !== 'All') return false
-        return true
-    })
+    // Server already filters indexed skills by search; only filter by tab here
+    const filteredIndexed = indexedSkills.filter(() => isDiscoveredFilter || activeFilter === 'All')
 
     const totalCount = officialSkills.length + communitySkills.length + openClawSkills.length + indexedTotal
 
@@ -683,283 +596,186 @@ const q = debouncedSearch.toLowerCase().trim()
         } finally {
             setDownloadingId(null)
         }
-    }, [authUser])
-    
-    // Scroll Dots track 
-    const handleChipScroll = () => {
-        const el = chipsRef.current
-        if (!el) return
-    
-        const maxScroll = el.scrollWidth - el.clientWidth
-    
-        if (maxScroll <= 0) {
-            setActiveDot(0)
-            return
-        }
-    
-        const progress = el.scrollLeft / maxScroll
-        const index = Math.round(progress * (totalDots - 1))
-    
-        setActiveDot(index)
-    }
+    }, [authUser, openAuthModal])
+
+    // ── Sidebar filter definitions ──────────────────────────────────────
+    const filterGroups = [
+        {
+            label: null,
+            items: [
+                { id: 'All', label: 'All skills', count: totalCount + dbSkills.length },
+                { id: SKILL_ISSUE_FILTER, label: 'Skill Issue community', avatar: '/favicon.png', round: true, count: dbSkills.length },
+                { id: DISCOVERED_FILTER, label: 'Discovered on GitHub', count: indexedTotal },
+            ],
+        },
+        {
+            label: 'Official',
+            items: FEATURED_SOURCES.map((s) => ({
+                id: s.company,
+                label: s.company,
+                avatar: getOrgAvatarUrl(s.repo),
+                count: sourceData[s.company]?.loading ? null : officialSkills.filter((x) => x.company === s.company).length,
+            })),
+        },
+        {
+            label: 'Community collections',
+            items: [
+                { id: 'OpenClaw', label: 'OpenClaw', avatar: 'https://avatars.githubusercontent.com/openclaw', round: true, count: sourceData.OpenClaw?.loading ? null : openClawSkills.length },
+                ...COMMUNITY_FLAT_SOURCES.map((s) => ({
+                    id: s.label,
+                    label: s.label,
+                    avatar: `https://avatars.githubusercontent.com/${s.company}`,
+                    round: true,
+                    count: sourceData[s.label]?.loading ? null : communitySkills.filter((x) => x.label === s.label).length,
+                })),
+            ],
+        },
+    ]
+    const allFilterItems = filterGroups.flatMap((g) => g.items)
+
+    const nothingFound = !loading && !dbLoading && !indexedLoading && !isSearchPending &&
+        filteredOfficial.length === 0 && filteredCommunity.length === 0 && filteredOpenClaw.length === 0 &&
+        filteredDbSkills.length === 0 && filteredIndexed.length === 0
+
+    const showMore = (key, label) => (
+        <button type="button" onClick={() => setExpandedSources((prev) => new Set([...prev, key]))} className="link inline-flex items-center gap-1 text-sm">
+            <ChevronDown className="h-4 w-4" />{label}
+        </button>
+    )
 
     return (
-        <div className="relative min-h-screen pt-32 pb-20">
+        <div className="container-page py-6">
             <SEO
-                title="Browse AI Skills — Discover Skill Files for Claude, ChatGPT, Gemini & Cursor"
-                description="Explore 50,000+ AI skill files from leading companies and the community. Find skills for coding, writing, design, marketing and more."
+                title="Explore AI Skills — Skill Files for Claude, ChatGPT, Gemini & Cursor"
+                description="Search AI skill files from leading companies, GitHub and the Skill Issue community. Find skills for coding, writing, design, marketing and more."
                 path="/browse"
                 jsonLd={jsonLdSchemas.breadcrumb([
                     { name: 'Home', url: '/' },
                     { name: 'Browse Skills', url: '/browse' },
                 ])}
             />
-            {/* Ambient glow */}
-            <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-accent/[0.04] rounded-full blur-[140px] pointer-events-none" />
 
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                <Breadcrumbs items={[{ label: 'Browse Skills' }]} />
+            <div className="grid gap-6 md:grid-cols-[256px_minmax(0,1fr)]">
+                {/* ── Sidebar ─────────────────────────────── */}
+                <aside className="md:sticky md:top-20 md:self-start">
+                    <h2 className="mb-2 hidden font-sans text-sm font-semibold md:block">Filter by</h2>
 
-                {/* ── Header ─────────────────────────── */}
-                <div className="text-center mb-12 max-w-3xl mx-auto">
-                    <span className="inline-block font-satoshi text-sm font-medium tracking-widest uppercase text-accent/70 mb-4">
-                        Marketplace
-                    </span>
-                    <h1 className="font-clash font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.1] mb-5">
-                        Featured{' '}
-                        <span className="italic text-accent glow-text">Skills</span>
-                    </h1>
-                    <p className="font-satoshi text-lg text-white/40 max-w-xl mx-auto">
-                        Official skill packages from the world's leading AI companies — always fresh from GitHub.
-                    </p>
-                </div>
+                    {/* Mobile: compact select */}
+                    <label className="md:hidden">
+                        <span className="sr-only">Filter by source</span>
+                        <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value)} className="input">
+                            {allFilterItems.map((it) => (
+                                <option key={it.id} value={it.id}>{it.label}{it.count != null ? ` (${it.count.toLocaleString()})` : ''}</option>
+                            ))}
+                        </select>
+                    </label>
 
-                {/* ── Search bar ──────────────────────── */}
-                <div className="max-w-lg mx-auto mb-8">
-                    <div className="relative">
-                        <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                        </svg>
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search skills by name, company, or author..."
-                            className="w-full pl-11 pr-11 py-3 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi text-sm outline-none transition-all duration-300"
-                        />
-                        {searchQuery && (
-                            <button
-                                onClick={() => setSearchQuery('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/30 hover:text-white/60 transition-colors"
-                            >
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                {/* ── Filter tabs ─────────────── */}
-                <div className="relative mb-10">
-                    <div 
-                        ref={chipsRef}
-                        onScroll={handleChipScroll} 
-                        className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 scrollbar-hide" 
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    >
-                        {companies.map((name) => {
-                            const isActive = activeFilter === name
-                            const isOC = name === 'OpenClaw'
-                            const isSkillIssueTab = name === SKILL_ISSUE_FILTER
-                            const flatSource = COMMUNITY_FLAT_SOURCES.find((s) => s.label === name)
-                            const isCommunityTab = isOC || !!flatSource
-                            // Pipe separator before first GitHub/official tab
-                            const isFirstOfficial = name === FEATURED_SOURCES[0]?.company
-                            // Pipe separator before first community tab
-                            const isFirstCommunity = name === communityFilterIds[0]
-                            const officialSource = FEATURED_SOURCES.find((s) => s.company === name)
-    
-                            const isDiscoveredTab = name === DISCOVERED_FILTER
-    
-                            const count = isSkillIssueTab
-                                ? dbSkills.length
-                                : isDiscoveredTab
-                                    ? indexedTotal
-                                    : isOC
-                                        ? openClawSkills.length
-                                        : flatSource
-                                            ? communitySkills.filter((s) => s.label === name).length
-                                            : name === 'All'
-                                                ? totalCount + dbSkills.length
-                                                : officialSkills.filter((s) => s.company === name).length
-    
-                            const activeStyle = (isSkillIssueTab || name === 'All') && isActive
-                                ? 'bg-accent/15 border-accent/30 text-accent shadow-[0_0_15px_rgba(75,169,255,0.1)]'
-                                : isDiscoveredTab && isActive
-                                    ? 'bg-amber-500/15 border-amber-500/30 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
-                                    : isCommunityTab && isActive
-                                        ? 'bg-violet-500/15 border-violet-500/30 text-violet-300 shadow-[0_0_15px_rgba(139,92,246,0.1)]'
-                                        : isActive
-                                            ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
-                                            : 'bg-white/[0.02] border-white/[0.06] text-white/40 hover:border-white/15 hover:text-white/60'
-                            const countStyle = (isSkillIssueTab || name === 'All') && isActive
-                                ? 'bg-accent/20 text-accent'
-                                : isDiscoveredTab && isActive
-                                    ? 'bg-amber-500/20 text-amber-300'
-                                    : isCommunityTab && isActive
-                                        ? 'bg-violet-500/20 text-violet-300'
-                                        : isActive
-                                            ? 'bg-emerald-500/20 text-emerald-300'
-                                            : 'bg-white/5 text-white/25'
-    
-                            const avatarSrc = isSkillIssueTab
-                                ? '/favicon.png'
-                                : isDiscoveredTab
-                                    ? null
-                                    : isOC
-                                    ? 'https://avatars.githubusercontent.com/openclaw'
-                                    : flatSource
-                                        ? `https://avatars.githubusercontent.com/${flatSource.company}`
-                                        : officialSource
-                                            ? getOrgAvatarUrl(officialSource.repo)
-                                            : null
-    
-                            return (
-                                <div key={name} className="flex items-center gap-2 shrink-0">
-                                    {/* Pipe separator before first official tab */}
-                                    {isFirstOfficial && (
-                                        <span className="w-px h-5 bg-white/10 rounded-full mx-1 shrink-0" />
-                                    )}
-                                    {/* Pipe separator before first community tab */}
-                                    {isFirstCommunity && (
-                                        <span className="w-px h-5 bg-white/10 rounded-full mx-1 shrink-0" />
-                                    )}
-                                    {/* Pipe separator before Discovered tab */}
-                                    {isDiscoveredTab && (
-                                        <span className="w-px h-5 bg-white/10 rounded-full mx-1 shrink-0" />
-                                    )}
-                                    <button
-                                        onClick={() => setActiveFilter(name)}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl font-satoshi text-sm font-medium transition-all duration-300 border ${activeStyle}`}
-                                    >
-                                        {isDiscoveredTab ? (
-                                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                                            </svg>
-                                        ) : avatarSrc ? (
-                                            <img
-                                                src={avatarSrc}
-                                                alt={name}
-                                                loading="lazy"
-                                                width={16}
-                                                height={16}
-                                                className={`w-4 h-4 ${isSkillIssueTab ? 'rounded-md' : isCommunityTab ? 'rounded-full' : 'rounded'}`}
-                                            />
-                                        ) : null}
-                                        {name}
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${countStyle}`}>
-                                            {count}
-                                        </span>
-                                    </button>
-                                </div>
-                            )
-                        })}
-                    </div>
-
-                    {/* Scroll Dots track */}
-                    <div className="flex items-center justify-center gap-1.5 mt-3">
-                        {Array.from({ length: totalDots }).map((_, i) => (
-                            <div
-                                key={i}
-                                className={`rounded-full transition-all duration-300 ${
-                                    i === activeDot
-                                        ? 'w-5 h-1.5 bg-accent'
-                                        : 'w-1.5 h-1.5 bg-white/15'
-                                }`}
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                {/* ── Error notices (per-source) ─────── */}
-                {errors.length > 0 && (
-                    <div className="flex flex-wrap gap-3 mb-8 justify-center">
-                        {errors.map((err, i) => (
-                            <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/5 border border-red-500/15 text-red-300/70 font-satoshi text-xs">
-                                <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                                </svg>
-                                <span><strong>{err.company}</strong> — {err.error}</span>
+                    <nav aria-label="Filter skills" className="hidden md:block">
+                        {filterGroups.map((group, gi) => (
+                            <div key={gi} className={gi > 0 ? 'mt-3 border-t border-line-muted pt-3' : ''}>
+                                {group.label && <p className="mb-1 px-2 text-xs font-semibold text-fg-muted">{group.label}</p>}
+                                <ul className="space-y-0.5">
+                                    {group.items.map((it) => {
+                                        const active = activeFilter === it.id
+                                        return (
+                                            <li key={it.id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActiveFilter(it.id)}
+                                                    aria-current={active ? 'true' : undefined}
+                                                    className={`relative flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-neutral-subtle ${active ? 'bg-neutral-subtle font-semibold text-fg' : 'text-fg'}`}
+                                                >
+                                                    {active && <span className="absolute -left-2 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-accent-emphasis" />}
+                                                    {it.avatar
+                                                        ? <img src={it.avatar} alt="" width={16} height={16} loading="lazy" className={`h-4 w-4 ${it.round ? 'rounded-full' : 'rounded'}`} />
+                                                        : <span className="h-4 w-4" />}
+                                                    <span className="min-w-0 flex-1 truncate">{it.label}</span>
+                                                    {it.count == null ? <Spinner size={12} /> : <span className="counter">{formatCount(it.count)}</span>}
+                                                </button>
+                                            </li>
+                                        )
+                                    })}
+                                </ul>
                             </div>
                         ))}
-                    </div>
-                )}
+                    </nav>
+                </aside>
 
-                {/* ── Loading skeleton (GitHub) — only shown before DB skills exist ── */}
-                {loading && filteredDbSkills.length === 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {Array.from({ length: 12 }).map((_, i) => (
-                            <SkeletonCard key={i} />
-                        ))}
-                    </div>
-                )}
-
-                {/* ── Unified skills grid ─────────────────────────────────── */}
-                {(loading || filteredOfficial.length > 0 || filteredCommunity.length > 0 || filteredOpenClaw.length > 0 || filteredDbSkills.length > 0 || filteredIndexed.length > 0 || !dbLoading) && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                        {/* ── From the Community (Skill Issue DB) — first, leftmost ── */}
-                        {!dbLoading && filteredDbSkills.length > 0 && (
-                            <>
-                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-center gap-4 py-2">
-                                    <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <img
-                                            src="/skill-issue-white.png"
-                                            alt="Skill Issue"
-                                            className="h-6 w-auto object-contain opacity-60"
-                                        />
-                                        <span className="text-emerald-500/20 select-none">·</span>
-                                        <span className="font-satoshi text-[11px] font-semibold text-white/20 tracking-widest uppercase">{filteredDbSkills.length} skills</span>
-                                    </div>
-                                    <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
-                                </div>
-                                {/* Sort controls — above the cards, only in Skill Issue filter */}
-                                {isSkillIssueFilter && (
-                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-center gap-2">
-                                    <span className="font-satoshi text-xs text-white/25 mr-1">Sort:</span>
-                                    {[['recent', 'Recent'], ['most-rated', 'Top Rated'], ['most-copied', 'Most Copied']].map(([val, label]) => (
-                                        <button
-                                            key={val}
-                                            onClick={() => setDbSort(val)}
-                                            className={`px-3 py-1.5 rounded-lg font-satoshi text-xs font-semibold transition-all duration-200 border ${dbSort === val
-                                                ? 'bg-accent/15 border-accent/30 text-accent'
-                                                : 'bg-white/[0.02] border-white/[0.06] text-white/35 hover:text-white/55 hover:border-white/15'
-                                                }`}
-                                        >
-                                            {label}
-                                        </button>
-                                    ))}
-                                </div>
-                                )}
-                                {filteredDbSkills.map((skill, i) => (
-                                    <DbSkillCard
-                                        key={skill.id}
-                                        skill={skill}
-                                        uploaderProfile={dbProfiles[skill.user_id]}
-                                        onClick={setSelectedDbSkill}
-                                        index={i}
-                                    />
-                                ))}
-                                {/* Separator after DB skills before GitHub skills */}
-                                {(loading || filteredOfficial.length > 0 || filteredCommunity.length > 0 || filteredOpenClaw.length > 0) && (
-                                    <div className="col-span-1 sm:col-span-2 lg:col-span-3 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent my-1" />
-                                )}
-                            </>
+                {/* ── Results ─────────────────────────────── */}
+                <div className="min-w-0">
+                    <form role="search" onSubmit={(e) => e.preventDefault()} className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted" />
+                        <input
+                            type="search"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search skills by name, owner or description"
+                            aria-label="Search skills"
+                            className="input input-lg pl-9 pr-9"
+                        />
+                        {searchQuery && (
+                            <button type="button" onClick={() => setSearchQuery('')} className="btn-invisible btn-icon btn-sm absolute right-1.5 top-1/2 -translate-y-1/2" aria-label="Clear search">
+                                <X className="h-4 w-4" />
+                            </button>
                         )}
+                    </form>
 
-                        {/* Official cards — grouped by company with per-source skeleton + limit */}
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <h1 className="font-sans text-base font-semibold">
+                            {isSearchPending || (loading && dbLoading)
+                                ? <span className="inline-flex items-center gap-2 text-fg-muted"><Spinner size={14} />Searching…</span>
+                                : <>
+                                    {(filteredDbSkills.length + filteredOfficial.length + filteredCommunity.length + filteredOpenClaw.length +
+                                        (isDiscoveredFilter || activeFilter === 'All' ? indexedTotal : 0)).toLocaleString()} results
+                                    {q && <span className="font-normal text-fg-muted"> for “{debouncedSearch.trim()}”</span>}
+                                </>}
+                        </h1>
+                        {(isSkillIssueFilter || activeFilter === 'All') && (
+                            <label className="flex items-center gap-2 text-sm text-fg-muted">
+                                Sort community by
+                                <select value={dbSort} onChange={(e) => setDbSort(e.target.value)} className="input h-8 w-auto py-0 text-sm">
+                                    <option value="recent">Recently added</option>
+                                    <option value="most-rated">Most stars</option>
+                                    <option value="most-copied">Most copied</option>
+                                </select>
+                            </label>
+                        )}
+                    </div>
+
+                    {errors.length > 0 && (
+                        <div className="flash flash-warn mt-4 flex items-start gap-2">
+                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-attention" />
+                            <div>
+                                Some sources could not be loaded right now:{' '}
+                                {errors.map((e) => e.company).join(', ')}. Showing everything else.
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="mt-4 space-y-4">
+                        {/* Skill Issue community */}
+                        {(isSkillIssueFilter || activeFilter === 'All') && (dbLoading || filteredDbSkills.length > 0) && (() => {
+                            const isExpanded = expandedSources.has('db') || isSkillIssueFilter || !!q
+                            const list = isExpanded ? filteredDbSkills : filteredDbSkills.slice(0, INITIAL_PER_SOURCE)
+                            return (
+                                <ResultGroup
+                                    title="Skill Issue community"
+                                    avatar="/favicon.png"
+                                    avatarRound
+                                    count={filteredDbSkills.length}
+                                    loading={dbLoading}
+                                    footer={!isExpanded && filteredDbSkills.length > INITIAL_PER_SOURCE && showMore('db', `Show all ${filteredDbSkills.length} community skills`)}
+                                >
+                                    {dbLoading && filteredDbSkills.length === 0
+                                        ? [...Array(3)].map((_, i) => <SkeletonRow key={i} />)
+                                        : list.map((skill) => (
+                                            <DbSkillCard key={skill.id} skill={skill} uploaderProfile={dbProfiles[skill.user_id]} onClick={setSelectedDbSkill} />
+                                        ))}
+                                </ResultGroup>
+                            )
+                        })()}
+
+                        {/* Official sources */}
                         {FEATURED_SOURCES.map((source) => {
                             const srcData = sourceData[source.company]
                             const isSourceLoading = srcData?.loading ?? false
@@ -968,70 +784,35 @@ const q = debouncedSearch.toLowerCase().trim()
                             const showLimit = activeFilter === 'All' && !isExpanded && !q
                             const displaySkills = showLimit ? companySkills.slice(0, INITIAL_PER_SOURCE) : companySkills
                             const hasMore = showLimit && companySkills.length > INITIAL_PER_SOURCE
-
+                            if (isCommunityFilter || isSkillIssueFilter || isDiscoveredFilter) return null
+                            if (activeFilter !== 'All' && activeFilter !== source.company) return null
                             if (!isSourceLoading && companySkills.length === 0) return null
                             return (
-                                <Fragment key={source.company}>
-                                    <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-center gap-4 py-2">
-                                        <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <img
-                                                src={getOrgAvatarUrl(source.repo)}
-                                                alt={source.company}
-                                                loading="lazy"
-                                                width={20}
-                                                height={20}
-                                                className="w-5 h-5 rounded object-cover opacity-70"
+                                <ResultGroup
+                                    key={source.company}
+                                    title={source.company}
+                                    avatar={getOrgAvatarUrl(source.repo)}
+                                    count={companySkills.length}
+                                    loading={isSourceLoading}
+                                    href={source.github_url || `https://github.com/${source.repo}`}
+                                    footer={hasMore && showMore(source.company, `Show all ${companySkills.length} from ${source.company}`)}
+                                >
+                                    {isSourceLoading
+                                        ? [...Array(3)].map((_, i) => <SkeletonRow key={i} />)
+                                        : displaySkills.map((skill) => (
+                                            <FeaturedSkillCard
+                                                key={`${skill.repo}:${skill.path}`}
+                                                skill={skill}
+                                                onClick={setSelectedSkill}
+                                                onDownload={handleDownload}
+                                                isDownloading={downloadingId === `${skill.repo}:${skill.path}`}
                                             />
-                                            <span className="font-satoshi text-[11px] font-semibold text-white/20 tracking-widest uppercase">{source.company}</span>
-                                            <span className="text-emerald-500/20 select-none">·</span>
-                                            {isSourceLoading ? (
-                                                <svg className="w-3 h-3 text-white/15 animate-spin" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                                </svg>
-                                            ) : (
-                                                <span className="font-satoshi text-[11px] font-semibold text-white/20 tracking-widest uppercase">{companySkills.length} skills</span>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
-                                    </div>
-                                    {isSourceLoading ? (
-                                        Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={`sk-${source.company}-${i}`} />)
-                                    ) : (
-                                        <>
-                                            {displaySkills.map((skill) => (
-                                                <FeaturedSkillCard
-                                                    key={`${skill.repo}:${skill.path}`}
-                                                    skill={skill}
-                                                    onClick={setSelectedSkill}
-                                                    onDownload={handleDownload}
-                                                    isDownloading={downloadingId === `${skill.repo}:${skill.path}`}
-                                                />
-                                            ))}
-                                            {hasMore && (
-                                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-center py-1">
-                                                    <button
-                                                        onClick={() => setExpandedSources(prev => new Set([...prev, source.company]))}
-                                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] text-emerald-300/70 hover:text-emerald-200 hover:border-emerald-500/35 hover:bg-emerald-500/10 font-satoshi text-sm font-medium transition-all duration-300"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                        See all {companySkills.length} from {source.company}
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">
-                                                            +{companySkills.length - INITIAL_PER_SOURCE} more
-                                                        </span>
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                </Fragment>
+                                        ))}
+                                </ResultGroup>
                             )
                         })}
 
-                        {/* Composio (community flat) — skeleton while loading + 6-initial limit */}
+                        {/* Community flat collections (Composio etc.) */}
                         {COMMUNITY_FLAT_SOURCES.map((flatSource) => {
                             const srcData = sourceData[flatSource.label]
                             const isSourceLoading = srcData?.loading ?? false
@@ -1040,326 +821,130 @@ const q = debouncedSearch.toLowerCase().trim()
                             const showLimit = activeFilter === 'All' && !isExpanded && !q
                             const displaySkills = showLimit ? sourceSkills.slice(0, INITIAL_PER_SOURCE) : sourceSkills
                             const hasMore = showLimit && sourceSkills.length > INITIAL_PER_SOURCE
-
+                            if (isSkillIssueFilter || isDiscoveredFilter) return null
+                            if (activeFilter !== 'All' && activeFilter !== flatSource.label) return null
                             if (!isSourceLoading && sourceSkills.length === 0) return null
                             return (
-                                <Fragment key={flatSource.label}>
-                                    {(filteredOfficial.length > 0 || FEATURED_SOURCES.some(s => !sourceData[s.company]?.loading)) && (
-                                        <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-center gap-4 py-2">
-                                            <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <img
-                                                    src={`https://avatars.githubusercontent.com/${flatSource.company}`}
-                                                    alt={flatSource.label}
-                                                    loading="lazy"
-                                                    width={20}
-                                                    height={20}
-                                                    className="w-5 h-5 rounded-full border border-violet-500/30"
-                                                />
-                                                <span className="font-satoshi text-[11px] font-semibold text-white/30 tracking-widest uppercase">Community</span>
-                                                <span className="text-white/15 select-none">·</span>
-                                                {isSourceLoading ? (
-                                                    <svg className="w-3 h-3 text-white/15 animate-spin" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                                    </svg>
-                                                ) : (
-                                                    <a href={flatSource.github_url} target="_blank" rel="noopener noreferrer"
-                                                        className="font-satoshi text-[11px] font-semibold text-violet-400/60 hover:text-violet-300 transition-colors tracking-widest uppercase">
-                                                        {flatSource.label}
-                                                    </a>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
-                                        </div>
-                                    )}
-                                    {isSourceLoading ? (
-                                        Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={`sk-${flatSource.label}-${i}`} />)
-                                    ) : (
-                                        <>
-                                            {displaySkills.map((skill) => (
-                                                <FeaturedSkillCard
-                                                    key={`${skill.repo}:${skill.path}`}
-                                                    skill={skill}
-                                                    onClick={setSelectedSkill}
-                                                    onDownload={handleDownload}
-                                                    isDownloading={downloadingId === `${skill.repo}:${skill.path}`}
-                                                />
-                                            ))}
-                                            {hasMore && (
-                                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-center py-1">
-                                                    <button
-                                                        onClick={() => setExpandedSources(prev => new Set([...prev, flatSource.label]))}
-                                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-violet-500/20 bg-violet-500/[0.05] text-violet-300/70 hover:text-violet-200 hover:border-violet-500/35 hover:bg-violet-500/10 font-satoshi text-sm font-medium transition-all duration-300"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                        See all {sourceSkills.length} from {flatSource.label}
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400">
-                                                            +{sourceSkills.length - INITIAL_PER_SOURCE} more
-                                                        </span>
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                </Fragment>
+                                <ResultGroup
+                                    key={flatSource.label}
+                                    title={flatSource.label}
+                                    avatar={`https://avatars.githubusercontent.com/${flatSource.company}`}
+                                    avatarRound
+                                    count={sourceSkills.length}
+                                    loading={isSourceLoading}
+                                    href={flatSource.github_url}
+                                    footer={hasMore && showMore(flatSource.label, `Show all ${sourceSkills.length} from ${flatSource.label}`)}
+                                >
+                                    {isSourceLoading
+                                        ? [...Array(3)].map((_, i) => <SkeletonRow key={i} />)
+                                        : displaySkills.map((skill) => (
+                                            <FeaturedSkillCard
+                                                key={`${skill.repo}:${skill.path}`}
+                                                skill={skill}
+                                                onClick={setSelectedSkill}
+                                                onDownload={handleDownload}
+                                                isDownloading={downloadingId === `${skill.repo}:${skill.path}`}
+                                            />
+                                        ))}
+                                </ResultGroup>
                             )
                         })}
 
-                        {/* ── Discovered Skills (from GitHub crawler) ── */}
-                        {(indexedLoading || filteredIndexed.length > 0) && (
-                            <>
-                                {/* Section divider */}
-                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-center gap-4 py-2">
-                                    <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <svg className="w-5 h-5 text-amber-400/60" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                                        </svg>
-                                        <span className="font-satoshi text-[11px] font-semibold text-white/20 tracking-widest uppercase">Discovered on GitHub</span>
-                                        <span className="text-amber-500/20 select-none">·</span>
-                                        {indexedLoading && indexedSkills.length === 0 ? (
-                                            <svg className="w-3 h-3 text-white/15 animate-spin" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                            </svg>
-                                        ) : (
-                                            <span className="font-satoshi text-[11px] font-semibold text-white/20 tracking-widest uppercase">
-                                                {indexedTotal.toLocaleString()} skills
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
-                                </div>
-                                {/* Cards */}
-                                {(indexedLoading || isSearchPending) && indexedSkills.length === 0 ? (
-                                    Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={`sk-indexed-${i}`} />)
-                                ) : (() => {
-                                    const isExpanded = expandedSources.has('Discovered')
-                                    const showLimit = activeFilter === 'All' && !isExpanded && !q
-                                    const displaySkills = showLimit ? filteredIndexed.slice(0, INITIAL_PER_SOURCE) : filteredIndexed
-                                    const hasMoreInitial = showLimit && filteredIndexed.length > INITIAL_PER_SOURCE
-                                    const hasMorePaged = !showLimit && indexedHasMore
-                                    // Show a subtle loading overlay when search is in-flight
-                                    // but we still have stale results to display (avoids blank screen)
-                                    const showSearchingOverlay = (indexedLoading || isSearchPending) && indexedSkills.length > 0
-
-                                    return (
-                                        <>
-                                            {showSearchingOverlay ? (
-                                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                    {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={`sk-search-${i}`} />)}
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    {displaySkills.map((skill) => (
-                                                        <FeaturedSkillCard
-                                                            key={`indexed:${skill.repo}:${skill.path}`}
-                                                            skill={skill}
-                                                            onClick={setSelectedSkill}
-                                                            onDownload={handleDownload}
-                                                            isDownloading={downloadingId === `${skill.repo}:${skill.path}`}
-                                                        />
-                                                    ))}
-                                                </>
-                                            )}
-                                            {hasMoreInitial && (
-                                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-center py-1">
-                                                    <button
-                                                        onClick={() => setExpandedSources(prev => new Set([...prev, 'Discovered']))}
-                                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] text-amber-300/70 hover:text-amber-200 hover:border-amber-500/35 hover:bg-amber-500/10 font-satoshi text-sm font-medium transition-all duration-300"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                        See all Discovered skills
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">
-                                                            {indexedTotal.toLocaleString()} total
-                                                        </span>
-                                                    </button>
-                                                </div>
-                                            )}
-                                            {hasMorePaged && (
-                                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-center pt-2 pb-1">
-                                                    <button
-                                                        onClick={() => setIndexedPage(p => p + 1)}
-                                                        disabled={indexedLoading}
-                                                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] text-amber-300/70 hover:text-amber-200 hover:border-amber-500/35 hover:bg-amber-500/10 font-satoshi text-sm font-medium transition-all duration-300 disabled:opacity-50"
-                                                    >
-                                                        {indexedLoading ? (
-                                                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                                            </svg>
-                                                        ) : (
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                                            </svg>
-                                                        )}
-                                                        Load more Discovered skills
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">
-                                                            {(indexedTotal - indexedSkills.length).toLocaleString()} remaining
-                                                        </span>
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </>
-                                    )
-                                })()}
-                            </>
-                        )}
-
-                        {/* OpenClaw — skeleton while loading, then paginated (or 6 in All mode) */}
-                        {(sourceData.OpenClaw?.loading || filteredOpenClaw.length > 0) && (
-                            <>
-                                {(filteredOfficial.length > 0 || filteredCommunity.length > 0 ||
-                                    FEATURED_SOURCES.some(s => !sourceData[s.company]?.loading) ||
-                                    COMMUNITY_FLAT_SOURCES.some(s => !sourceData[s.label]?.loading)) && (
-                                    <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-center gap-4 py-2">
-                                        <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <img
-                                                src="https://avatars.githubusercontent.com/openclaw"
-                                                alt="OpenClaw"
-                                                loading="lazy"
-                                                width={20}
-                                                height={20}
-                                                className="w-5 h-5 rounded-full border border-violet-500/30"
+                        {/* Discovered on GitHub (crawler index) */}
+                        {(isDiscoveredFilter || activeFilter === 'All') && (indexedLoading || filteredIndexed.length > 0) && (() => {
+                            const isExpanded = expandedSources.has('Discovered')
+                            const showLimit = activeFilter === 'All' && !isExpanded && !q
+                            const displaySkills = showLimit ? filteredIndexed.slice(0, INITIAL_PER_SOURCE) : filteredIndexed
+                            const hasMoreInitial = showLimit && filteredIndexed.length > INITIAL_PER_SOURCE
+                            const hasMorePaged = !showLimit && indexedHasMore
+                            const busy = (indexedLoading || isSearchPending)
+                            return (
+                                <ResultGroup
+                                    title="Discovered on GitHub"
+                                    count={indexedTotal}
+                                    loading={busy && indexedSkills.length === 0}
+                                    footer={
+                                        hasMoreInitial
+                                            ? showMore('Discovered', `Show more discovered skills (${indexedTotal.toLocaleString()} total)`)
+                                            : hasMorePaged && (
+                                                <button type="button" onClick={() => setIndexedPage((p) => p + 1)} disabled={indexedLoading} className="btn btn-sm">
+                                                    {indexedLoading && <Spinner size={14} />}
+                                                    Load more · {(indexedTotal - indexedSkills.length).toLocaleString()} remaining
+                                                </button>
+                                            )
+                                    }
+                                >
+                                    {busy && (indexedSkills.length === 0 || isSearchPending)
+                                        ? [...Array(4)].map((_, i) => <SkeletonRow key={i} />)
+                                        : displaySkills.map((skill) => (
+                                            <FeaturedSkillCard
+                                                key={`indexed:${skill.repo}:${skill.path}`}
+                                                skill={skill}
+                                                onClick={setSelectedSkill}
+                                                onDownload={handleDownload}
+                                                isDownloading={downloadingId === `${skill.repo}:${skill.path}`}
                                             />
-                                            <span className="font-satoshi text-[11px] font-semibold text-white/30 tracking-widest uppercase">Community</span>
-                                            <span className="text-white/15 select-none">·</span>
-                                            {sourceData.OpenClaw?.loading ? (
-                                                <svg className="w-3 h-3 text-white/15 animate-spin" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                                </svg>
-                                            ) : (
-                                                <a
-                                                    href={OPENCLAW_SOURCE.github_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="font-satoshi text-[11px] font-semibold text-violet-400/60 hover:text-violet-300 transition-colors tracking-widest uppercase"
-                                                >
-                                                    OpenClaw
-                                                </a>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
-                                    </div>
-                                )}
-                                {sourceData.OpenClaw?.loading ? (
-                                    Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={`sk-openclaw-${i}`} />)
-                                ) : (() => {
-                                    const isExpanded = expandedSources.has('OpenClaw')
-                                    const showLimit = activeFilter === 'All' && !isExpanded && !q
-                                    const pagedSkills = showLimit
-                                        ? filteredOpenClaw.slice(0, INITIAL_PER_SOURCE)
-                                        : filteredOpenClaw.slice(0, ocPage * OC_PAGE_SIZE)
-                                    const hasMoreInitial = showLimit && filteredOpenClaw.length > INITIAL_PER_SOURCE
-                                    const hasMorePaged = !showLimit && filteredOpenClaw.length > ocPage * OC_PAGE_SIZE
+                                        ))}
+                                </ResultGroup>
+                            )
+                        })()}
 
-                                    return (
-                                        <>
-                                            {pagedSkills.map((skill) => (
-                                                <FeaturedSkillCard
-                                                    key={`${skill.repo}:${skill.path}`}
-                                                    skill={skill}
-                                                    onClick={setSelectedSkill}
-                                                    onDownload={handleDownload}
-                                                    isDownloading={downloadingId === `${skill.repo}:${skill.path}`}
-                                                />
-                                            ))}
-                                            {hasMoreInitial && (
-                                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-center pt-2 pb-1">
-                                                    <button
-                                                        onClick={() => setExpandedSources(prev => new Set([...prev, 'OpenClaw']))}
-                                                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-violet-500/20 bg-violet-500/[0.05] text-violet-300/70 hover:text-violet-200 hover:border-violet-500/35 hover:bg-violet-500/10 font-satoshi text-sm font-medium transition-all duration-300"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                        See all from OpenClaw
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400">
-                                                            {filteredOpenClaw.length.toLocaleString()} skills
-                                                        </span>
-                                                    </button>
-                                                </div>
-                                            )}
-                                            {hasMorePaged && (
-                                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-center pt-2 pb-1">
-                                                    <button
-                                                        onClick={() => setOcPage((p) => p + 1)}
-                                                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-violet-500/20 bg-violet-500/[0.05] text-violet-300/70 hover:text-violet-200 hover:border-violet-500/35 hover:bg-violet-500/10 font-satoshi text-sm font-medium transition-all duration-300"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                        Load more from OpenClaw
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400">
-                                                            {filteredOpenClaw.length - ocPage * OC_PAGE_SIZE} remaining
-                                                        </span>
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </>
-                                    )
-                                })()}
-                            </>
+                        {/* OpenClaw */}
+                        {!isSkillIssueFilter && !isDiscoveredFilter && (activeFilter === 'All' || activeFilter === 'OpenClaw') &&
+                            (sourceData.OpenClaw?.loading || filteredOpenClaw.length > 0) && (() => {
+                            const isExpanded = expandedSources.has('OpenClaw')
+                            const showLimit = activeFilter === 'All' && !isExpanded && !q
+                            const pagedSkills = showLimit ? filteredOpenClaw.slice(0, INITIAL_PER_SOURCE) : filteredOpenClaw.slice(0, ocPage * OC_PAGE_SIZE)
+                            const hasMoreInitial = showLimit && filteredOpenClaw.length > INITIAL_PER_SOURCE
+                            const hasMorePaged = !showLimit && filteredOpenClaw.length > ocPage * OC_PAGE_SIZE
+                            return (
+                                <ResultGroup
+                                    title="OpenClaw"
+                                    avatar="https://avatars.githubusercontent.com/openclaw"
+                                    avatarRound
+                                    count={filteredOpenClaw.length}
+                                    loading={sourceData.OpenClaw?.loading}
+                                    href={OPENCLAW_SOURCE.github_url}
+                                    footer={
+                                        hasMoreInitial
+                                            ? showMore('OpenClaw', `Show all ${filteredOpenClaw.length.toLocaleString()} from OpenClaw`)
+                                            : hasMorePaged && (
+                                                <button type="button" onClick={() => setOcPage((p) => p + 1)} className="btn btn-sm">
+                                                    Load more · {(filteredOpenClaw.length - ocPage * OC_PAGE_SIZE).toLocaleString()} remaining
+                                                </button>
+                                            )
+                                    }
+                                >
+                                    {sourceData.OpenClaw?.loading
+                                        ? [...Array(3)].map((_, i) => <SkeletonRow key={i} />)
+                                        : pagedSkills.map((skill) => (
+                                            <FeaturedSkillCard
+                                                key={`${skill.repo}:${skill.path}`}
+                                                skill={skill}
+                                                onClick={setSelectedSkill}
+                                                onDownload={handleDownload}
+                                                isDownloading={downloadingId === `${skill.repo}:${skill.path}`}
+                                            />
+                                        ))}
+                                </ResultGroup>
+                            )
+                        })()}
+
+                        {nothingFound && (
+                            <div className="box">
+                                <Blankslate
+                                    icon={SearchX}
+                                    title="No matching skills"
+                                    action={searchQuery && <button type="button" onClick={() => setSearchQuery('')} className="btn">Clear search</button>}
+                                >
+                                    Try a different keyword, or switch the filter to search every source.
+                                </Blankslate>
+                            </div>
                         )}
                     </div>
-                )}
-
-                {/* ── Empty state ─────────────────────────────────────────── */}
-{!loading &&
-  !dbLoading &&
-  !indexedLoading &&
-  !isSearchPending &&
-  filteredOfficial.length === 0 &&
-  filteredCommunity.length === 0 &&
-  filteredOpenClaw.length === 0 &&
-  filteredDbSkills.length === 0 &&
-  filteredIndexed.length === 0 && (
-    <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-      
-      <div className="w-20 h-20 rounded-3xl bg-accent/10 border border-accent/20 flex items-center justify-center shadow-lg">
-        <svg
-          className="w-10 h-10 text-accent/50"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.5}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-          />
-        </svg>
-      </div>
-
-      <h2 className="font-clash font-semibold text-white text-2xl">
-        No matching skills found
-      </h2>
-
-      <p className="font-satoshi text-sm text-white/50 max-w-md mx-auto">
-  We couldn't find any matching skills. Try a different keyword or reset your search to explore more skills.
-</p>
-
-      {searchQuery && (
-        <button
-          onClick={() => setSearchQuery("")}
-          className="mt-2 px-5 py-2 rounded-xl bg-accent text-black font-medium hover:scale-105 transition-all duration-300"
-        >
-          Clear Search
-        </button>
-      )}
-    </div>
-)}
+                </div>
             </div>
 
-            {/* ── GitHub Skill Detail Modal ────────── */}
             {selectedSkill && (
                 <SkillModal
                     skill={selectedSkill}
@@ -1369,7 +954,6 @@ const q = debouncedSearch.toLowerCase().trim()
                 />
             )}
 
-            {/* ── DB Community Skill Modal ────────── */}
             {selectedDbSkill && (
                 <UserSkillModal
                     skill={selectedDbSkill}

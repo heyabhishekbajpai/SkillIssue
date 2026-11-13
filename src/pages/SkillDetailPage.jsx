@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import {
+    Star, Copy, Check, Share2, Download, MessageSquare, BookOpen, Bookmark, Lock, Globe,
+    Trash2, Tag, Calendar, LogIn, Settings,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { getSkillById, deleteSkill, toggleVisibility, starSkill, unstarSkill } from '../lib/skillService'
 import { invalidateProfileCache } from '../lib/profileCache'
 import { getProfile, toggleSavedSkill } from '../lib/userService'
+import { SITE_URL as SITE } from '../lib/site'
 import ConfirmDialog from '../components/ConfirmDialog'
 import SEO, { jsonLdSchemas } from '../components/SEO'
-import Breadcrumbs from '../components/Breadcrumbs'
 import SkillViewer from '../components/SkillViewer'
-import SkillActionBar from '../components/SkillActionBar'
 import Toast from '../components/Toast'
 import { StandaloneCommentDrawer } from '../components/CommentPanel'
 import { useComments } from '../hooks/useComments'
-
-const SITE = import.meta.env.VITE_SITE_URL || 'https://www.skillissue.bajpai.tech'
+import { SkillRepoHeader, SidebarSection, MetaItem, DetailSkeleton } from '../components/SkillPageLayout'
+import { Avatar, Blankslate, CategoryDot, Spinner, formatCount, timeAgo } from '../components/ui/primitives'
 
 function starKey(userId, skillId) { return `starred:${userId}:${skillId}` }
 function isStarred(userId, skillId) { return !!localStorage.getItem(starKey(userId, skillId)) }
@@ -52,7 +55,7 @@ export default function SkillDetailPage() {
     })
 
     useEffect(() => {
-        if (!id) return
+        if (!id) return undefined
         let cancelled = false
         getSkillById(id)
             .then((s) => {
@@ -87,6 +90,7 @@ export default function SkillDetailPage() {
     }
 
     function handleCopy() {
+        if (isGuest) { openAuthModal(); return }
         const src = viewerContent || skill.content
         if (!src) return
         navigator.clipboard.writeText(src)
@@ -112,13 +116,13 @@ export default function SkillDetailPage() {
         } else {
             await navigator.clipboard.writeText(url)
             setLinkCopied(true)
-            showToast('Link copied to clipboard!')
+            showToast('Link copied to clipboard')
             window.setTimeout(() => setLinkCopied(false), 2000)
         }
     }
 
     async function handleStar() {
-        if (!authUser) { showToast('Sign in to star skills'); return }
+        if (!authUser) { openAuthModal(); return }
         if (starring) return
         setStarring(true)
         try {
@@ -148,7 +152,7 @@ export default function SkillDetailPage() {
             await toggleSavedSkill(authProfile.id, skill.id, nextAction)
             setIsSaved(!isSaved)
             invalidateProfileCache(authProfile?.username)
-            showToast(isSaved ? 'Removed from Saved' : 'Saved to profile')
+            showToast(isSaved ? 'Removed from saved' : 'Saved to your profile')
             await refreshProfile()
         } catch {
             showToast('Failed to update saved skill')
@@ -182,30 +186,24 @@ export default function SkillDetailPage() {
         }
     }
 
-    if (loading) {
-        return (
-            <main className="min-h-screen flex items-center justify-center">
-                <svg className="w-8 h-8 text-accent animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-            </main>
-        )
-    }
+    if (loading) return <DetailSkeleton />
 
     if (notFound || !skill) {
         return (
-            <main className="min-h-[80vh] flex flex-col items-center justify-center px-6 text-center gap-5">
-                <div className="w-16 h-16 rounded-2xl bg-accent/5 border border-accent/10 flex items-center justify-center">
-                    <svg className="w-8 h-8 text-accent/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+            <div className="container-page py-16">
+                <div className="box mx-auto max-w-xl">
+                    <Blankslate icon={Lock} title="Skill not found" action={<Link to="/browse" className="btn-primary">Browse skills</Link>}>
+                        This skill doesn’t exist or is private. Only the owner can view private skills.
+                    </Blankslate>
                 </div>
-                <h1 className="font-clash font-bold text-3xl">Skill not found</h1>
-                <p className="font-satoshi text-white/40 max-w-sm">This skill doesn't exist or is private. You need to be the owner to view private skills.</p>
-                <Link to="/" className="btn-primary">Go Home</Link>
-            </main>
+            </div>
         )
     }
 
     const authorName = author?.display_name || author?.username || 'Unknown'
-    const authorAvatar = author?.avatar_url
     const authorUsername = author?.username
+    const tags = Array.isArray(skill.tags) ? skill.tags : typeof skill.tags === 'string' ? skill.tags.split(',').map((t) => t.trim()).filter(Boolean) : []
+    const created = skill.$createdAt || skill.created_at
 
     return (
         <>
@@ -224,55 +222,77 @@ export default function SkillDetailPage() {
                     ],
                 }}
             />
-            <main className="relative min-h-screen pt-28 pb-24">
-                <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-accent/[0.04] rounded-full blur-[140px] pointer-events-none" />
-                <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6">
-                    <Breadcrumbs items={[{ label: 'Browse Skills', to: '/browse' }, { label: skill.title }]} />
-                    <button onClick={() => navigate(-1)} className="flex items-center gap-2 mb-8 text-white/30 hover:text-white/60 font-satoshi text-sm transition-colors group">
-                        <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-                        Back
-                    </button>
 
-                    <div className="mb-8">
-                        <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
-                            <h1 className="font-clash font-bold text-3xl sm:text-4xl text-white leading-tight flex-1">{skill.title}</h1>
-                            <button onClick={handleStar} disabled={starring} aria-label={starred ? 'Unstar skill' : 'Star skill'} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border font-satoshi text-sm font-semibold transition-all duration-300 shrink-0 ${starred ? 'bg-amber-500/15 border-amber-500/30 text-amber-400 hover:bg-amber-500/10' : 'bg-white/[0.03] border-white/[0.08] text-white/40 hover:border-amber-500/30 hover:text-amber-400/80 hover:bg-amber-500/[0.06]'} disabled:opacity-50`}>
-                                <svg className={`w-4 h-4 transition-transform ${starring ? 'animate-spin' : starred ? 'scale-110' : ''}`} fill={starred ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={starred ? 0 : 1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
-                                <span>{starCount}</span>
+            <SkillRepoHeader
+                avatar={author?.avatar_url}
+                owner={authorUsername || authorName}
+                ownerTo={authorUsername ? `/user/${authorUsername}` : undefined}
+                name={skill.title}
+                label={isPrivate ? 'Private' : 'Public'}
+                actions={
+                    <>
+                        {!isGuest && !isOwner && (
+                            <button type="button" onClick={handleSaveSkill} disabled={saving} className="btn btn-sm" aria-pressed={isSaved}>
+                                {saving ? <Spinner size={14} /> : <Bookmark className="h-3.5 w-3.5" fill={isSaved ? 'currentColor' : 'none'} />}
+                                {isSaved ? 'Saved' : 'Save'}
                             </button>
+                        )}
+                        <button type="button" onClick={handleShare} className="btn btn-sm">
+                            {linkCopied ? <Check className="h-3.5 w-3.5 !text-success" /> : <Share2 className="h-3.5 w-3.5" />}
+                            {linkCopied ? 'Copied' : 'Share'}
+                        </button>
+                        <div className="inline-flex">
+                            <button
+                                type="button"
+                                onClick={handleStar}
+                                disabled={starring}
+                                aria-label={starred ? 'Unstar skill' : 'Star skill'}
+                                aria-pressed={starred}
+                                className="btn btn-sm rounded-r-none"
+                            >
+                                {starring ? <Spinner size={14} /> : <Star className={`h-3.5 w-3.5 ${starred ? '!text-attention' : ''}`} fill={starred ? 'currentColor' : 'none'} />}
+                                {starred ? 'Starred' : 'Star'}
+                            </button>
+                            <span className="btn btn-sm pointer-events-none -ml-px rounded-l-none px-2 font-semibold">{formatCount(starCount)}</span>
                         </div>
-                        {skill.description && <p className="font-satoshi text-white/40 text-base leading-relaxed mb-4">{skill.description}</p>}
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                            {skill.category && <span className="px-2.5 py-1 rounded-lg bg-accent/10 border border-accent/20 text-accent text-[11px] font-satoshi font-bold uppercase tracking-wider">{skill.category}</span>}
-                            <span className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[11px] font-satoshi font-bold uppercase tracking-wider ${isPrivate ? 'bg-white/[0.04] border-white/10 text-white/25' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>{isPrivate ? 'Private' : 'Public'}</span>
+                    </>
+                }
+                tabs={
+                    <nav className="tabnav border-b-0" aria-label="Skill sections">
+                        <span className="tabnav-item selected"><BookOpen className="h-4 w-4" />Skill</span>
+                        <button type="button" onClick={() => setCommentsOpen(true)} className="tabnav-item">
+                            <MessageSquare className="h-4 w-4" />Discussion
+                            {comments.length > 0 && <span className="counter">{comments.length}</span>}
+                        </button>
+                        {isOwner && (
+                            <a href="#settings" className="tabnav-item"><Settings className="h-4 w-4" />Settings</a>
+                        )}
+                    </nav>
+                }
+            />
+
+            <div className="container-page grid gap-6 py-6 lg:grid-cols-[minmax(0,1fr)_296px]">
+                <div className="min-w-0 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="inline-flex min-w-0 items-center gap-2 text-sm text-fg-muted">
+                            <Avatar src={author?.avatar_url} name={authorName} size={20} />
+                            <span className="truncate">
+                                <span className="font-semibold text-fg">{authorUsername || authorName}</span>
+                                {created && <> published {timeAgo(created)}</>}
+                            </span>
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button type="button" onClick={handleCopy} className="btn btn-sm">
+                                {copied ? <Check className="h-3.5 w-3.5 !text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                                {copied ? 'Copied' : 'Copy'}
+                            </button>
+                            <button type="button" onClick={handleDownload} className="btn-primary btn-sm">
+                                <Download className="h-3.5 w-3.5" />Download .md
+                            </button>
                         </div>
                     </div>
 
-                    <Link to={authorUsername ? `/u/${authorUsername}` : '#'} className="flex items-center gap-3.5 mb-8 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-accent/20 hover:bg-white/[0.04] transition-all duration-300 group">
-                        {authorAvatar && <img src={authorAvatar} alt={authorName} loading="lazy" width={40} height={40} className="w-10 h-10 rounded-full border border-white/10 object-cover shrink-0" />}
-                        <div className="flex-1 min-w-0">
-                            <p className="font-satoshi font-semibold text-sm text-white/80 group-hover:text-white transition-colors truncate">{authorName}</p>
-                            {authorUsername && <p className="font-satoshi text-xs text-white/30 truncate">@{authorUsername}</p>}
-                        </div>
-                    </Link>
-
-                    <SkillActionBar
-                        compact
-                        className="mb-4"
-                        actions={[
-                            { key: 'copy', icon: 'copy', label: copied ? 'Copied!' : 'Copy', ariaLabel: 'Copy skill markdown', onClick: handleCopy, status: copied ? 'success' : undefined },
-                            { key: 'share', icon: 'share', label: linkCopied ? 'Link copied!' : 'Share', ariaLabel: 'Share skill link', onClick: handleShare, status: linkCopied ? 'success' : undefined },
-                            { key: 'download', icon: 'download', label: '.md', ariaLabel: 'Download markdown file', onClick: handleDownload, primary: true },
-                            { key: 'comments', icon: 'comments', label: 'Comments', ariaLabel: 'View comments', onClick: () => setCommentsOpen(o => !o), active: commentsOpen },
-                        ]}
-                        secondaryActions={[
-                            isGuest && { key: 'signin', icon: 'save', label: 'Sign in to Save', ariaLabel: 'Sign in to save skill', onClick: openAuthModal },
-                            !isGuest && !isOwner && { key: 'save', icon: 'save', label: saving ? 'Saving...' : isSaved ? 'Saved' : 'Save', ariaLabel: isSaved ? 'Remove from saved skills' : 'Save skill', onClick: handleSaveSkill, loading: saving, active: isSaved },
-                        ]}
-                    />
-
                     <SkillViewer
-                        className="mb-6"
                         rootName={slug(skill.title)}
                         markdownContent={skill.content || ''}
                         locked={isGuest}
@@ -282,13 +302,75 @@ export default function SkillDetailPage() {
                     />
 
                     {isOwner && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <button onClick={handleToggleVisibility} disabled={working} className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.02] text-white/40 font-satoshi text-xs font-medium hover:text-accent/70 hover:border-accent/20 hover:bg-accent/[0.04] transition-all disabled:opacity-40">{isPrivate ? 'Make Public' : 'Make Private'}</button>
-                            <button onClick={() => setShowDeleteConfirm(true)} disabled={working} className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.02] text-white/40 font-satoshi text-xs font-medium hover:text-red-400/70 hover:border-red-500/20 hover:bg-red-500/[0.04] transition-all disabled:opacity-40">Delete</button>
-                        </div>
+                        <section id="settings" className="box mt-6 scroll-mt-20 border-danger/40">
+                            <header className="box-header bg-transparent">
+                                <h2 className="font-sans text-sm font-semibold">Danger zone</h2>
+                            </header>
+                            <div className="box-row flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p className="text-sm font-semibold">Change visibility</p>
+                                    <p className="text-sm text-fg-muted">This skill is currently {isPrivate ? 'private' : 'public'}.</p>
+                                </div>
+                                <button type="button" onClick={handleToggleVisibility} disabled={working} className="btn-danger shrink-0">
+                                    {isPrivate ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                                    {isPrivate ? 'Make public' : 'Make private'}
+                                </button>
+                            </div>
+                            <div className="box-row flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p className="text-sm font-semibold">Delete this skill</p>
+                                    <p className="text-sm text-fg-muted">Once deleted, it cannot be recovered.</p>
+                                </div>
+                                <button type="button" onClick={() => setShowDeleteConfirm(true)} disabled={working} className="btn-danger shrink-0">
+                                    <Trash2 className="h-4 w-4" />Delete this skill
+                                </button>
+                            </div>
+                        </section>
                     )}
                 </div>
-            </main>
+
+                <aside className="min-w-0">
+                    <SidebarSection title="About">
+                        {skill.description
+                            ? <p className="text-[15px] leading-6">{skill.description}</p>
+                            : <p className="text-sm italic text-fg-muted">No description provided.</p>}
+                        {tags.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-1">
+                                {tags.map((t) => <Link key={t} to={`/browse?q=${encodeURIComponent(t)}`} className="topic">{t}</Link>)}
+                            </div>
+                        )}
+                        <ul className="mt-4 space-y-2">
+                            {skill.category && <li><CategoryDot category={skill.category} className="text-sm" /></li>}
+                            <MetaItem icon={Star}><strong className="text-fg">{starCount.toLocaleString()}</strong> stars</MetaItem>
+                            <MetaItem icon={Copy}><strong className="text-fg">{(skill.copy_count ?? 0).toLocaleString()}</strong> copies</MetaItem>
+                            {created && <MetaItem icon={Calendar}>Published {new Date(created).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</MetaItem>}
+                            {tags.length === 0 && skill.category && <MetaItem icon={Tag}>{skill.category}</MetaItem>}
+                        </ul>
+                    </SidebarSection>
+
+                    <SidebarSection title="Author">
+                        {authorUsername ? (
+                            <Link to={`/user/${authorUsername}`} className="group flex items-center gap-3">
+                                <Avatar src={author?.avatar_url} name={authorName} size={40} />
+                                <span className="min-w-0">
+                                    <span className="block truncate text-sm font-semibold group-hover:text-accent group-hover:underline">{authorName}</span>
+                                    <span className="block truncate text-xs text-fg-muted">@{authorUsername}</span>
+                                </span>
+                            </Link>
+                        ) : (
+                            <p className="text-sm text-fg-muted">{authorName}</p>
+                        )}
+                    </SidebarSection>
+
+                    {isGuest && (
+                        <SidebarSection>
+                            <button type="button" onClick={openAuthModal} className="btn btn-block">
+                                <LogIn className="h-4 w-4" />Sign in to save and download
+                            </button>
+                        </SidebarSection>
+                    )}
+                </aside>
+            </div>
 
             <Toast message={toast} onDismiss={() => setToast(null)} />
 
@@ -308,9 +390,9 @@ export default function SkillDetailPage() {
 
             {showDeleteConfirm && (
                 <ConfirmDialog
-                    title="Delete Skill"
-                    message={<><span className="text-white/70 font-semibold">"{skill.title}"</span>{' '}will be permanently deleted. This action cannot be undone.</>}
-                    confirmLabel="Delete"
+                    title="Delete skill"
+                    message={<><span className="font-semibold text-fg">{skill.title}</span> will be permanently deleted. This cannot be undone.</>}
+                    confirmLabel="Delete this skill"
                     onConfirm={handleDelete}
                     onCancel={() => setShowDeleteConfirm(false)}
                     working={working}

@@ -314,8 +314,11 @@ export async function fetchFileContentByPath(repo, filePath) {
     const url = `https://api.github.com/repos/${repo}/contents/${filePath}`
     const data = await ghFetch(url)
     if (data.encoding === 'base64' && data.content) {
-        // atob handles standard base64; GitHub wraps lines at 60 chars
-        return atob(data.content.replace(/\n/g, ''))
+        // GitHub wraps base64 lines at 60 chars. atob() yields Latin-1 bytes,
+        // so decode them as UTF-8 to keep em dashes, emoji, etc. intact.
+        const binary = atob(data.content.replace(/\n/g, ''))
+        const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0))
+        return new TextDecoder('utf-8').decode(bytes)
     }
     // Fallback: try download_url if content is not embedded
     if (data.download_url) return ghFetchRaw(data.download_url)

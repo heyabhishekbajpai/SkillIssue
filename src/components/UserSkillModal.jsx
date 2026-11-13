@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { X, Lock, BookMarked, ExternalLink } from 'lucide-react'
 import { useComments } from '../hooks/useComments'
 import ConfirmDialog from './ConfirmDialog'
 import ModalShell from './ModalShell'
@@ -10,7 +12,7 @@ import { toggleSavedSkill } from '../lib/userService'
 import { starSkill, unstarSkill } from '../lib/skillService'
 import { invalidateProfileCache } from '../lib/profileCache'
 
-const SITE = 'https://www.skillissue.bajpai.tech'
+import { SITE_URL as SITE } from '../lib/site'
 
 function starKey(userId, skillId) { return `starred:${userId}:${skillId}` }
 function getStarred(userId, skillId) { return !!localStorage.getItem(starKey(userId, skillId)) }
@@ -154,22 +156,28 @@ export default function UserSkillModal({ skill, onClose, isOwner = false, onDele
     return (
         <>
             <ModalShell onClose={() => !showDeleteConfirm && onClose()} titleId={titleId} contentClassName="flex flex-col h-full">
-                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/[0.06] bg-white/[0.02] shrink-0">
-                    <div className="flex items-center gap-3 min-w-0">
+                <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line bg-canvas-subtle px-4 py-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                        {isPrivate ? <Lock className="h-4 w-4 shrink-0 text-fg-muted" /> : <BookMarked className="h-4 w-4 shrink-0 text-fg-muted" />}
                         <div className="min-w-0">
-                            <h2 id={titleId} className="font-clash font-bold text-lg text-white truncate">{skill.title}</h2>
-                            {skill.category && <p className="font-satoshi text-xs text-white/35 capitalize">{skill.category}</p>}
+                            <h2 id={titleId} className="truncate font-sans text-base font-semibold">{skill.title}</h2>
+                            {skill.category && <p className="text-xs capitalize text-fg-muted">{skill.category}</p>}
                         </div>
-                        <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-satoshi font-bold uppercase tracking-wider shrink-0 ${isPrivate ? 'bg-white/[0.05] border-white/10 text-white/30' : 'bg-accent/10 border-accent/20 text-accent'}`}>
-                            {isPrivate ? 'Private' : 'Public'}
-                        </span>
+                        <span className="label shrink-0">{isPrivate ? 'Private' : 'Public'}</span>
                     </div>
-                    <button type="button" onClick={onClose} aria-label="Close skill modal" className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors shrink-0 ml-3">
-                        <svg className="w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
+                        {skill.id && (
+                            <Link to={`/skill/${skill.id}`} onClick={onClose} className="btn btn-sm hidden sm:inline-flex" title="Open full page">
+                                <ExternalLink className="h-3.5 w-3.5" />Open page
+                            </Link>
+                        )}
+                        <button type="button" onClick={onClose} aria-label="Close skill modal" className="btn-invisible btn-icon">
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4">
                     <SkillViewer
                         fill
                         rootName={slug(skill.title)}
@@ -182,19 +190,19 @@ export default function UserSkillModal({ skill, onClose, isOwner = false, onDele
                 </div>
 
                 <SkillActionBar
-                    className="px-3 sm:px-6 py-3 sm:py-4 border-t border-white/[0.06] bg-white/[0.02] shrink-0"
+                    className="shrink-0 border-t border-line bg-canvas-subtle px-4 py-3"
                     actions={[
-                        !isGuest && { key: 'star', icon: 'save', label: String(starCount), ariaLabel: starred ? 'Unstar skill' : 'Star skill', onClick: handleStar, loading: starring, active: starred },
-                        { key: 'copy', icon: 'copy', label: copied ? 'Copied!' : 'Copy', ariaLabel: 'Copy skill markdown', onClick: handleCopy, status: copied ? 'success' : undefined },
-                        { key: 'share', icon: 'share', label: linkCopied ? 'Link copied!' : 'Share', ariaLabel: 'Share skill link', onClick: handleShare, status: linkCopied ? 'success' : undefined },
+                        !isGuest && { key: 'star', icon: 'star', label: String(starCount), ariaLabel: starred ? 'Unstar skill' : 'Star skill', onClick: handleStar, loading: starring, active: starred },
+                        { key: 'copy', icon: 'copy', label: copied ? 'Copied' : 'Copy', ariaLabel: 'Copy skill markdown', onClick: handleCopy, status: copied ? 'success' : undefined },
+                        { key: 'share', icon: 'share', label: linkCopied ? 'Link copied' : 'Share', ariaLabel: 'Share skill link', onClick: handleShare, status: linkCopied ? 'success' : undefined },
                         { key: 'download', icon: 'download', label: 'Download .md', ariaLabel: 'Download markdown file', onClick: handleDownload, primary: true },
                         { key: 'comments', icon: 'comments', label: 'Comments', ariaLabel: 'View comments', onClick: () => setCommentsOpen(o => !o), active: commentsOpen },
                     ]}
                     secondaryActions={[
-                        isGuest && { key: 'signin', icon: 'save', label: 'Sign in to Save', ariaLabel: 'Sign in to save skill', onClick: signIn },
-                        !isGuest && !isOwner && { key: 'save', icon: 'save', label: saving ? 'Saving...' : isSaved ? 'Saved' : 'Save', ariaLabel: isSaved ? 'Remove from saved skills' : 'Save skill', onClick: handleSaveSkill, loading: saving, active: isSaved },
-                        isOwner && { key: 'visibility', icon: 'save', label: isPrivate ? 'Make Public' : 'Make Private', ariaLabel: isPrivate ? 'Make skill public' : 'Make skill private', onClick: handleTogglePrivate, disabled: working },
-                        isOwner && { key: 'delete', icon: 'copy', label: 'Delete', ariaLabel: 'Delete skill', onClick: () => setShowDeleteConfirm(true), disabled: working, className: 'hover:text-red-400/70 hover:border-red-500/20 hover:bg-red-500/[0.04]' },
+                        isGuest && { key: 'signin', icon: 'signin', label: 'Sign in to save', ariaLabel: 'Sign in to save skill', onClick: signIn },
+                        !isGuest && !isOwner && { key: 'save', icon: 'save', label: saving ? 'Saving…' : isSaved ? 'Saved' : 'Save', ariaLabel: isSaved ? 'Remove from saved skills' : 'Save skill', onClick: handleSaveSkill, loading: saving, active: isSaved },
+                        isOwner && { key: 'visibility', icon: isPrivate ? 'globe' : 'lock', label: isPrivate ? 'Make public' : 'Make private', ariaLabel: isPrivate ? 'Make skill public' : 'Make skill private', onClick: handleTogglePrivate, disabled: working },
+                        isOwner && { key: 'delete', icon: 'trash', label: 'Delete', ariaLabel: 'Delete skill', onClick: () => setShowDeleteConfirm(true), disabled: working, className: 'hover:!text-danger' },
                     ]}
                 />
                 <CommentPanel
@@ -214,9 +222,9 @@ export default function UserSkillModal({ skill, onClose, isOwner = false, onDele
 
             {showDeleteConfirm && (
                 <ConfirmDialog
-                    title="Delete Skill"
-                    message={<><span className="text-white/70 font-semibold">"{skill.title}"</span>{' '}will be permanently deleted. This action cannot be undone.</>}
-                    confirmLabel="Delete"
+                    title="Delete skill"
+                    message={<><span className="font-semibold text-fg">{skill.title}</span>{' '}will be permanently deleted. This action cannot be undone.</>}
+                    confirmLabel="Delete this skill"
                     onConfirm={handleDelete}
                     onCancel={() => setShowDeleteConfirm(false)}
                     working={working}

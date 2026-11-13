@@ -1,11 +1,11 @@
 # Skill Issue — AI Skills Marketplace
-# https://www.skillissue.bajpai.tech
+# https://skillissue.si
 
 User-agent: *
 Allow: /
 
 # Sitemap (dynamic — includes all skill pages)
-Sitemap: https://www.skillissue.bajpai.tech/sitemap.xml
+Sitemap: https://skillissue.si/sitemap.xml
 
 # Allow AI search engine bots
 User-agent: Googlebot

@@ -12,7 +12,7 @@
 
 import { getDb, COLLECTIONS } from './lib/mongodb.js'
 
-const SITE_URL = 'https://www.skillissue.bajpai.tech'
+const SITE_URL = 'https://skillissue.si'
 
 const STATIC_ROUTES = [
     { path: '/',          priority: '1.0', changefreq: 'daily' },

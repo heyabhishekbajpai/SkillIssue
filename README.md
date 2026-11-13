@@ -6,7 +6,7 @@ Skill Issue is where you find, build, and share `.md` skill files that make AI a
 
 You're a developer dropping skill files into Cursor? A teacher pasting instructions into a Custom GPT? Doesn't matter. Same idea: give your AI a skill file, it stops guessing and starts doing.
 
-**Live at [skillissue.bajpai.tech](https://www.skillissue.bajpai.tech)**
+**Live at [skillissue.si](https://skillissue.si)**
 
 ---
 
@@ -69,7 +69,7 @@ A cron job runs every 15 days. It hits GitHub's Code Search API with 6 size part
 | AI (Skill Builder) | Groq - Llama 4 Scout + Llama 3.3 70B |
 | Hosting | Vercel (SPA + serverless API routes) |
 | SEO | Prerendered static routes, dynamic sitemap (10K+ URLs) |
-| Domain | [skillissue.bajpai.tech](https://www.skillissue.bajpai.tech) |
+| Domain | [skillissue.si](https://skillissue.si) |
 
 ---
 
@@ -150,7 +150,7 @@ Open [http://localhost:5173](http://localhost:5173)
 
 ## contributing
 
-Got a skill worth sharing? Build it on [skillissue.bajpai.tech](https://www.skillissue.bajpai.tech) and publish. No PRs needed.
+Got a skill worth sharing? Build it on [skillissue.si](https://skillissue.si) and publish. No PRs needed.
 
 Want to contribute to the codebase? Issues and PRs are welcome.
 

@@ -1,84 +1,24 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Search, X, BookMarked, Star, CalendarDays, UserPlus, Clock, UserCheck, Users, AlertCircle } from 'lucide-react'
 import { getCommunityUsers, getPublicSkillsStatsByUser } from '../lib/userService'
 import { getFollowStatus, sendFollowRequest, unfollowUser } from '../lib/followService'
 import { useAuth } from '../context/AuthContext'
 import SEO, { jsonLdSchemas } from '../components/SEO'
-import Breadcrumbs from '../components/Breadcrumbs'
+import { Avatar, Blankslate, PageHeader, Spinner, formatCount, timeAgo } from '../components/ui/primitives'
 
 // ── Module-level page cache (5 min TTL) ────────────────────────────────
-// First 12 users + stats are cached so revisiting the page is instant.
+// First page of users + stats is cached so revisiting the page is instant.
 const CACHE_TTL = 5 * 60 * 1000
 let _pageCache = null // { users, stats, total, cursor, expiresAt }
 
-// ── Helpers ──────────────────────────────────────────────────
-
-function formatJoined(dateStr) {
-    if (!dateStr) return '—'
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return '—'
-    const days = Math.floor((Date.now() - d.getTime()) / 86400000)
-    if (days < 1) return 'today'
-    if (days === 1) return 'yesterday'
-    if (days < 7) return `${days}d ago`
-    const weeks = Math.floor(days / 7)
-    if (weeks < 52) return `${weeks}w ago`
-    const years = Math.floor(weeks / 52)
-    return `${years}y ago`
-}
-
-// ── Avatar with fallback initials ─────────────────────────────
-function Avatar({ src, name }) {
-    const [err, setErr] = useState(false)
-    useEffect(() => { setErr(false) }, [src])
-
-    const initial = name?.charAt(0)?.toUpperCase() ?? '?'
-
+function SkeletonRow() {
     return (
-        <div
-            className="relative shrink-0"
-            style={{ width: 64, height: 64 }}
-        >
-            {/* Glow ring */}
-            <div
-                className="absolute inset-0 rounded-full"
-                style={{
-                    background: 'transparent',
-                    boxShadow: '0 0 0 2px rgba(75,169,255,0.35), 0 0 18px rgba(75,169,255,0.18)',
-                    borderRadius: '50%',
-                    zIndex: 1,
-                    pointerEvents: 'none',
-                }}
-            />
-            {src && !err ? (
-                <img
-                    src={src}
-                    alt={name}
-                    onError={() => setErr(true)}
-                    loading="lazy"
-                    width={64}
-                    height={64}
-                    className="w-16 h-16 rounded-full object-cover border-2 border-accent/30 group-hover:border-accent/60 transition-colors duration-300"
-                />
-            ) : (
-                <div className="w-16 h-16 rounded-full bg-accent/10 border-2 border-accent/30 group-hover:border-accent/60 transition-colors duration-300 flex items-center justify-center">
-                    <span className="font-clash font-bold text-xl text-accent">{initial}</span>
-                </div>
-            )}
-        </div>
-    )
-}
-
-// ── Skeleton card ─────────────────────────────────────────────
-function SkeletonUserCard() {
-    return (
-        <div className="flex items-center gap-5 px-6 py-5 rounded-2xl bg-navy-100/60 border border-white/[0.05] animate-pulse">
-            <div className="w-16 h-16 rounded-full bg-white/[0.06] shrink-0" />
-            <div className="flex-1 min-w-0 space-y-2.5">
-                <div className="h-4 w-32 rounded-md bg-white/[0.06]" />
-                <div className="h-3 w-20 rounded-md bg-white/[0.04]" />
-                <div className="h-3 w-56 rounded-md bg-white/[0.04]" />
-                <div className="h-3 w-40 rounded-md bg-white/[0.03] mt-2" />
+        <div className="box-row flex items-center gap-4 py-4">
+            <div className="skeleton-line h-12 w-12 rounded-full" />
+            <div className="flex-1 space-y-2">
+                <div className="skeleton-line h-4 w-40" />
+                <div className="skeleton-line h-3 w-64 max-w-full" />
             </div>
         </div>
     )
@@ -92,7 +32,7 @@ function FollowButton({ userId, currentUserId }) {
         if (!currentUserId || userId === currentUserId) return
         setLoading(true)
         getFollowStatus(userId)
-            .then(s => setStatus(s === 'accepted' ? 'following' : s))
+            .then((s) => setStatus(s === 'accepted' ? 'following' : s))
             .catch(() => setStatus('none'))
             .finally(() => setLoading(false))
     }, [userId, currentUserId])
@@ -119,153 +59,57 @@ function FollowButton({ userId, currentUserId }) {
         }
     }
 
-    const styles = {
-        none: 'bg-accent/10 border-accent/20 text-accent hover:bg-accent/20 hover:border-accent/40 hover:shadow-[0_0_14px_rgba(75,169,255,0.2)]',
-        pending: 'bg-white/[0.05] border-white/[0.12] text-white/50 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400',
-        following: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400',
-    }
-
-    const labels = { none: 'Follow', pending: 'Pending', following: 'Following' }
+    const labels = { none: 'Follow', pending: 'Requested', following: 'Following' }
     const hoverLabels = { none: 'Follow', pending: 'Cancel', following: 'Unfollow' }
+    const Icon = status === 'none' ? UserPlus : status === 'pending' ? Clock : UserCheck
 
     return (
-        <button
-            onClick={handleClick}
-            disabled={loading}
-            className={`group/fb shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border font-satoshi text-xs font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${styles[status]}`}
-        >
-            {status === 'none' && (
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-            )}
-            {status === 'pending' && (
-                <svg className="w-3 h-3 group-hover/fb:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            )}
-            {status === 'following' && (
-                <svg className="w-3 h-3 group-hover/fb:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-            )}
+        <button type="button" onClick={handleClick} disabled={loading} className="btn btn-sm group/fb shrink-0">
+            {loading ? <Spinner size={12} /> : <Icon className="h-3.5 w-3.5" />}
             <span className="group-hover/fb:hidden">{labels[status]}</span>
             <span className="hidden group-hover/fb:inline">{hoverLabels[status]}</span>
         </button>
     )
 }
 
-// ── User card ─────────────────────────────────────────────────
-function UserCard({ user, stats, index, currentUserId }) {
-    const userStats = stats[user.user_id] || { skills: 0, stars: 0 }
-
+function UserRow({ user, stats, currentUserId }) {
+    const s = stats[user.user_id] || { skills: 0, stars: 0 }
     return (
-        <Link
-            to={`/user/${user.username}`}
-            className="group flex items-center gap-5 px-6 py-5 rounded-2xl border border-white/[0.06] bg-gradient-to-r from-navy-100/70 to-navy/80 hover:border-accent/25 hover:bg-navy-100/90 hover:shadow-[0_0_28px_rgba(75,169,255,0.07)] transition-all duration-300 hover:-translate-y-[1px]"
-            style={{ animationDelay: `${index * 40}ms` }}
-        >
-            {/* Avatar */}
-            <Avatar src={user.avatar_url} name={user.display_name || user.username} />
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-                {/* Name + username row */}
-                <div className="flex items-baseline gap-2 flex-wrap">
-                    <span className="font-clash font-semibold text-[15px] text-white/90 group-hover:text-white transition-colors duration-200 leading-snug truncate">
-                        {user.display_name || user.username}
-                    </span>
-                    <span className="font-satoshi text-xs text-white/35 shrink-0">
-                        @{user.username}
-                    </span>
-                </div>
-
-                {/* Bio */}
-                {user.bio && (
-                    <p className="font-satoshi text-sm text-white/45 mt-1 truncate leading-snug">
-                        {user.bio}
-                    </p>
-                )}
-
-                {/* Stats row */}
-                <div className="flex items-center gap-0 mt-2.5 flex-wrap">
-                    <StatItem
-                        icon={
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-                            </svg>
-                        }
-                        label={`${userStats.skills} ${userStats.skills === 1 ? 'skill' : 'skills'}`}
-                    />
-                    <Dot />
-                    <StatItem
-                        icon={
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                            </svg>
-                        }
-                        label={`${userStats.stars} ${userStats.stars === 1 ? 'star' : 'stars'}`}
-                    />
-                    <Dot />
-                    <StatItem
-                        icon={
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                            </svg>
-                        }
-                        label={`Joined ${formatJoined(user.created_at)}`}
-                    />
+        <div className="box-row flex items-start gap-4 py-4">
+            <Link to={`/user/${user.username}`} className="shrink-0">
+                <Avatar src={user.avatar_url} name={user.display_name || user.username} size={48} />
+            </Link>
+            <div className="min-w-0 flex-1">
+                <Link to={`/user/${user.username}`} className="group inline-flex flex-wrap items-baseline gap-x-2">
+                    <span className="font-semibold text-accent group-hover:underline">{user.display_name || user.username}</span>
+                    <span className="text-sm text-fg-muted">{user.username}</span>
+                </Link>
+                {user.bio && <p className="mt-0.5 line-clamp-2 text-sm text-fg-muted">{user.bio}</p>}
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-muted">
+                    <span className="inline-flex items-center gap-1"><BookMarked className="h-3.5 w-3.5" />{s.skills} {s.skills === 1 ? 'skill' : 'skills'}</span>
+                    <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5" />{formatCount(s.stars)} {s.stars === 1 ? 'star' : 'stars'}</span>
+                    {user.created_at && <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />Joined {timeAgo(user.created_at)}</span>}
                 </div>
             </div>
-
-            
-            <div className="flex items-center gap-3 shrink-0">
-                <FollowButton userId={user.user_id} currentUserId={currentUserId} />
-                <svg
-                    className="w-4 h-4 text-white/15 group-hover:text-accent/50 transition-colors duration-300"
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-            </div>
-        </Link>
+            <FollowButton userId={user.user_id} currentUserId={currentUserId} />
+        </div>
     )
 }
 
-function StatItem({ icon, label }) {
-    return (
-        <span className="flex items-center gap-1 font-satoshi text-[11px] text-white/30">
-            <span className="text-accent/35">{icon}</span>
-            {label}
-        </span>
-    )
-}
-
-function Dot() {
-    return <span className="mx-2 text-white/15 text-[10px] select-none">·</span>
-}
-
-// ── Sort options ──────────────────────────────────────────────
 const SORT_OPTIONS = [
-    { id: 'joined', label: 'Recently Joined' },
-    { id: 'stars', label: 'Most Starred' },
-    { id: 'skills', label: 'Most Skills' },
+    { id: 'joined', label: 'Recently joined' },
+    { id: 'stars', label: 'Most stars' },
+    { id: 'skills', label: 'Most skills' },
 ]
 
 function sortUsers(users, sortId, stats) {
     const arr = [...users]
-    if (sortId === 'stars') {
-        return arr.sort((a, b) => (stats[b.user_id]?.stars ?? 0) - (stats[a.user_id]?.stars ?? 0))
-    }
-    if (sortId === 'skills') {
-        return arr.sort((a, b) => (stats[b.user_id]?.skills ?? 0) - (stats[a.user_id]?.skills ?? 0))
-    }
-    // 'joined' — Appwrite already returns documents ordered by $createdAt DESC.
-    // No JS sort needed; return as-is to preserve the server-side order.
+    if (sortId === 'stars') return arr.sort((a, b) => (stats[b.user_id]?.stars ?? 0) - (stats[a.user_id]?.stars ?? 0))
+    if (sortId === 'skills') return arr.sort((a, b) => (stats[b.user_id]?.skills ?? 0) - (stats[a.user_id]?.skills ?? 0))
+    // 'joined' — Appwrite already returns documents ordered by $createdAt DESC
     return arr
 }
 
-// ── Main Page ───────────────────────────────────────────────────────────────
 const PAGE_SIZE = 12
 
 export default function Community() {
@@ -273,6 +117,7 @@ export default function Community() {
     const currentUserId = authProfile?.user_id ?? null
     const [allUsers, setAllUsers] = useState([])
     const [stats, setStats] = useState({})
+    const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
     const [error, setError] = useState(null)
@@ -280,29 +125,22 @@ export default function Community() {
     const [hasMore, setHasMore] = useState(false)
     const [search, setSearch] = useState('')
     const [sort, setSort] = useState('joined')
-    const [sortOpen, setSortOpen] = useState(false)
 
-    // Derived list — filter then sort
     const query = search.trim().toLowerCase()
     const filtered = query
-        ? allUsers.filter(u =>
-            (u.display_name || '').toLowerCase().includes(query) ||
-            (u.username || '').toLowerCase().includes(query)
-        )
+        ? allUsers.filter((u) => (u.display_name || '').toLowerCase().includes(query) || (u.username || '').toLowerCase().includes(query))
         : allUsers
     const users = sortUsers(filtered, sort, stats)
 
-    // Initial load
     useEffect(() => {
         let cancelled = false
 
         async function init() {
-            // ── Serve from cache if fresh ─────────────────────────────
             if (_pageCache && Date.now() < _pageCache.expiresAt) {
-                console.log('[Community] Cache hit — page loaded from memory')
                 setAllUsers(_pageCache.users)
                 setStats(_pageCache.stats)
                 setCursor(_pageCache.cursor)
+                setTotal(_pageCache.total)
                 setHasMore(_pageCache.total > _pageCache.users.length)
                 setLoading(false)
                 return
@@ -310,19 +148,13 @@ export default function Community() {
 
             setLoading(true)
             setError(null)
-            const t0 = performance.now()
-
             try {
                 const [result, skillStats] = await Promise.all([
                     getCommunityUsers({ limit: PAGE_SIZE }),
                     getPublicSkillsStatsByUser(),
                 ])
-                console.log(`[Community] Users (${result.users.length}/${result.total}): ${(performance.now() - t0).toFixed(0)}ms`)
                 if (cancelled) return
-
                 const lastCursor = result.users[result.users.length - 1]?.$id ?? null
-
-                // ── Populate cache ────────────────────────────────────
                 _pageCache = {
                     users: result.users,
                     stats: skillStats,
@@ -330,10 +162,10 @@ export default function Community() {
                     cursor: lastCursor,
                     expiresAt: Date.now() + CACHE_TTL,
                 }
-
                 setAllUsers(result.users)
                 setStats(skillStats)
                 setCursor(lastCursor)
+                setTotal(result.total)
                 setHasMore(result.users.length < result.total)
             } catch (err) {
                 if (!cancelled) setError('Failed to load community members.')
@@ -350,16 +182,14 @@ export default function Community() {
     async function loadMore() {
         if (!cursor || loadingMore) return
         setLoadingMore(true)
-        const t0 = performance.now()
         try {
             const result = await getCommunityUsers({ limit: PAGE_SIZE, cursor })
-            console.log(`[Community] Load more (${result.users.length} more, offset ${allUsers.length}): ${(performance.now() - t0).toFixed(0)}ms`)
             const merged = [...allUsers, ...result.users]
             const lastCursor = result.users[result.users.length - 1]?.$id ?? null
             setAllUsers(merged)
             setCursor(lastCursor)
+            setTotal(result.total)
             setHasMore(merged.length < result.total)
-            // Update cache with expanded list
             if (_pageCache) {
                 _pageCache.users = merged
                 _pageCache.cursor = lastCursor
@@ -373,7 +203,7 @@ export default function Community() {
     }
 
     return (
-        <div className="min-h-screen pt-28 pb-20 px-6">
+        <div className="container-page max-w-[1012px] py-8">
             <SEO
                 title="AI Skills Community — Discover Skill File Creators"
                 description="Meet the community of developers and creators building AI skill files. Browse profiles, discover skills, and connect with fellow AI enthusiasts."
@@ -383,162 +213,66 @@ export default function Community() {
                     { name: 'Community', url: '/community' },
                 ])}
             />
-            <div className="max-w-3xl mx-auto">
-                <Breadcrumbs items={[{ label: 'Community' }]} />
 
-                {/* Page header */}
-                <div className="mb-4">
-                    <h1 className="font-clash font-bold text-4xl md:text-5xl text-white mb-3 leading-tight">
-                        Community
-                    </h1>
-                    <p className="font-satoshi text-base text-white/40">
-                        Skills made by people, for everyone.
-                    </p>
-                </div>
+            <PageHeader
+                title="Community"
+                description="People building and sharing skills on Skill Issue."
+            />
 
-                {/* Divider */}
-                <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent mb-4" />
-
-                {/* Search + Sort toolbar */}
-                <div className="flex items-center gap-3 mb-6">
-                    {/* Search */}
-                    <div className="relative flex-1">
-                        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                        </svg>
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            placeholder="Search by name or username…"
-                            className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.07] focus:border-accent/30 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi text-sm outline-none transition-all duration-200"
-                        />
-                        {search && (
-                            <button
-                                onClick={() => setSearch('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors"
-                            >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Sort dropdown */}
-                    <div className="relative shrink-0">
-                        <button
-                            onClick={() => setSortOpen(o => !o)}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.07] hover:border-accent/25 hover:bg-white/[0.05] text-white/50 hover:text-white/80 font-satoshi text-sm transition-all duration-200"
-                        >
-                            <svg className="w-3.5 h-3.5 text-accent/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
-                            </svg>
-                            <span>{SORT_OPTIONS.find(o => o.id === sort)?.label}</span>
-                            <svg className={`w-3.5 h-3.5 text-white/25 transition-transform duration-200 ${sortOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                            </svg>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <div className="relative flex-1">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted" />
+                    <input
+                        type="search"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Find a member by name or username"
+                        aria-label="Find a member"
+                        className="input pl-8 pr-8"
+                    />
+                    {search && (
+                        <button type="button" onClick={() => setSearch('')} className="btn-invisible btn-icon btn-sm absolute right-1 top-1/2 -translate-y-1/2" aria-label="Clear search">
+                            <X className="h-4 w-4" />
                         </button>
+                    )}
+                </div>
+                <label className="flex items-center gap-2 text-sm text-fg-muted">
+                    <span className="shrink-0">Sort</span>
+                    <select value={sort} onChange={(e) => setSort(e.target.value)} className="input sm:w-44">
+                        {SORT_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                    </select>
+                </label>
+            </div>
 
-                        {sortOpen && (
-                            <>
-                                {/* Backdrop */}
-                                <div className="fixed inset-0 z-10" onClick={() => setSortOpen(false)} />
-                                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-navy-100 border border-white/[0.08] shadow-xl shadow-black/40 z-20 overflow-hidden py-1">
-                                    {SORT_OPTIONS.map(opt => (
-                                        <button
-                                            key={opt.id}
-                                            onClick={() => { setSort(opt.id); setSortOpen(false) }}
-                                            className={`w-full text-left px-4 py-2.5 font-satoshi text-sm transition-colors duration-150 flex items-center justify-between ${
-                                                sort === opt.id
-                                                    ? 'text-accent bg-accent/[0.07]'
-                                                    : 'text-white/55 hover:text-white/80 hover:bg-white/[0.04]'
-                                            }`}
-                                        >
-                                            {opt.label}
-                                            {sort === opt.id && (
-                                                <svg className="w-3.5 h-3.5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                                </svg>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
+            <div className="box mt-4 overflow-hidden">
+                <div className="box-header py-2.5 text-sm">
+                    <Users className="h-4 w-4 text-fg-muted" />
+                    <span className="font-semibold">{loading ? 'Loading members…' : `${(query ? users.length : total || users.length).toLocaleString()} members`}</span>
                 </div>
 
-                {/* Error state */}
                 {error && (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
-                            <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                            </svg>
-                        </div>
-                        <p className="font-satoshi text-sm text-white/40">{error}</p>
-                    </div>
+                    <Blankslate icon={AlertCircle} title="Something went wrong">{error}</Blankslate>
                 )}
 
-                {/* Loading state */}
-                {loading && (
-                    <div className="space-y-3">
-                        {Array.from({ length: 8 }).map((_, i) => (
-                            <SkeletonUserCard key={i} />
-                        ))}
+                {loading && Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} />)}
+
+                {!loading && !error && (users.length === 0 ? (
+                    <Blankslate icon={Users} title={query ? 'No matching members' : 'No members yet'}>
+                        {query ? 'Try a different name or username. Only loaded members are searched.' : 'Be the first to join.'}
+                    </Blankslate>
+                ) : (
+                    users.map((user) => (
+                        <UserRow key={user.id || user.$id || user.username} user={user} stats={stats} currentUserId={currentUserId} />
+                    ))
+                ))}
+
+                {!loading && !error && hasMore && (
+                    <div className="box-footer flex justify-center bg-canvas-subtle py-2">
+                        <button type="button" onClick={loadMore} disabled={loadingMore} className="btn btn-sm">
+                            {loadingMore && <Spinner size={12} />}
+                            {loadingMore ? 'Loading…' : 'Load more members'}
+                        </button>
                     </div>
-                )}
-
-                {/* Users list */}
-                {!loading && !error && (
-                    <>
-                        {users.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-center">
-                                <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-4">
-                                    <svg className="w-6 h-6 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                                    </svg>
-                                </div>
-                                <p className="font-satoshi text-sm text-white/30">No members yet.</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-2.5">
-                                {users.map((user, i) => (
-                                    <UserCard
-                                        key={user.id || user.$id || user.username}
-                                        user={user}
-                                        stats={stats}
-                                        index={i}
-                                        currentUserId={currentUserId}
-                                    />
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Load more */}
-                        {hasMore && (
-                            <div className="flex justify-center mt-8">
-                                <button
-                                    onClick={loadMore}
-                                    disabled={loadingMore}
-                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-satoshi text-sm font-medium bg-white/[0.04] border border-white/[0.08] hover:border-accent/25 hover:bg-white/[0.07] text-white/50 hover:text-white/80 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loadingMore ? (
-                                        <>
-                                            <svg className="w-4 h-4 animate-spin text-accent/50" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                            </svg>
-                                            Loading…
-                                        </>
-                                    ) : (
-                                        'Load more'
-                                    )}
-                                </button>
-                            </div>
-                        )}
-                    </>
                 )}
             </div>
         </div>

@@ -33,3 +33,6 @@ output_new.txt
 .agents
 .agent
 .planning
+
+# local tooling
+.claude/

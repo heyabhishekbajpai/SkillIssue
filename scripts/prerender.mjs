@@ -22,7 +22,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const DIST_DIR = join(__dirname, '..', 'dist')
 
 const SITE_NAME = 'Skill Issue'
-const SITE_URL = 'https://www.skillissue.bajpai.tech'
+const SITE_URL = 'https://skillissue.si'
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`
 const TWITTER_HANDLE = '@BajpaiX'
 

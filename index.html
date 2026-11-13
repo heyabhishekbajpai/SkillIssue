@@ -4,22 +4,32 @@
 <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="preload" as="image" href="/skill-issue-white.png" />
+    <meta name="theme-color" content="#f6f8fa" />
+    <script>
+        // Apply the saved theme before first paint to avoid a light/dark flash
+        (function () {
+            try {
+                var p = localStorage.getItem('si-theme') || 'system';
+                var dark = p === 'dark' || (p === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+            } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+        })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description"
         content="Skill Issue — The AI skills marketplace. Discover, build, share and combine AI skills for Claude, ChatGPT, Gemini, Cursor and more. 50,000+ skills available." />
     <title>Skill Issue — AI Skills Marketplace for Claude, ChatGPT, Gemini & Cursor</title>
 
     <!-- Canonical -->
-    <link rel="canonical" href="https://www.skillissue.bajpai.tech/" />
+    <link rel="canonical" href="https://skillissue.si/" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Skill Issue" />
     <meta property="og:title" content="Skill Issue — AI Skills Marketplace" />
     <meta property="og:description" content="Discover, build, share and combine AI skills for Claude, ChatGPT, Gemini, Cursor and more. 50,000+ skills available." />
-    <meta property="og:url" content="https://www.skillissue.bajpai.tech/" />
-    <meta property="og:image" content="https://www.skillissue.bajpai.tech/og-image.png" />
+    <meta property="og:url" content="https://skillissue.si/" />
+    <meta property="og:image" content="https://skillissue.si/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="631" />
 
@@ -27,7 +37,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Skill Issue — AI Skills Marketplace" />
     <meta name="twitter:description" content="Discover, build, share and combine AI skills for Claude, ChatGPT, Gemini, Cursor and more. 50,000+ skills available." />
-    <meta name="twitter:image" content="https://www.skillissue.bajpai.tech/og-image.png" />
+    <meta name="twitter:image" content="https://skillissue.si/og-image.png" />
     <meta name="twitter:site" content="@BajpaiX" />
 
     <!-- JSON-LD Structured Data (static for crawlers that don't execute JS) -->
@@ -38,8 +48,8 @@
             {
                 "@type": "Organization",
                 "name": "Skill Issue",
-                "url": "https://www.skillissue.bajpai.tech",
-                "logo": "https://www.skillissue.bajpai.tech/favicon.png",
+                "url": "https://skillissue.si",
+                "logo": "https://skillissue.si/favicon.png",
                 "description": "The AI skills marketplace. Discover, build, share and combine skills for every AI agent.",
                 "sameAs": [
                     "https://x.com/BajpaiX",
@@ -52,13 +62,13 @@
             {
                 "@type": "WebSite",
                 "name": "Skill Issue",
-                "url": "https://www.skillissue.bajpai.tech",
+                "url": "https://skillissue.si",
                 "description": "The AI skills marketplace — discover, build, share and combine skills for every AI agent.",
                 "potentialAction": {
                     "@type": "SearchAction",
                     "target": {
                         "@type": "EntryPoint",
-                        "urlTemplate": "https://www.skillissue.bajpai.tech/browse?q={search_term_string}"
+                        "urlTemplate": "https://skillissue.si/browse?q={search_term_string}"
                     },
                     "query-input": "required name=search_term_string"
                 }
@@ -68,7 +78,7 @@
                 "name": "Skill Issue",
                 "applicationCategory": "DeveloperApplication",
                 "operatingSystem": "Web",
-                "url": "https://www.skillissue.bajpai.tech",
+                "url": "https://skillissue.si",
                 "description": "AI skills marketplace — discover, build, share and combine skills for Claude, ChatGPT, Gemini, Cursor and more.",
                 "offers": {
                     "@type": "Offer",
@@ -117,11 +127,6 @@
     }
     </script>
 
-    <!-- Clash Display from FontShare -->
-    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700&display=swap"
-        rel="stylesheet">
-    <!-- Satoshi from FontShare -->
-    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -130,7 +135,7 @@
 
     <!-- Fallback content for crawlers that don't execute JavaScript -->
     <noscript>
-        <div style="max-width:800px;margin:0 auto;padding:40px 20px;font-family:system-ui,sans-serif;color:#e2e8f0;background:#0a0e1a;">
+        <div style="max-width:800px;margin:0 auto;padding:40px 20px;font-family:system-ui,sans-serif;color:#1f2328;background:#ffffff;">
             <h1>Skill Issue — AI Skills Marketplace</h1>
             <p>Skill Issue is the open marketplace for AI skills. Discover, build, share and combine AI skills for Claude, ChatGPT, Gemini, Cursor, Copilot and more.</p>
 

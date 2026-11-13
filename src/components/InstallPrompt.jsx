@@ -4,24 +4,23 @@ import { Download, X } from 'lucide-react'
 export default function InstallPrompt() {
     const [deferredPrompt, setDeferredPrompt] = useState(null)
     const [visible, setVisible] = useState(false)
-    const [dismissed, setDismissed] = useState(false)
 
     useEffect(() => {
-        // Don't show if already dismissed this session
-        if (sessionStorage.getItem('pwa-dismissed')) return
-
+        try { if (sessionStorage.getItem('pwa-dismissed')) return undefined } catch { /* ignore */ }
+        let timer
         const handler = (e) => {
             e.preventDefault()
             setDeferredPrompt(e)
-            // Small delay so it doesn't pop up instantly on page load
-            setTimeout(() => setVisible(true), 3000)
+            timer = setTimeout(() => setVisible(true), 3000)
         }
-
         window.addEventListener('beforeinstallprompt', handler)
-        return () => window.removeEventListener('beforeinstallprompt', handler)
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handler)
+            clearTimeout(timer)
+        }
     }, [])
 
-    const handleInstall = async () => {
+    const install = async () => {
         if (!deferredPrompt) return
         deferredPrompt.prompt()
         const { outcome } = await deferredPrompt.userChoice
@@ -31,96 +30,26 @@ export default function InstallPrompt() {
         }
     }
 
-    const handleDismiss = () => {
+    const dismiss = () => {
         setVisible(false)
-        setDismissed(true)
-        sessionStorage.setItem('pwa-dismissed', '1')
+        try { sessionStorage.setItem('pwa-dismissed', '1') } catch { /* ignore */ }
     }
 
-    if (!visible || dismissed) return null
+    if (!visible) return null
 
     return (
-        <div
-            style={{
-                position: 'fixed',
-                bottom: '80px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 9998,
-                width: 'min(360px, 90vw)',
-                background: 'linear-gradient(135deg, #111827 0%, #0d1526 100%)',
-                border: '1px solid rgba(75,169,255,0.25)',
-                borderRadius: '16px',
-                padding: '16px 18px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(75,169,255,0.08)',
-                backdropFilter: 'blur(12px)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                animation: 'slideUpIn 0.35s cubic-bezier(0.16,1,0.3,1)',
-            }}
-        >
-            <style>{`
-                @keyframes slideUpIn {
-                    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-                    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-                }
-            `}</style>
-
-            {/* App icon */}
-            <img
-                src="/favicon.png"
-                alt="Skill Issue"
-                style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0 }}
-            />
-
-            {/* Text */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: '#f0f4ff', lineHeight: 1.3 }}>
-                    Install Skill Issue
-                </p>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(180,198,230,0.7)', lineHeight: 1.4 }}>
-                    Add to home screen for quick access
-                </p>
+        <div className="fixed bottom-20 left-1/2 z-[95] flex w-[min(380px,calc(100vw-32px))] -translate-x-1/2 items-center gap-3 rounded-lg border border-line bg-canvas-overlay p-3 shadow-overlay animate-pop-in md:bottom-6">
+            <img src="/favicon.png" alt="" width={36} height={36} className="h-9 w-9 rounded-md ring-1 ring-line" />
+            <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-fg">Install Skill Issue</p>
+                <p className="text-xs text-fg-muted">Add it to your home screen for quick access.</p>
             </div>
-
-            {/* Install button */}
-            <button
-                onClick={handleInstall}
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    background: 'linear-gradient(135deg, #4ba9ff, #2563eb)',
-                    border: 'none',
-                    borderRadius: 8,
-                    color: '#fff',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    padding: '7px 12px',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    whiteSpace: 'nowrap',
-                }}
-            >
-                <Download size={13} />
+            <button type="button" onClick={install} className="btn-primary btn-sm">
+                <Download className="h-3.5 w-3.5" />
                 Install
             </button>
-
-            {/* Dismiss */}
-            <button
-                onClick={handleDismiss}
-                style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'rgba(180,198,230,0.5)',
-                    cursor: 'pointer',
-                    padding: 4,
-                    flexShrink: 0,
-                    lineHeight: 1,
-                }}
-            >
-                <X size={16} />
+            <button type="button" onClick={dismiss} className="btn-invisible btn-icon btn-sm" aria-label="Dismiss">
+                <X className="h-4 w-4" />
             </button>
         </div>
     )

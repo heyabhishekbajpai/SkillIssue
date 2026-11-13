@@ -483,13 +483,13 @@ export default defineConfig({
         sitemapPlugin(),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['favicon.png', 'skill-issue-white.png'],
+            includeAssets: ['favicon.png'],
             manifest: {
                 name: 'Skill Issue',
                 short_name: 'SkillIssue',
                 description: 'The AI skills marketplace. Discover, build, share and combine skills for Claude, ChatGPT, Gemini, Cursor and more.',
-                theme_color: '#0a0e1a',
-                background_color: '#0a0e1a',
+                theme_color: '#f6f8fa',
+                background_color: '#ffffff',
                 display: 'standalone',
                 orientation: 'portrait',
                 start_url: '/',
@@ -514,16 +514,6 @@ export default defineConfig({
                     /^\/robots\.txt$/,
                     /^\/sitemap\.xml$/,
                     /^\/api\//,
-                ],
-                runtimeCaching: [
-                    {
-                        urlPattern: /^https:\/\/api\.fontshare\.com\/.*/i,
-                        handler: 'CacheFirst',
-                        options: {
-                            cacheName: 'font-cache',
-                            expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-                        },
-                    },
                 ],
             },
         }),

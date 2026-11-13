@@ -1,145 +1,90 @@
 import { Link } from 'react-router-dom'
 
+const COLUMNS = [
+    {
+        title: 'Product',
+        links: [
+            { label: 'Explore skills', to: '/browse' },
+            { label: 'Skill builder', to: '/build' },
+            { label: 'Upload a skill', to: '/upload' },
+            { label: 'Private vault', to: '/coming-soon?feature=Private%20Vault' },
+            { label: 'Pricing', to: '/coming-soon?feature=Pricing' },
+        ],
+    },
+    {
+        title: 'Resources',
+        links: [
+            { label: 'What are AI skills?', to: '/about' },
+            { label: 'Skill format guide', to: '/about' },
+            { label: 'Community', to: '/community' },
+        ],
+    },
+    {
+        title: 'Company',
+        links: [
+            { label: 'About', to: '/about' },
+            { label: 'X / Twitter', href: 'https://x.com/BajpaiX' },
+            { label: 'GitHub', href: 'https://github.com/heyabhishekbajpai' },
+            { label: 'Support on Ko-fi', href: 'https://ko-fi.com/abhishekbajpai' },
+        ],
+    },
+]
+
 export default function Footer() {
     return (
-        <footer className="relative pt-16 pb-10 bg-[#05070d] border-t border-accent/10">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-                    {/* Brand */}
-                    <div className="lg:col-span-1">
-                        <div className="flex items-center mb-4">
-                            <img
-                                src="/skill-issue-white.png"
-                                alt="Skill Issue"
-                                loading="lazy"
-                                width={132}
-                                height={32}
-                                className="h-8 w-auto"
-                            />
+        <footer className="mt-8 border-t border-line-muted bg-canvas-subtle">
+            <div className="container-page py-10">
+                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+                    <div className="lg:col-span-2">
+                        <div className="flex items-center gap-2">
+                            <img src="/favicon.png" alt="" width={24} height={24} loading="lazy" className="h-6 w-6 rounded-full ring-1 ring-line" />
+                            <span className="font-display text-sm font-semibold">Skill Issue</span>
                         </div>
-                        <p className="font-satoshi text-sm text-white/30 leading-relaxed mb-6">
-                            The marketplace for AI skill files.
-                            Discover, save, share and combine
-                            skills for every AI agent.
+                        <p className="mt-3 max-w-xs text-sm text-fg-muted">
+                            The open registry for AI agent skills. Discover, build and share SKILL.md files for every agent.
                         </p>
-                        {/* Ko-fi Button */}
-                        <a
-                            href="https://ko-fi.com/abhishekbajpai"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FF5E5B]/10 border border-[#FF5E5B]/20 hover:bg-[#FF5E5B]/20 transition-all duration-300 group"
-                        >
-                            <svg className="w-4 h-4 text-[#FF5E5B]" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.679.798-.679.798s-.082 7.324-.022 11.822c.164 2.424 2.586 2.672 2.586 2.672s8.267-.023 11.966-.049c2.438-.426 2.683-2.566 2.658-3.734 4.352.24 7.422-2.831 6.649-6.916zm-11.062 3.511c-1.246 1.453-4.011 3.976-4.011 3.976s-.121.119-.31.023c-.076-.057-.108-.09-.108-.09-.443-.441-3.368-3.049-4.034-3.954-.709-.965-1.041-2.7-.091-3.71.951-1.01 3.005-1.086 4.363.407 0 0 1.565-1.782 3.468-.963 1.904.82 1.832 3.011.723 4.311z" />
-                            </svg>
-                            <span className="font-satoshi text-sm font-medium text-[#FF5E5B]/80 group-hover:text-[#FF5E5B] transition-colors">
-                                Support on Ko-fi
-                            </span>
-                        </a>
                     </div>
-
-                    {/* Product */}
-                    <div>
-                        <h4 className="font-clash font-semibold text-sm text-white/80 mb-5 tracking-wide">
-                            Product
-                        </h4>
-                        <ul className="space-y-3">
-                            {[
-                                { label: 'Browse Skills', to: '/browse' },
-                                { label: 'Skill Editor', to: '/build' },
-                                { label: 'Public Marketplace', to: '/browse' },
-                                { label: 'Private Vault', to: '/coming-soon?feature=Private%20Vault' },
-                                { label: 'Pricing', to: '/coming-soon?feature=Pricing' },
-                            ].map(({ label, to }) => (
-                                <li key={label}>
-                                    {to ? (
-                                        <Link to={to} className="font-satoshi text-sm text-white/30 hover:text-accent-light transition-colors duration-300">
-                                            {label}
-                                        </Link>
-                                    ) : (
-                                        <span className="font-satoshi text-sm text-white/30 cursor-default">{label}</span>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Resources */}
-                    <div>
-                        <h4 className="font-clash font-semibold text-sm text-white/80 mb-5 tracking-wide">
-                            Resources
-                        </h4>
-                        <ul className="space-y-3">
-                            {[
-                                { label: 'What Are AI Skills?', to: '/about' },
-                                { label: 'Skill Format Guide', to: '/about' },
-                                { label: 'Community', to: '/community' },
-                            ].map(({ label, to }) => (
-                                <li key={label}>
-                                    <Link to={to} className="font-satoshi text-sm text-white/30 hover:text-accent-light transition-colors duration-300">
-                                        {label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Company */}
-                    <div>
-                        <h4 className="font-clash font-semibold text-sm text-white/80 mb-5 tracking-wide">
-                            Company
-                        </h4>
-                        <ul className="space-y-3">
-                            {[
-                                { label: 'About', href: '/about', internal: true },
-                                { label: 'Twitter / X', href: 'https://x.com/BajpaiX', internal: false },
-                                { label: 'GitHub', href: 'https://github.com/heyabhishekbajpai', internal: false },
-                            ].map(({ label, href, internal }) => (
-                                <li key={label}>
-                                    {internal ? (
-                                        <Link to={href} className="font-satoshi text-sm text-white/30 hover:text-accent-light transition-colors duration-300">
-                                            {label}
-                                        </Link>
-                                    ) : (
-                                        <a href={href} target="_blank" rel="noopener noreferrer" className="font-satoshi text-sm text-white/30 hover:text-accent-light transition-colors duration-300">
-                                            {label}
-                                        </a>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    {COLUMNS.map((col) => (
+                        <div key={col.title}>
+                            <h2 className="mb-3 font-sans text-sm font-semibold text-fg">{col.title}</h2>
+                            <ul className="space-y-2">
+                                {col.links.map(({ label, to, href }) => (
+                                    <li key={label}>
+                                        {to ? (
+                                            <Link to={to} className="text-sm text-fg-muted hover:text-accent hover:underline">{label}</Link>
+                                        ) : (
+                                            <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm text-fg-muted hover:text-accent hover:underline">{label}</a>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
                 </div>
 
-                {/* Bottom bar */}
-                <div className="border-t border-white/5 pt-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                    <p className="font-satoshi text-xs text-white/20 text-center md:text-left order-2 md:order-1">
-                        © 2026 Skill Issue. All rights reserved.
-                    </p>
-
-                    {/* Developed By - Centered, Minimal, Big */}
+                <div className="mt-10 flex flex-col gap-4 border-t border-line-muted pt-6 text-xs text-fg-muted sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                        <span>© {new Date().getFullYear()} Skill Issue</span>
+                        <Link to="/terms" className="hover:text-accent hover:underline">Terms</Link>
+                        <Link to="/privacy" className="hover:text-accent hover:underline">Privacy</Link>
+                        <Link to="/about" className="hover:text-accent hover:underline">About</Link>
+                    </div>
                     <a
                         href="https://www.bajpai.tech"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex justify-center items-center gap-3 order-1 md:order-2 w-fit mx-auto transition-transform hover:scale-105 duration-300 cursor-pointer group"
+                        className="inline-flex items-center gap-2 hover:text-fg"
                     >
-                        <span className="font-clash text-lg sm:text-xl text-white/50 group-hover:text-white transition-colors">Developed by</span>
+                        Built by
                         <img
                             src="/bajpailogo.png"
-                            alt="Bajpai Tech logo — developed by Abhishek Bajpai"
+                            alt="Bajpai Tech"
                             loading="lazy"
-                            width={100}
-                            height={24}
-                            className="h-6 sm:h-7 w-auto opacity-70 group-hover:opacity-100 transition-opacity duration-300"
+                            width={80}
+                            height={20}
+                            className="h-4 w-auto opacity-80 [[data-theme=light]_&]:invert"
                         />
                     </a>
-
-                    <div className="flex gap-6 justify-center md:justify-end order-3">
-                        <Link to="/about" className="font-satoshi text-xs text-white/20 hover:text-white/40 transition-colors">About</Link>
-                        <Link to="/privacy" className="font-satoshi text-xs text-white/20 hover:text-white/40 transition-colors">Privacy</Link>
-                        <Link to="/terms" className="font-satoshi text-xs text-white/20 hover:text-white/40 transition-colors">Terms</Link>
-                    </div>
                 </div>
             </div>
         </footer>

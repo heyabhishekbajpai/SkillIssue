@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Spinner } from '../components/ui/primitives'
 import { account } from '../lib/appwrite'
 import { useAuth } from '../context/AuthContext'
 
@@ -74,10 +75,9 @@ export default function AuthCallback() {
     }, [navigate])
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-            {/* Spinner */}
-            <div className="w-10 h-10 rounded-full border-2 border-accent/20 border-t-accent animate-spin" />
-            <p className="font-satoshi text-sm text-white/40">Finishing sign-in…</p>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3" role="status" aria-live="polite">
+            <Spinner size={24} />
+            <p className="text-sm text-fg-muted">Finishing sign-in…</p>
         </div>
     )
 }

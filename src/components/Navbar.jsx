@@ -1,280 +1,269 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import {
+    Search, Plus, Menu, X, Sun, Moon, Monitor, User, LogOut, Upload, Wand2, ChevronDown,
+    BookOpen, Users, Hammer, Compass,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
+import { Avatar, Dropdown, GoogleMark, Logo } from './ui/primitives'
 
-/** Small self-contained avatar that falls back to initials on image error. */
-function AvatarImg({ src, name, size = 'w-8 h-8', textSize = 'text-xs' }) {
-    const [err, setErr] = useState(false)
-    useEffect(() => { setErr(false) }, [src])
-    if (src && !err) {
-        return (
-            <img
-                src={src}
-                alt={name}
-                width={32}
-                height={32}
-                className={`${size} rounded-full border border-accent/30 object-cover hover:border-accent transition-colors`}
-                onError={() => setErr(true)}
-            />
-        )
+const NAV = [
+    { to: '/browse', label: 'Explore', icon: Compass },
+    { to: '/community', label: 'Community', icon: Users },
+    { to: '/build', label: 'Build', icon: Hammer },
+    { to: '/about', label: 'Docs', icon: BookOpen },
+]
+
+const THEMES = [
+    { id: 'light', label: 'Light', icon: Sun },
+    { id: 'dark', label: 'Dark', icon: Moon },
+    { id: 'system', label: 'System', icon: Monitor },
+]
+
+function HeaderSearch({ className = '', autoFocus = false, onDone }) {
+    const navigate = useNavigate()
+    const location = useLocation()
+    const inputRef = useRef(null)
+    const [q, setQ] = useState('')
+
+    // Mirror the current ?q= when on the browse page
+    useEffect(() => {
+        if (location.pathname === '/browse') {
+            setQ(new URLSearchParams(location.search).get('q') || '')
+        }
+    }, [location.pathname, location.search])
+
+    // "/" focuses search, like most developer tools
+    useEffect(() => {
+        const onKey = (e) => {
+            if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return
+            const tag = document.activeElement?.tagName
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return
+            e.preventDefault()
+            inputRef.current?.focus()
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [])
+
+    const submit = (e) => {
+        e.preventDefault()
+        const term = q.trim()
+        navigate(term ? `/browse?q=${encodeURIComponent(term)}` : '/browse')
+        inputRef.current?.blur()
+        onDone?.()
     }
+
     return (
-        <div className={`${size} rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center hover:border-accent transition-colors`}>
-            <span className={`font-clash font-bold ${textSize} text-accent`}>
-                {name?.charAt(0)?.toUpperCase() ?? 'U'}
-            </span>
-        </div>
+        <form role="search" onSubmit={submit} className={`relative ${className}`}>
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted" />
+            <input
+                ref={inputRef}
+                type="search"
+                value={q}
+                autoFocus={autoFocus}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search skills"
+                aria-label="Search skills"
+                className="input h-8 bg-canvas pl-8 pr-8 text-sm"
+            />
+            <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-line px-1.5 font-mono text-[11px] leading-4 text-fg-muted sm:block">
+                /
+            </kbd>
+        </form>
+    )
+}
+
+function ThemeSwitch() {
+    const { preference, resolved, setPreference } = useTheme()
+    const Icon = resolved === 'dark' ? Moon : Sun
+    return (
+        <Dropdown
+            trigger={({ toggle }) => (
+                <button type="button" onClick={toggle} className="btn btn-icon" aria-label="Change theme" title="Theme">
+                    <Icon className="h-4 w-4" />
+                </button>
+            )}
+            menuClassName="min-w-[160px]"
+        >
+            <p className="px-4 pb-1 text-xs font-semibold text-fg-muted">Theme</p>
+            {THEMES.map(({ id, label, icon: I }) => (
+                <button
+                    key={id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={preference === id}
+                    onClick={() => setPreference(id)}
+                    className={`menu-item ${preference === id ? 'font-semibold' : ''}`}
+                >
+                    <I />
+                    {label}
+                    {preference === id && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-accent" />}
+                </button>
+            ))}
+        </Dropdown>
     )
 }
 
 export default function Navbar() {
-    const [scrolled, setScrolled] = useState(false)
-    const [mobileOpen, setMobileOpen] = useState(false)
     const { user, profile, isLoggedIn, openAuthModal, signOut } = useAuth()
     const location = useLocation()
-    const isHome = location.pathname === '/'
+    const [drawer, setDrawer] = useState(false)
 
-    // Sliding pill indicator
-    const pillRef = useRef(null)
-    const linkRefs = useRef({})
-    const [indicator, setIndicator] = useState({ left: 0, width: 0, opacity: 0 })
+    useEffect(() => { setDrawer(false) }, [location.pathname])
 
-    const measureIndicator = useCallback(() => {
-        const pill = pillRef.current
-        const active = linkRefs.current[location.pathname]
-        if (pill && active) {
-            const pillRect = pill.getBoundingClientRect()
-            const activeRect = active.getBoundingClientRect()
-            setIndicator({
-                left: activeRect.left - pillRect.left,
-                width: activeRect.width,
-                opacity: 1,
-            })
-        } else {
-            setIndicator(prev => ({ ...prev, opacity: 0 }))
+    useEffect(() => {
+        if (!drawer) return undefined
+        const prev = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+        const onKey = (e) => { if (e.key === 'Escape') setDrawer(false) }
+        window.addEventListener('keydown', onKey)
+        return () => {
+            document.body.style.overflow = prev
+            window.removeEventListener('keydown', onKey)
         }
-    }, [location.pathname])
+    }, [drawer])
 
-    useEffect(() => {
-        const id = requestAnimationFrame(measureIndicator)
-        return () => cancelAnimationFrame(id)
-    }, [measureIndicator])
-
-    useEffect(() => {
-        window.addEventListener('resize', measureIndicator)
-        return () => window.removeEventListener('resize', measureIndicator)
-    }, [measureIndicator])
-
-    useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 20)
-        window.addEventListener('scroll', handleScroll)
-        return () => window.removeEventListener('scroll', handleScroll)
-    }, [])
-
-    // Close mobile menu on route change
-    useEffect(() => {
-        setMobileOpen(false)
-    }, [location])
+    const name = profile?.display_name || user?.name || user?.user_metadata?.full_name || 'You'
+    const avatarSrc = profile?.avatar_url || user?.user_metadata?.avatar_url
+    const profileHref = profile?.username ? `/user/${profile.username}` : null
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50">
-            {/* ── Desktop: All pages → Bar + Centered floating pill ── */}
-            <div className={`hidden md:block transition-all duration-500 ${
-                scrolled
-                    ? 'bg-navy/90 backdrop-blur-xl border-b border-accent/10 shadow-lg shadow-black/20'
-                    : 'bg-navy/90 backdrop-blur-xl border-b border-white/5'
-            }`}>
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-20">
-                        {/* Logo */}
-                        <Link to="/" className="flex items-center group">
-                            <img
-                                src="/skill-issue-white.png"
-                                alt="Skill Issue"
-                                width={148}
-                                height={36}
-                                className="h-9 w-auto transition-transform duration-300 group-hover:scale-105"
-                            />
-                        </Link>
+        <header className="sticky top-0 z-50 border-b border-header-line bg-header text-header-fg">
+            <div className="container-page flex h-16 items-center gap-3">
+                <button
+                    type="button"
+                    onClick={() => setDrawer(true)}
+                    className="btn btn-icon md:hidden"
+                    aria-label="Open navigation"
+                >
+                    <Menu className="h-4 w-4" />
+                </button>
 
-                        {/* Centered pill */}
-                        <div
-                            ref={pillRef}
-                            className={`absolute left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-2 rounded-full border transition-all duration-500 ${
-                                scrolled
-                                    ? 'bg-navy/80 backdrop-blur-xl border-white/[0.08] shadow-lg shadow-black/20'
-                                    : 'bg-white/[0.03] backdrop-blur-md border-white/[0.06]'
-                            }`}
+                <Logo className="shrink-0" />
+
+                <nav aria-label="Primary" className="ml-4 hidden items-center gap-1 md:flex">
+                    {NAV.map(({ to, label }) => (
+                        <NavLink
+                            key={to}
+                            to={to}
+                            className={({ isActive }) =>
+                                `rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-neutral-subtle ${
+                                    isActive ? 'text-fg' : 'text-fg-muted hover:text-fg'
+                                }`
+                            }
                         >
-                            {/* Sliding indicator */}
-                            <div
-                                className="absolute top-2 bottom-2 rounded-full bg-white/[0.08] transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] pointer-events-none"
-                                style={{
-                                    left: indicator.left,
-                                    width: indicator.width,
-                                    opacity: indicator.opacity,
-                                }}
-                            />
-                            {[
-                                { to: '/', label: 'Home' },
-                                { to: '/browse', label: 'Browse' },
-                                { to: '/community', label: 'Community' },
-                                { to: '/build', label: 'Build' },
-                                { to: '/upload', label: 'Upload' },
-                            ].map(({ to, label }) => (
-                                <Link
-                                    key={to}
-                                    ref={el => { linkRefs.current[to] = el }}
-                                    to={to}
-                                    className={`relative z-[1] px-4 py-2 rounded-full font-satoshi text-[13px] font-medium transition-colors duration-300 ${
-                                        location.pathname === to
-                                            ? 'text-white'
-                                            : 'text-white/55 hover:text-white/90 hover:bg-white/[0.04]'
-                                    }`}
-                                >
-                                    {label}
-                                </Link>
-                            ))}
-                        </div>
+                            {label}
+                        </NavLink>
+                    ))}
+                </nav>
 
-                        {/* Auth */}
-                        <div>
-                            {isLoggedIn ? (
-                                <div className="flex items-center gap-3">
-                                    <Link
-                                        to={profile?.username ? `/user/${profile.username}` : '#'}
-                                        title="My Profile"
-                                        className="relative group/avatar"
-                                    >
-                                        <AvatarImg
-                                            src={profile?.avatar_url || user?.user_metadata?.avatar_url}
-                                            name={profile?.display_name || user?.user_metadata?.full_name || 'User'}
-                                        />
-                                        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap font-satoshi text-[10px] text-white/50 bg-navy border border-white/10 px-2 py-0.5 rounded-md opacity-0 group-hover/avatar:opacity-100 transition-opacity pointer-events-none">
-                                            @{profile?.username}
-                                        </span>
-                                    </Link>
-                                    <button
-                                        onClick={signOut}
-                                        className="font-satoshi text-sm text-white/40 hover:text-white/70 transition-colors duration-300"
-                                    >
-                                        Sign out
-                                    </button>
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={openAuthModal}
-                                    className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-accent/30 hover:bg-white/10 transition-all duration-300 group"
-                                >
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                                    </svg>
-                                    <span className="font-satoshi text-sm font-medium text-white/80 group-hover:text-white transition-colors">
-                                        Sign in with Google
-                                    </span>
+                <div className="ml-auto flex items-center gap-2">
+                    <HeaderSearch className="hidden w-56 sm:block lg:w-72" />
+
+                    <Link to="/browse" className="btn btn-icon sm:hidden" aria-label="Search">
+                        <Search className="h-4 w-4" />
+                    </Link>
+
+                    <Dropdown
+                        className="hidden sm:block"
+                        trigger={({ toggle }) => (
+                            <button type="button" onClick={toggle} className="btn gap-1 px-2" aria-label="Create new">
+                                <Plus className="h-4 w-4" />
+                                <ChevronDown className="h-3 w-3" />
+                            </button>
+                        )}
+                    >
+                        <Link to="/build" className="menu-item"><Wand2 />New skill with AI</Link>
+                        <Link to="/upload" className="menu-item"><Upload />Upload a skill</Link>
+                    </Dropdown>
+
+                    <ThemeSwitch />
+
+                    {isLoggedIn ? (
+                        <Dropdown
+                            trigger={({ toggle }) => (
+                                <button type="button" onClick={toggle} className="rounded-full" aria-label="Open user menu">
+                                    <Avatar src={avatarSrc} name={name} size={32} />
                                 </button>
                             )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Mobile: Same as before (all pages) ── */}
-            <div className={`md:hidden transition-all duration-500 ${
-                scrolled || mobileOpen
-                    ? 'bg-navy/90 backdrop-blur-xl border-b border-accent/10 shadow-lg shadow-black/20'
-                    : 'bg-navy/90 backdrop-blur-xl border-b border-white/5 shadow-lg shadow-black/10'
-            }`}>
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex items-center justify-between h-20">
-                        <Link to="/" className="flex items-center group">
-                            <img
-                                src="/skill-issue-white.png"
-                                alt="Skill Issue"
-                                width={148}
-                                height={36}
-                                className="h-9 w-auto transition-transform duration-300 group-hover:scale-105"
-                            />
-                        </Link>
-                        <button
-                            onClick={() => setMobileOpen(!mobileOpen)}
-                            className="p-2 text-white/70 hover:text-white"
+                            menuClassName="w-60"
                         >
-                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                {mobileOpen ? (
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                ) : (
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
-                                )}
-                            </svg>
+                            <div className="flex items-center gap-2 px-4 pb-2">
+                                <Avatar src={avatarSrc} name={name} size={32} />
+                                <div className="min-w-0">
+                                    <p className="truncate text-sm font-semibold text-fg">{name}</p>
+                                    {profile?.username && <p className="truncate text-xs text-fg-muted">@{profile.username}</p>}
+                                </div>
+                            </div>
+                            <div className="menu-divider" />
+                            {profileHref && <Link to={profileHref} className="menu-item"><User />Your profile</Link>}
+                            <Link to="/build" className="menu-item"><Wand2 />New skill</Link>
+                            <Link to="/upload" className="menu-item"><Upload />Upload skill</Link>
+                            <div className="menu-divider" />
+                            <button type="button" onClick={signOut} className="menu-item"><LogOut />Sign out</button>
+                        </Dropdown>
+                    ) : (
+                        <button type="button" onClick={openAuthModal} className="btn">
+                            <GoogleMark />
+                            <span className="hidden sm:inline">Sign in</span>
                         </button>
-                    </div>
-
-                    {/* Mobile Menu */}
-                    {mobileOpen && (
-                        <div className="md:hidden pb-6 border-t border-white/5 mt-2 pt-4 space-y-3">
-                            {!isHome && (
-                                <Link to="/" className="block font-satoshi text-sm text-white/60 hover:text-accent-light py-2">Home</Link>
-                            )}
-                            <Link to="/browse" className="block font-satoshi text-sm text-white/60 hover:text-accent-light py-2">Browse Skills</Link>
-                            <Link to="/community" className={`block font-satoshi text-sm py-2 ${location.pathname === '/community' ? 'text-accent font-medium' : 'text-white/60 hover:text-accent-light'}`}>
-                                Community
-                            </Link>
-                            <Link to="/build" className={`block font-satoshi text-sm py-2 ${location.pathname === '/build' ? 'text-accent font-medium' : 'text-white/60 hover:text-accent-light'}`}>
-                                Build a Skill
-                            </Link>
-                            <Link to="/upload" className={`block font-satoshi text-sm py-2 ${location.pathname === '/upload' ? 'text-accent font-medium' : 'text-white/60 hover:text-accent-light'}`}>
-                                Upload Skill
-                            </Link>
-
-                            {isLoggedIn ? (
-                                <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-white/[0.06]">
-                                    <Link
-                                        to={profile?.username ? `/user/${profile.username}` : '#'}
-                                        onClick={() => setMobileOpen(false)}
-                                        className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.04] transition-all"
-                                    >
-                                        <AvatarImg
-                                            src={profile?.avatar_url || user?.user_metadata?.avatar_url}
-                                            name={profile?.display_name || user?.user_metadata?.full_name || 'User'}
-                                        />
-                                        <div>
-                                            <p className="font-satoshi text-sm text-white/80 leading-none">
-                                                {user?.user_metadata?.full_name ?? 'My Profile'}
-                                            </p>
-                                            <p className="font-satoshi text-xs text-accent/60 mt-0.5">
-                                                @{profile?.username}
-                                            </p>
-                                        </div>
-                                    </Link>
-                                    <button
-                                        onClick={signOut}
-                                        className="font-satoshi text-sm text-white/30 hover:text-white/60 py-1.5 text-left px-3 transition-colors"
-                                    >
-                                        Sign out
-                                    </button>
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={openAuthModal}
-                                    className="flex items-center gap-2 mt-3 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 w-full"
-                                >
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                                    </svg>
-                                    <span className="font-satoshi text-sm font-medium text-white/80">Sign in with Google</span>
-                                </button>
-                            )}
-                        </div>
                     )}
                 </div>
             </div>
-        </nav>
+
+            {/* Mobile navigation drawer */}
+            {drawer && (
+                <div className="fixed inset-0 z-[90] md:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
+                    <div className="absolute inset-0 bg-[rgb(var(--shadow)/0.5)] animate-fade-in" onClick={() => setDrawer(false)} />
+                    <div className="absolute inset-y-0 left-0 flex w-[300px] max-w-[85vw] flex-col border-r border-line bg-canvas shadow-overlay animate-fade-in">
+                        <div className="flex h-16 items-center justify-between border-b border-line-muted px-4">
+                            <Logo />
+                            <button type="button" onClick={() => setDrawer(false)} className="btn-invisible btn-icon" aria-label="Close navigation">
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+                        <div className="p-4">
+                            <HeaderSearch onDone={() => setDrawer(false)} />
+                        </div>
+                        <nav className="flex flex-col gap-0.5 px-2" aria-label="Mobile">
+                            {[{ to: '/', label: 'Home', icon: null }, ...NAV, { to: '/upload', label: 'Upload', icon: Upload }].map(({ to, label, icon: I }) => (
+                                <NavLink
+                                    key={to}
+                                    to={to}
+                                    end={to === '/'}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-3 rounded-md px-3 py-2 text-sm ${
+                                            isActive ? 'bg-neutral-subtle font-semibold text-fg' : 'text-fg hover:bg-neutral-subtle'
+                                        }`
+                                    }
+                                >
+                                    {I ? <I className="h-4 w-4 text-fg-muted" /> : <span className="w-4" />}
+                                    {label}
+                                </NavLink>
+                            ))}
+                        </nav>
+                        <div className="mt-auto border-t border-line-muted p-4">
+                            {isLoggedIn ? (
+                                <div className="flex items-center gap-3">
+                                    <Avatar src={avatarSrc} name={name} size={32} />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-semibold">{name}</p>
+                                        {profile?.username && <p className="truncate text-xs text-fg-muted">@{profile.username}</p>}
+                                    </div>
+                                    <button type="button" onClick={signOut} className="btn btn-sm">Sign out</button>
+                                </div>
+                            ) : (
+                                <button type="button" onClick={openAuthModal} className="btn btn-block">
+                                    <GoogleMark />
+                                    Sign in with Google
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </header>
     )
 }

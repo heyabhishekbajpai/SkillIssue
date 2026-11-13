@@ -1,108 +1,74 @@
-import { Routes, Route } from 'react-router-dom'
-import { useState } from 'react'
+import { Routes, Route, useLocation } from 'react-router-dom'
+import { useEffect, lazy, Suspense } from 'react'
 import { useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
-import Hero from './components/Hero'
-import VideoAndPlatforms from './components/VideoAndPlatforms'
-import { Testimonials } from './components/Testimonials'
-import WhatIsSkillFile from './components/WhatIsSkillFile'
-import HowItWorks from './components/HowItWorks'
-import Features from './components/Features'
-import CTA from './components/CTA'
-import FAQ from './components/FAQ'
 import Footer from './components/Footer'
-import SkillBuilder from './pages/SkillBuilder'
-import SkillUploader from './pages/SkillUploader'
-import BrowseSkills from './pages/BrowseSkills'
-import UserProfile from './pages/UserProfile'
-import AuthCallback from './pages/AuthCallback'
-import AuthModal from './components/AuthModal'
-import OnboardingModal from './components/OnboardingModal'
-import SkillDetailPage from './pages/SkillDetailPage'
-import GitHubSkillPage from './pages/GitHubSkillPage'
-import Community from './pages/Community'
-import About from './pages/About'
-import Privacy from './pages/Privacy'
-import Terms from './pages/Terms'
 import BottomNav from './components/BottomNav'
-import SplashScreen from './components/SplashScreen'
 import InstallPrompt from './components/InstallPrompt'
 import BackToTop from './components/BackToTop'
+import AuthModal from './components/AuthModal'
+import OnboardingModal from './components/OnboardingModal'
+import Home from './pages/Home'
+const SkillBuilder = lazy(() => import('./pages/SkillBuilder'))
+const SkillUploader = lazy(() => import('./pages/SkillUploader'))
+import BrowseSkills from './pages/BrowseSkills'
+const UserProfile = lazy(() => import('./pages/UserProfile'))
+import AuthCallback from './pages/AuthCallback'
+const SkillDetailPage = lazy(() => import('./pages/SkillDetailPage'))
+const GitHubSkillPage = lazy(() => import('./pages/GitHubSkillPage'))
+const Community = lazy(() => import('./pages/Community'))
+const About = lazy(() => import('./pages/About'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const Terms = lazy(() => import('./pages/Terms'))
 import NotFound from './pages/NotFound'
-import ComingSoon from './pages/ComingSoon'
-import SEO, { jsonLdSchemas } from './components/SEO'
+import { Spinner } from './components/ui/primitives'
+const ComingSoon = lazy(() => import('./pages/ComingSoon'))
 
-function LandingPage() {
-    return (
-        <>
-            <SEO
-                title={null}
-                description="Skill Issue is the AI skills marketplace. Discover, build, share and combine AI skills for Claude, ChatGPT, Gemini, Cursor and more. 50,000+ skills available."
-                path="/"
-                jsonLd={{
-                    '@graph': [
-                        jsonLdSchemas.website(),
-                        jsonLdSchemas.organization(),
-                        jsonLdSchemas.softwareApplication(),
-                    ],
-                }}
-            />
-            <Hero />
-            <VideoAndPlatforms />
-            <Testimonials />
-            <WhatIsSkillFile />
-            <HowItWorks />
-            <Features />
-            <FAQ />
-            <CTA />
-            <Footer />
-        </>
-    )
+function ScrollToTop() {
+    const { pathname } = useLocation()
+    useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+    return null
 }
-
-// Detect if visitor is a bot/crawler — skip splash screen for them
-const isBot = typeof navigator !== 'undefined' && /bot|crawl|spider|slurp|googlebot|bingbot|yandex|baidu|duckduckbot|facebookexternalhit|twitterbot|linkedinbot|perplexitybot|chatgpt|gptbot|claude|anthropic|prerender/i.test(navigator.userAgent)
 
 export default function App() {
     const { showAuthModal, needsOnboarding } = useAuth()
-    const [splashDone, setSplashDone] = useState(isBot)
 
     return (
-        <div className="relative min-h-screen bg-navy text-white">
-            {!splashDone && !isBot && <SplashScreen onDone={() => setSplashDone(true)} />}
+        <div className="flex min-h-screen flex-col bg-canvas text-fg">
+            <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[200] focus:rounded-md focus:bg-canvas focus:px-3 focus:py-2 focus:shadow-overlay">
+                Skip to content
+            </a>
+            <ScrollToTop />
             <InstallPrompt />
-            {/* Grid Background */}
-            <div className="grid-bg" />
-
-            {/* Content */}
-            <div className="relative z-10">
-                <Navbar />
-                <main className="pb-20 md:pb-0">
-                    <Routes>
-                        <Route path="/" element={<LandingPage />} />
-                        <Route path="/build" element={<SkillBuilder />} />
-                        <Route path="/upload" element={<SkillUploader />} />
-                        <Route path="/browse" element={<BrowseSkills />} />
-                        <Route path="/auth/callback" element={<AuthCallback />} />
-                        <Route path="/user/:username" element={<UserProfile />} />
-                        <Route path="/skill/github" element={<GitHubSkillPage />} />
-                        <Route path="/skill/:id" element={<SkillDetailPage />} />
-                        <Route path="/community" element={<Community />} />
-                        <Route path="/about" element={<About />} />
-                        <Route path="/privacy" element={<Privacy />} />
-                        <Route path="/terms" element={<Terms />} />
-                        <Route path="/coming-soon" element={<ComingSoon />} />
-                        <Route path="*" element={<NotFound />} />
-                    </Routes>
-                </main>
+            <Navbar />
+            <main id="main" className="flex-1">
+                <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center"><Spinner size={20} /></div>}>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/build" element={<SkillBuilder />} />
+                    <Route path="/upload" element={<SkillUploader />} />
+                    <Route path="/browse" element={<BrowseSkills />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route path="/user/:username" element={<UserProfile />} />
+                    <Route path="/skill/github" element={<GitHubSkillPage />} />
+                    <Route path="/skill/:id" element={<SkillDetailPage />} />
+                    <Route path="/community" element={<Community />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/coming-soon" element={<ComingSoon />} />
+                    <Route path="*" element={<NotFound />} />
+                </Routes>
+                </Suspense>
+            </main>
+            <div className="pb-16 md:pb-0">
+                <Footer />
             </div>
 
-            {/* Bottom nav — direct child of root so no ancestor overflow/transform
-                can break position:fixed on iOS/Android Safari */}
+            {/* Fixed chrome sits at the root so no ancestor transform breaks position:fixed on mobile Safari */}
             <BackToTop />
             <BottomNav />
 
-            {/* Global Modals (rendered above everything) */}
             {showAuthModal && <AuthModal />}
             {needsOnboarding && <OnboardingModal />}
         </div>

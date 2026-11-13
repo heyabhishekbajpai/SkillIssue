@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async'
 
 const SITE_NAME = 'Skill Issue'
-const SITE_URL = 'https://www.skillissue.bajpai.tech'
+import { SITE_URL } from '../lib/site'
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`
 const TWITTER_HANDLE = '@BajpaiX'
 

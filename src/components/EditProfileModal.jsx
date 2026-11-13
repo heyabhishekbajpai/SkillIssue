@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { X, Camera, Upload, ZoomIn, ZoomOut } from 'lucide-react'
+import { Spinner } from './ui/primitives'
 import { updateProfile } from '../lib/userService'
 import { storage, account, ID, Permission, Role, AVATARS_BUCKET_ID, isAppwriteConfigured } from '../lib/appwrite'
 
@@ -323,103 +325,38 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
     }
 
     return (
-        <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4"
-            onClick={photoStep === 'cropping' ? undefined : onClose}
-        >
-            {/* Global Drag & Drop Overlay for Profile Pic */}
+        <div className="modal-overlay" onClick={photoStep === 'cropping' ? undefined : onClose}>
+            {/* Window-level drag & drop hint */}
             {globalDragActive && (
-                <div className="fixed inset-0 bg-navy/80 backdrop-blur-md z-[9999] flex flex-col items-center justify-center pointer-events-none">
-                    {/* Animated background gradient */}
-                    <div className="absolute inset-0 opacity-10 pointer-events-none">
-                        <div className="absolute inset-0 bg-gradient-to-b from-accent/20 to-transparent" />
-                    </div>
-
-                    {/* Content */}
-                    <div className="relative z-10 text-center space-y-8 px-6">
-                        {/* Animated icon */}
-                        <div className="flex justify-center">
-                            <div className="relative w-32 h-32">
-                                {/* Outer rotating ring */}
-                                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-accent border-r-accent animate-spin" style={{ animationDuration: '3s' }} />
-
-                                {/* Middle pulsing ring */}
-                                <div className="absolute inset-4 rounded-full border border-accent/30 animate-pulse" />
-
-                                {/* Inner circular avatar frame */}
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <svg className="w-16 h-16 text-accent animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Text */}
-                        <div className="space-y-3">
-                            <h2 className="font-clash font-bold text-5xl sm:text-6xl text-white">
-                                DROP your photo
-                            </h2>
-                            <p className="font-satoshi text-lg text-white/60 max-w-md mx-auto">
-                                Upload a profile picture to complete your profile
-                            </p>
-                        </div>
-
-                        {/* Highlight box */}
-                        <div className="mt-12 inline-block">
-                            <div className="px-8 py-4 rounded-2xl border border-accent/40 bg-accent/[0.08] backdrop-blur-sm">
-                                <p className="font-satoshi text-sm font-medium text-accent">
-                                    ✨ JPEG, PNG, or WebP (max 5 MB)
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Floating particles effect */}
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        {[...Array(8)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="absolute w-1 h-1 bg-accent/40 rounded-full animate-pulse"
-                                style={{
-                                    left: `${Math.random() * 100}%`,
-                                    top: `${Math.random() * 100}%`,
-                                    animationDelay: `${Math.random() * 2}s`,
-                                    animationDuration: `${2 + Math.random() * 1}s`,
-                                }}
-                            />
-                        ))}
+                <div className="pointer-events-none fixed inset-0 z-[9999] flex items-center justify-center bg-[rgb(var(--shadow)/0.55)] p-6">
+                    <div className="rounded-xl border-2 border-dashed border-accent bg-canvas px-10 py-12 text-center shadow-overlay">
+                        <Camera className="mx-auto h-8 w-8 text-accent" />
+                        <p className="mt-3 font-display text-xl font-semibold">Drop your photo to upload</p>
+                        <p className="mt-1 text-sm text-fg-muted">JPEG, PNG or WebP, up to 5 MB</p>
                     </div>
                 </div>
             )}
 
             <div
-                className="relative w-full max-w-md bg-[#0d1225] border border-white/[0.08] rounded-2xl p-8 shadow-2xl"
-                onClick={e => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="edit-profile-title"
+                className="modal-card max-w-md"
+                onClick={(e) => e.stopPropagation()}
             >
-                {/* Close */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white/60 hover:bg-white/5 transition-all"
-                >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                <div className="flex items-center justify-between border-b border-line-muted px-4 py-3">
+                    <h2 id="edit-profile-title" className="font-sans text-sm font-semibold">
+                        {photoStep === 'cropping' ? 'Adjust photo' : 'Edit profile'}
+                    </h2>
+                    <button type="button" onClick={onClose} className="btn-invisible btn-icon btn-sm" aria-label="Close"><X className="h-4 w-4" /></button>
+                </div>
 
-                {/* ── CROP STEP ── */}
                 {photoStep === 'cropping' && rawSrc ? (
-                    <div className="space-y-5">
-                        <div className="text-center">
-                            <h2 className="font-clash font-bold text-xl">Adjust Photo</h2>
-                            <p className="font-satoshi text-xs text-white/30 mt-1">Drag to reposition · scroll to zoom</p>
-                        </div>
-
-                        {/* Crop circle viewport */}
+                    <div className="space-y-4 p-5">
+                        <p className="text-center text-xs text-fg-muted">Drag to reposition · scroll to zoom</p>
                         <div className="flex justify-center">
                             <div
-                                className="relative overflow-hidden rounded-full border-2 border-accent/40 shadow-[0_0_40px_rgba(75,169,255,0.2)] cursor-grab active:cursor-grabbing select-none"
+                                className="relative cursor-grab select-none overflow-hidden rounded-full ring-2 ring-accent active:cursor-grabbing"
                                 style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }}
                                 onMouseDown={handleMouseDown}
                                 onMouseMove={handleMouseMove}
@@ -428,17 +365,17 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
                                 onTouchStart={handleTouchStart}
                                 onTouchMove={handleTouchMove}
                                 onTouchEnd={handleMouseUp}
-                                onWheel={e => {
+                                onWheel={(e) => {
                                     e.preventDefault()
                                     const newScale = Math.min(4, Math.max(1, cropScale - e.deltaY * 0.003))
                                     setCropScale(newScale)
-                                    setCropOffset(prev => clampOffset(prev.x, prev.y, newScale))
+                                    setCropOffset((prev) => clampOffset(prev.x, prev.y, newScale))
                                 }}
                             >
-                                {/* Absolutely positioned so preview geometry exactly matches canvas output */}
+                                {/* Absolutely positioned so preview geometry matches canvas output */}
                                 <img
                                     src={rawSrc}
-                                    alt="crop"
+                                    alt="Crop preview"
                                     draggable={false}
                                     style={{
                                         position: 'absolute',
@@ -453,195 +390,104 @@ export default function EditProfileModal({ profile, onClose, onSave }) {
                                 />
                             </div>
                         </div>
-
-                        {/* Zoom slider */}
-                        <div className="flex items-center gap-3 px-2">
-                            <svg className="w-3.5 h-3.5 text-white/30 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
-                            </svg>
+                        <label className="flex items-center gap-3 px-2">
+                            <ZoomOut className="h-4 w-4 shrink-0 text-fg-muted" />
+                            <span className="sr-only">Zoom</span>
                             <input
                                 type="range" min="1" max="4" step="0.01"
                                 value={cropScale}
-                                onChange={e => {
+                                onChange={(e) => {
                                     const newScale = parseFloat(e.target.value)
                                     setCropScale(newScale)
-                                    setCropOffset(prev => clampOffset(prev.x, prev.y, newScale))
+                                    setCropOffset((prev) => clampOffset(prev.x, prev.y, newScale))
                                 }}
-                                className="flex-1 h-1.5 appearance-none bg-white/10 rounded-full accent-accent cursor-pointer"
+                                className="flex-1 cursor-pointer accent-[rgb(var(--accent-emphasis))]"
                             />
-                            <svg className="w-5 h-5 text-white/30 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
-                            </svg>
-                        </div>
-
-                        {error && (
-                            <p className="font-satoshi text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">{error}</p>
-                        )}
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => { setPhotoStep('idle'); setRawSrc(null) }}
-                                className="flex-1 py-3 rounded-xl border border-white/[0.08] text-white/50 font-satoshi text-sm hover:text-white/80 hover:border-white/20 transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleCropConfirm}
-                                className="flex-1 py-3 rounded-xl bg-accent text-navy font-satoshi font-bold text-sm hover:bg-[#6bbcff] transition-all"
-                            >
-                                Upload Photo →
-                            </button>
+                            <ZoomIn className="h-4 w-4 shrink-0 text-fg-muted" />
+                        </label>
+                        {error && <p className="flash flash-danger text-xs">{error}</p>}
+                        <div className="flex justify-end gap-2">
+                            <button type="button" onClick={() => { setPhotoStep('idle'); setRawSrc(null) }} className="btn">Cancel</button>
+                            <button type="button" onClick={handleCropConfirm} className="btn-primary">Set new profile picture</button>
                         </div>
                     </div>
                 ) : photoStep === 'uploading' ? (
-                    /* ── UPLOADING STEP ── */
-                    <div className="flex flex-col items-center gap-5 py-8">
-                        <div className="w-12 h-12 rounded-full border-2 border-accent/20 border-t-accent animate-spin" />
-                        <p className="font-satoshi text-sm text-white/40">Uploading your photo…</p>
+                    <div className="flex flex-col items-center gap-3 py-12">
+                        <Spinner size={24} />
+                        <p className="text-sm text-fg-muted">Uploading your photo…</p>
                     </div>
                 ) : (
-                    /* ── MAIN EDIT STEP ── */
-                    <>
-                        <h2 className="font-clash font-bold text-xl mb-6">Edit Profile</h2>
-
-                        {/* Avatar with upload button */}
-                        <div
-                            className="flex justify-center mb-7"
-                            onDragEnter={handleDragEnter}
-                            onDragLeave={handleDragLeave}
-                            onDragOver={handleDragOver}
-                            onDrop={handleDrop}
-                        >
-                            <div className={`relative group transition-all ${dragActive ? 'scale-105' : ''}`}>
-                                {/* Avatar ring */}
-                                <div className={`absolute -inset-1 rounded-full bg-gradient-to-br from-accent/40 via-accent/10 to-accent/30 transition-all ${dragActive ? 'opacity-100 shadow-[0_0_30px_rgba(75,169,255,0.4)]' : 'opacity-60 group-hover:opacity-100'} duration-500`} />
+                    <form onSubmit={handleSave}>
+                        <div className="space-y-4 p-5">
+                            <div
+                                className={`flex items-center gap-4 rounded-md border border-dashed p-3 transition-colors ${dragActive ? 'border-accent bg-accent-subtle' : 'border-line'}`}
+                                onDragEnter={isAppwriteConfigured ? handleDragEnter : undefined}
+                                onDragLeave={isAppwriteConfigured ? handleDragLeave : undefined}
+                                onDragOver={isAppwriteConfigured ? handleDragOver : undefined}
+                                onDrop={isAppwriteConfigured ? handleDrop : undefined}
+                            >
                                 {previewUrl ? (
-                                    <img
-                                        src={previewUrl}
-                                        alt="Avatar"
-                                        className="relative w-24 h-24 rounded-full border-2 border-navy object-cover"
-                                    />
+                                    <img src={previewUrl} alt="Avatar" className="avatar h-16 w-16" />
                                 ) : (
-                                    <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-navy-200 to-navy-100 border-2 border-navy flex items-center justify-center">
-                                        <span className="font-clash font-medium text-4xl text-accent">
-                                            {(displayName || profile?.username || '?').charAt(0).toUpperCase()}
-                                        </span>
-                                    </div>
+                                    <span className="avatar flex h-16 w-16 items-center justify-center bg-neutral-subtle text-2xl font-semibold text-fg-muted">
+                                        {(displayName || profile?.username || '?').charAt(0).toUpperCase()}
+                                    </span>
                                 )}
-
-                                {/* Camera overlay button */}
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-semibold">Profile picture</p>
+                                    <p className="text-xs text-fg-muted">{dragActive ? 'Drop the image here' : 'Drag an image here or choose a file.'}</p>
+                                </div>
                                 <button
                                     type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="absolute inset-0 rounded-full bg-navy/70 backdrop-blur-sm flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 border border-accent/20"
+                                    disabled={!isAppwriteConfigured}
+                                    onClick={() => isAppwriteConfigured && fileInputRef.current?.click()}
+                                    className="btn btn-sm shrink-0"
+                                    title={!isAppwriteConfigured ? 'Appwrite not configured. Check VITE_APPWRITE_ENDPOINT and VITE_APPWRITE_PROJECT_ID.' : ''}
                                 >
-                                    <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                                    </svg>
-                                    <span className="font-satoshi text-[10px] text-accent/80 font-semibold">Change</span>
+                                    <Upload className="h-3.5 w-3.5" />Upload
                                 </button>
-                            </div>
-                        </div>
-
-                        {/* Hidden file input */}
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            className="sr-only"
-                            onChange={handleFilePick}
-                        />
-
-                        {/* Upload button with drag-and-drop zone */}
-                        <div
-                            onDragEnter={isAppwriteConfigured ? handleDragEnter : undefined}
-                            onDragLeave={isAppwriteConfigured ? handleDragLeave : undefined}
-                            onDragOver={isAppwriteConfigured ? handleDragOver : undefined}
-                            onDrop={isAppwriteConfigured ? handleDrop : undefined}
-                            className={`w-full mb-5 transition-all duration-300 ${
-                                dragActive
-                                    ? 'bg-accent/[0.15] border-accent/40'
-                                    : 'border-white/[0.08] bg-white/[0.02]'
-                            }`}
-                        >
-                            <button
-                                type="button"
-                                disabled={!isAppwriteConfigured}
-                                onClick={() => isAppwriteConfigured && fileInputRef.current?.click()}
-                                className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all duration-300 ${
-                                    !isAppwriteConfigured
-                                        ? 'border-white/10 text-white/20 cursor-not-allowed opacity-50'
-                                        : dragActive
-                                        ? 'border-accent/40 text-accent/80'
-                                        : 'border-white/[0.08] text-white/40 hover:text-accent/70 hover:border-accent/20 hover:bg-accent/[0.04]'
-                                } font-satoshi text-xs font-medium`}
-                                title={!isAppwriteConfigured ? 'Appwrite not configured. Check VITE_APPWRITE_ENDPOINT and VITE_APPWRITE_PROJECT_ID.' : ''}
-                            >
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                                </svg>
-                                {dragActive ? 'Drop image here' : 'Upload Photo'}
-                            </button>
-                        </div>
-
-                        {!isAppwriteConfigured && (
-                            <p className="font-satoshi text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-4 py-2 mb-5">
-                                ℹ️ Photo upload is disabled. Please configure Appwrite by setting VITE_APPWRITE_ENDPOINT and VITE_APPWRITE_PROJECT_ID environment variables.
-                            </p>
-                        )}
-
-                        <form onSubmit={handleSave} className="space-y-5">
-                            <div>
-                                <label className="block font-satoshi text-xs text-white/40 uppercase tracking-widest mb-1.5">
-                                    Display Name
-                                </label>
-                                <input
-                                    type="text"
-                                    value={displayName}
-                                    onChange={e => setDisplayName(e.target.value)}
-                                    maxLength={60}
-                                    placeholder="Your name"
-                                    className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-accent/40 text-white placeholder:text-white/20 font-satoshi text-sm outline-none transition-all"
-                                />
+                                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={handleFilePick} />
                             </div>
 
-                            <div>
-                                <label className="block font-satoshi text-xs text-white/40 uppercase tracking-widest mb-1.5">
-                                    Bio
-                                    <span className="ml-2 normal-case tracking-normal text-white/20">{bio.length}/160</span>
-                                </label>
-                                <textarea
-                                    value={bio}
-                                    onChange={e => setBio(e.target.value.slice(0, 160))}
-                                    rows={3}
-                                    placeholder="Tell people about yourself or your AI skills..."
-                                    className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-accent/40 text-white placeholder:text-white/20 font-satoshi text-sm outline-none transition-all resize-none"
-                                />
-                            </div>
-
-                            {error && (
-                                <p className="font-satoshi text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">{error}</p>
+                            {!isAppwriteConfigured && (
+                                <p className="flash flash-warn text-xs">
+                                    Photo upload is disabled until VITE_APPWRITE_ENDPOINT and VITE_APPWRITE_PROJECT_ID are configured.
+                                </p>
                             )}
 
-                            <div className="flex gap-3 pt-1">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="flex-1 py-3 rounded-xl border border-white/[0.08] text-white/50 font-satoshi text-sm hover:text-white/80 hover:border-white/20 transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={saving}
-                                    className="flex-1 py-3 rounded-xl bg-accent text-navy font-satoshi font-bold text-sm hover:bg-[#6bbcff] transition-all disabled:opacity-50"
-                                >
-                                    {saving ? 'Saving…' : 'Save Changes'}
-                                </button>
+                            <div>
+                                <label htmlFor="ep-name" className="form-label">Name</label>
+                                <input
+                                    id="ep-name"
+                                    type="text"
+                                    value={displayName}
+                                    onChange={(e) => setDisplayName(e.target.value)}
+                                    maxLength={60}
+                                    placeholder="Your name"
+                                    className="input"
+                                />
                             </div>
-                        </form>
-                    </>
+
+                            <div>
+                                <label htmlFor="ep-bio" className="form-label">Bio</label>
+                                <textarea
+                                    id="ep-bio"
+                                    value={bio}
+                                    onChange={(e) => setBio(e.target.value.slice(0, 160))}
+                                    rows={3}
+                                    placeholder="Tell people about yourself or your AI skills"
+                                    className="input resize-none"
+                                />
+                                <p className="form-hint text-right">{bio.length}/160</p>
+                            </div>
+
+                            {error && <p className="flash flash-danger text-xs">{error}</p>}
+                        </div>
+                        <div className="flex justify-end gap-2 border-t border-line-muted bg-canvas-subtle px-4 py-3">
+                            <button type="button" onClick={onClose} className="btn">Cancel</button>
+                            <button type="submit" disabled={saving} className="btn-primary">{saving ? 'Saving…' : 'Update profile'}</button>
+                        </div>
+                    </form>
                 )}
             </div>
         </div>

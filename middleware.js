@@ -17,7 +17,7 @@ import { next } from '@vercel/edge'
 const BOT_PATTERN =
     /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|exabot|facebot|ia_archiver|twitterbot|linkedinbot|whatsapp|telegrambot|discordbot|applebot|petalbot|semrushbot|ahrefsbot|mj12bot|dotbot|rogerbot|screaming frog/i
 
-const SITE_URL = 'https://www.skillissue.bajpai.tech'
+const SITE_URL = 'https://skillissue.si'
 const SITE_NAME = 'Skill Issue'
 
 // Only run on skill pages

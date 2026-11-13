@@ -1,111 +1,26 @@
 import { useState, useRef, useEffect } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { Link } from 'react-router-dom'
+import { FileUp, FileText, X, CheckCircle2, AlertTriangle, Pencil, Eye, Code2, Wand2, RotateCcw, Upload } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { saveSkill } from '../lib/skillService'
 import { invalidateProfileCache } from '../lib/profileCache'
 import { submitTestimonial } from '../lib/userService'
 import { parseSkillFile, validateSkillFile } from '../lib/parseSkillFile'
 import SEO, { jsonLdSchemas } from '../components/SEO'
-import Breadcrumbs from '../components/Breadcrumbs'
+import ToastBanner from '../components/Toast'
+import SaveModal from '../components/SaveSkillModal'
+import { Markdown } from '../components/SkillViewer'
+import { PageHeader, Spinner } from '../components/ui/primitives'
 
-// ── Toast notification ──────────────────────────────
 function Toast({ message, onClose }) {
-    useEffect(() => {
-        const timer = setTimeout(onClose, 3500)
-        return () => clearTimeout(timer)
-    }, [onClose])
-
-    return (
-        <div className="toast">
-            <div className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                    <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                </div>
-                <span className="font-satoshi text-sm text-white/80">{message}</span>
-            </div>
-        </div>
-    )
+    return <ToastBanner message={message} onDismiss={onClose} duration={3000} variant="success" />
 }
 
-// ── Error Toast notification ──────────────────────────────
 function ErrorToast({ message, onClose }) {
-    useEffect(() => {
-        const timer = setTimeout(onClose, 4000)
-        return () => clearTimeout(timer)
-    }, [onClose])
-
-    return (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <div className="flex items-center gap-3 px-6 py-4 rounded-xl bg-red-500/10 border border-red-500/30 backdrop-blur-sm">
-                <div className="w-6 h-6 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center shrink-0">
-                    <svg className="w-3.5 h-3.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </div>
-                <span className="font-satoshi text-sm text-red-200">{message}</span>
-            </div>
-        </div>
-    )
+    return <ToastBanner message={message} onDismiss={onClose} duration={4500} variant="error" />
 }
 
-// ── Save visibility modal ───────────────────────────────
-function SaveModal({ onClose, onSave }) {
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-white/30 hover:text-white/60 transition-colors"
-                >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-
-                <div className="text-center">
-                    <h3 className="font-clash font-bold text-2xl mb-2">Who can see this skill?</h3>
-                    <p className="font-satoshi text-sm text-white/40 mb-8">Choose how you'd like to share your new skill.</p>
-                    <div className="space-y-3">
-                        <button
-                            onClick={() => onSave('private')}
-                            className="w-full flex items-center gap-4 px-5 py-4 rounded-xl border border-white/10 hover:border-accent/30 bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-300 group text-left"
-                        >
-                            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:border-accent/20 transition-colors">
-                                <svg className="w-5 h-5 text-white/50 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p className="font-clash font-semibold text-white group-hover:text-accent-light transition-colors">Private</p>
-                                <p className="font-satoshi text-xs text-white/30">Only you can see this skill</p>
-                            </div>
-                        </button>
-
-                        <button
-                            onClick={() => onSave('public')}
-                            className="w-full flex items-center gap-4 px-5 py-4 rounded-xl border border-white/10 hover:border-accent/30 bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-300 group text-left"
-                        >
-                            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:border-accent/20 transition-colors">
-                                <svg className="w-5 h-5 text-white/50 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12.75 3.03v.568c0 .334.148.65.405.864l1.068.89c.442.369.535 1.01.216 1.49l-.51.766a2.25 2.25 0 01-1.161.886l-.143.048a1.107 1.107 0 00-.57 1.664c.369.555.169 1.307-.427 1.605L9 13.125l.423 1.059a.956.956 0 01-1.652.928l-.679-.906a1.125 1.125 0 00-1.906.172L4.5 15.75l-.612.153M12.75 3.031a9 9 0 00-8.862 12.872M12.75 3.031a9 9 0 016.69 14.036m0 0l-.177-.529A2.25 2.25 0 0017.128 15H16.5l-.324-.324a1.453 1.453 0 00-2.328.377l-.036.073a1.586 1.586 0 01-.982.816l-.99.282c-.55.157-.894.702-.8 1.267l.073.438a2.253 2.253 0 01-1.699 2.652l-.829.207a8.96 8.96 0 01-3.085.29" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p className="font-clash font-semibold text-white group-hover:text-accent-light transition-colors">Public</p>
-                                <p className="font-satoshi text-xs text-white/30">Share with the community</p>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-// ── Success modal ───────────────────────────────
+// ── Success dialog (with optional first-skill feedback) ─────────
 function SuccessModal({ onClose, isFirstSkill, authUser }) {
     const [showTestimonial, setShowTestimonial] = useState(false)
     const [testimonialBody, setTestimonialBody] = useState('')
@@ -119,7 +34,7 @@ function SuccessModal({ onClose, isFirstSkill, authUser }) {
                 name: authUser.user_metadata?.full_name || authUser.name || 'Anonymous',
                 username: authUser.name ? authUser.name.replace(/\s+/g, '').toLowerCase() : 'user',
                 body: testimonialBody.trim(),
-                img: authUser.avatar_url || 'https://avatar.vercel.sh/user'
+                img: authUser.avatar_url || 'https://avatar.vercel.sh/user',
             })
             setTimeout(() => {
                 setSubmittingTestimonial(false)
@@ -132,83 +47,39 @@ function SuccessModal({ onClose, isFirstSkill, authUser }) {
         }
     }
 
-    if (showTestimonial) {
-        return (
-            <div className="modal-overlay z-[100]" onClick={onClose}>
-                <div className="modal-card relative" onClick={e => e.stopPropagation()}>
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 text-white/30 hover:text-white/60 transition-colors"
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-
-                    <div className="text-center mb-6">
-                        <span className="inline-block px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent font-satoshi text-xs font-semibold mb-3">
-                            Achievement Unlocked ✨
-                        </span>
-                        <h3 className="font-clash font-bold text-2xl mb-2 text-white/90">First Skill Uploaded!</h3>
-                        <p className="font-satoshi text-sm text-white/50">
-                            You just uploaded your first skill! What do you think of Skill Issue?
-                        </p>
-                    </div>
-
-                    <textarea
-                        value={testimonialBody}
-                        onChange={(e) => setTestimonialBody(e.target.value)}
-                        placeholder="This app is amazing. Uploading skills is super easy..."
-                        rows={4}
-                        className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi text-sm outline-none transition-all duration-300 resize-none mb-4"
-                    />
-
-                    <div className="flex gap-3">
-                        <button
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2.5 rounded-xl font-satoshi font-semibold text-sm bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
-                        >
-                            Skip for now
-                        </button>
-                        <button
-                            onClick={handleTestimonialSubmit}
-                            disabled={submittingTestimonial || !testimonialBody.trim()}
-                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-satoshi font-semibold text-sm transition-all duration-300 ${testimonialBody.trim() && !submittingTestimonial ? 'bg-accent text-navy hover:bg-[#6bbcff] cursor-pointer' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
-                        >
-                            {submittingTestimonial ? 'Submitting...' : 'Submit Review'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
     return (
-        <div className="modal-overlay z-[100]" onClick={onClose}>
-            <div className="modal-card text-center relative" onClick={e => e.stopPropagation()}>
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
+        <div className="modal-overlay" onClick={onClose}>
+            <div role="dialog" aria-modal="true" aria-labelledby="upload-success-title" className="modal-card max-w-md" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-line-muted px-4 py-3">
+                    <h3 id="upload-success-title" className="font-sans text-sm font-semibold">{showTestimonial ? 'Share your feedback' : 'Skill uploaded'}</h3>
+                    <button type="button" onClick={onClose} className="btn-invisible btn-icon btn-sm" aria-label="Close"><X className="h-4 w-4" /></button>
                 </div>
-                <h3 className="font-clash font-bold text-2xl mb-2 text-white/90">Skill uploaded!</h3>
-                <p className="font-satoshi text-sm text-white/50 mb-6">Your skill has been saved successfully.</p>
-                {isFirstSkill && (
+                {showTestimonial ? (
                     <>
-                        <button
-                            onClick={() => setShowTestimonial(true)}
-                            className="w-full mb-3 px-4 py-2.5 rounded-xl font-satoshi font-semibold text-sm bg-accent text-navy hover:bg-[#6bbcff] transition-all duration-300"
-                        >
-                            Share your feedback
-                        </button>
+                        <div className="space-y-2 p-4">
+                            <label htmlFor="upload-feedback" className="text-sm text-fg-muted">What do you think of Skill Issue so far?</label>
+                            <textarea id="upload-feedback" value={testimonialBody} onChange={(e) => setTestimonialBody(e.target.value)} rows={4} className="input resize-none" placeholder="Share your experience…" />
+                        </div>
+                        <div className="flex justify-end gap-2 border-t border-line-muted bg-canvas-subtle px-4 py-3">
+                            <button type="button" onClick={onClose} className="btn">Skip for now</button>
+                            <button type="button" onClick={handleTestimonialSubmit} disabled={submittingTestimonial || !testimonialBody.trim()} className="btn-primary">
+                                {submittingTestimonial ? 'Submitting…' : 'Submit review'}
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="flex flex-col items-center gap-2 px-6 py-8 text-center">
+                            <CheckCircle2 className="h-6 w-6 text-success" />
+                            <p className="font-semibold">Your skill has been saved</p>
+                            <p className="text-sm text-fg-muted">You can find it on your profile.</p>
+                        </div>
+                        <div className="flex justify-end gap-2 border-t border-line-muted bg-canvas-subtle px-4 py-3">
+                            {isFirstSkill && <button type="button" onClick={() => setShowTestimonial(true)} className="btn">Share feedback</button>}
+                            <button type="button" onClick={onClose} className="btn-primary">Done</button>
+                        </div>
                     </>
                 )}
-                <button
-                    onClick={onClose}
-                    className="w-full px-4 py-2.5 rounded-xl font-satoshi font-semibold text-sm bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
-                >
-                    Done
-                </button>
             </div>
         </div>
     )
@@ -381,7 +252,7 @@ export default function SkillUploader() {
                 setSelectedFile(file)
                 setFileContent(content)
                 setStep('preview')
-                setToast('File parsed successfully!')
+                setToast('File parsed')
             } catch (err) {
                 setErrorToast('Failed to parse file: ' + err.message)
                 setSelectedFile(null)
@@ -420,7 +291,7 @@ export default function SkillUploader() {
             invalidateProfileCache(authProfile?.username)
             await refreshProfile()
 
-            setToast(`Skill saved as ${visibility}! ✓`)
+            setToast(`Skill saved as ${visibility}`)
             setShowSuccessModal(true)
             setIsSaving(false)
 
@@ -449,8 +320,20 @@ export default function SkillUploader() {
 
     const canSave = extractedSkill && extractedSkill.title && extractedSkill.title.trim().length > 0
 
+    function chooseFile() {
+        if (!isLoggedIn) { openAuthModal(); return }
+        fileInputRef.current?.click()
+    }
+
+    function resetUpload() {
+        setStep('upload')
+        setSelectedFile(null)
+        setExtractedSkill(null)
+        setEditMode(false)
+    }
+
     return (
-        <div className="min-h-screen pt-28 pb-10 relative">
+        <div className="container-page max-w-[1100px] py-8">
             <SEO
                 title="Upload Skill Files — Skill Issue Marketplace"
                 description="Upload pre-written SKILL.md files directly to Skill Issue. Share your skills with the community or keep them private."
@@ -461,377 +344,178 @@ export default function SkillUploader() {
                 ])}
             />
 
-            {/* Ambient glow */}
-            <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-accent/[0.04] rounded-full blur-[140px] pointer-events-none" />
-
-            {/* Global Drag & Drop Overlay */}
             {globalDragActive && (
-                <div className="fixed inset-0 bg-navy/80 backdrop-blur-md z-[9999] flex flex-col items-center justify-center pointer-events-none">
-                    {/* Animated background grid */}
-                    <div className="absolute inset-0 opacity-10 pointer-events-none">
-                        <div className="absolute inset-0 bg-gradient-to-b from-accent/20 to-transparent" />
-                    </div>
-
-                    {/* Content */}
-                    <div className="relative z-10 text-center space-y-8 px-6">
-                        {/* Animated icon */}
-                        <div className="flex justify-center">
-                            <div className="relative w-32 h-32">
-                                {/* Outer rotating ring */}
-                                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-accent border-r-accent animate-spin" style={{ animationDuration: '3s' }} />
-
-                                {/* Middle pulsing ring */}
-                                <div className="absolute inset-4 rounded-full border border-accent/30 animate-pulse" />
-
-                                {/* Inner content */}
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <svg className="w-16 h-16 text-accent animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Text */}
-                        <div className="space-y-3">
-                            <h2 className="font-clash font-bold text-5xl sm:text-6xl text-white">
-                                DROP your file
-                            </h2>
-                            <p className="font-satoshi text-lg text-white/60 max-w-md mx-auto">
-                                Upload your SKILL.md file to get started
-                            </p>
-                        </div>
-
-                        {/* Highlight box */}
-                        <div className="mt-12 inline-block">
-                            <div className="px-8 py-4 rounded-2xl border border-accent/40 bg-accent/[0.08] backdrop-blur-sm">
-                                <p className="font-satoshi text-sm font-medium text-accent">
-                                    ✨ Markdown files only (.md)
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Floating particles effect */}
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        {[...Array(8)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="absolute w-1 h-1 bg-accent/40 rounded-full animate-pulse"
-                                style={{
-                                    left: `${Math.random() * 100}%`,
-                                    top: `${Math.random() * 100}%`,
-                                    animationDelay: `${i * 0.2}s`,
-                                }}
-                            />
-                        ))}
+                <div className="pointer-events-none fixed inset-0 z-[9999] flex items-center justify-center bg-[rgb(var(--shadow)/0.55)] p-6">
+                    <div className="rounded-xl border-2 border-dashed border-accent bg-canvas px-10 py-12 text-center shadow-overlay">
+                        <FileUp className="mx-auto h-8 w-8 text-accent" />
+                        <p className="mt-3 font-display text-xl font-semibold">Drop your SKILL.md to upload</p>
+                        <p className="mt-1 text-sm text-fg-muted">Markdown files up to 5 MB</p>
                     </div>
                 </div>
             )}
 
-            <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8">
-                <Breadcrumbs />
+            <PageHeader
+                title="Upload a skill"
+                description="Already have a SKILL.md? Upload it and it will be validated, parsed and ready to publish."
+                actions={<Link to="/build" className="btn"><Wand2 className="h-4 w-4" />Build with AI instead</Link>}
+            />
 
-                {/* Header */}
-                <div className="text-center mb-10 max-w-3xl mx-auto">
-                    <span className="inline-block font-satoshi text-sm font-medium tracking-widest uppercase text-accent/70 mb-4">
-                        Upload Skill
-                    </span>
-                    <h1 className="font-clash font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.1] mb-5">
-                        Show us.{' '}
-                        <span className="italic text-accent glow-text">What you built.</span>
-                    </h1>
-                    <p className="font-satoshi text-lg text-white/40 max-w-xl mx-auto">
-                        Already have a skill file? Upload your .md file directly and we'll parse it for you.
-                    </p>
+            {/* Steps */}
+            <ol className="mt-4 flex items-center gap-2 text-sm" aria-label="Progress">
+                {[['upload', 'Choose file'], ['preview', 'Review and publish']].map(([id, label], i) => {
+                    const done = id === 'upload' && step === 'preview'
+                    const current = step === id
+                    return (
+                        <li key={id} className="flex items-center gap-2">
+                            {i > 0 && <span className="h-px w-6 bg-line" aria-hidden="true" />}
+                            <span className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold ${done ? 'border-success bg-success-emphasis text-fg-onemphasis' : current ? 'border-accent text-accent' : 'border-line text-fg-muted'}`}>
+                                {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
+                            </span>
+                            <span className={current ? 'font-semibold' : 'text-fg-muted'} aria-current={current ? 'step' : undefined}>{label}</span>
+                        </li>
+                    )
+                })}
+            </ol>
+
+            <input ref={fileInputRef} type="file" accept=".md" onChange={handleFileSelect} className="hidden" />
+
+            {step === 'upload' && (
+                <div
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onClick={chooseFile}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); chooseFile() } }}
+                    className={`mt-6 flex cursor-pointer flex-col items-center rounded-md border-2 border-dashed px-6 py-16 text-center transition-colors ${dragActive ? 'border-accent bg-accent-subtle' : 'border-line hover:border-fg-subtle hover:bg-canvas-subtle'}`}
+                >
+                    <FileUp className="h-8 w-8 text-fg-muted" strokeWidth={1.5} />
+                    <h2 className="mt-4 font-display text-xl font-semibold">Drag your SKILL.md here</h2>
+                    <p className="mt-1 text-sm text-fg-muted">or <span className="link">choose a file</span> from your computer · Markdown, max 5 MB</p>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); chooseFile() }} className="btn mt-6">
+                        <Upload className="h-4 w-4" />Choose file
+                    </button>
+                    <p className="mt-6 text-xs text-fg-muted">YAML frontmatter (name, description, tags) is detected automatically.</p>
                 </div>
+            )}
 
-                {/* Upload Section or Preview Section */}
-                {step === 'upload' && (
-                    // ── UPLOAD STEP ──────────────────────────────
-                    <div
-                        onDragEnter={handleDragEnter}
-                        onDragLeave={handleDragLeave}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                        className={`mt-10 rounded-2xl border-2 border-dashed transition-all duration-300 p-12 text-center ${dragActive
-                            ? 'border-accent bg-accent/[0.08] bg-opacity-50'
-                            : 'border-white/[0.12] bg-white/[0.02] hover:border-accent/30 hover:bg-white/[0.04]'
-                        } cursor-pointer`}
-                    >
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".md"
-                            onChange={handleFileSelect}
-                            className="hidden"
-                        />
-
-                        {/* Icon */}
-                        <div className="flex justify-center mb-6">
-                            <div className="w-20 h-20 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center">
-                                <svg className="w-10 h-10 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                            </div>
-                        </div>
-
-                        {/* Text */}
-                        <h3 className="font-clash font-bold text-2xl text-white mb-3">
-                            Upload your SKILL.md file
-                        </h3>
-                        <p className="font-satoshi text-white/60 mb-8 max-w-md mx-auto">
-                            Click to browse or drag and drop your Markdown file anywhere. Max 5MB.
-                        </p>
-
-                        {/* Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <button
-                                onClick={() => {
-                                    if (!isLoggedIn) {
-                                        openAuthModal()
-                                        return
-                                    }
-                                    fileInputRef.current?.click()
-                                }}
-                                className="px-8 py-3 rounded-xl bg-accent text-navy font-satoshi font-semibold hover:bg-[#6bbcff] transition-all duration-300"
-                            >
-                                Choose File
-                            </button>
-                            {/* <button
-                                onClick={() => setStep('upload')}
-                                className="px-8 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 font-satoshi font-semibold hover:bg-white/10 hover:border-white/20 transition-all duration-300"
-                            >
-                                Or Browse
-                            </button> */}
-                        </div>
-
-                        {/* Info */}
-                        <div className="mt-8 inline-block">
-                            <div className="px-4 py-3 rounded-xl border border-white/10 bg-white/[0.02]">
-                                <p className="font-satoshi text-xs text-white/50">
-                                    ✨ Supports YAML frontmatter and standard Markdown format
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {step === 'preview' && extractedSkill && (
-                    // ── PREVIEW STEP ────────────────────────────
-                    <div className="mt-10 scroll-reveal revealed grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-6 lg:gap-8 lg:items-start">
-                        {/* Left Column — Extracted Data + Action Buttons */}
-                        <div className="flex flex-col gap-4 lg:gap-6">
-                        <div className="rounded-2xl border border-accent/15 bg-gradient-to-br from-accent/[0.04] via-transparent to-transparent p-4 sm:p-6 lg:p-8">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-3 h-3 rounded-full bg-accent/60" />
-                                <span className="font-clash font-semibold text-lg text-accent">
-                                    Extracted Data
-                                </span>
+            {step === 'preview' && extractedSkill && (
+                <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
+                    {/* Details */}
+                    <div className="min-w-0 space-y-4">
+                        <div className="box">
+                            <div className="box-header py-2.5">
+                                <FileText className="h-4 w-4 text-fg-muted" />
+                                <span className="min-w-0 flex-1 truncate font-mono text-sm">{selectedFile?.name || 'SKILL.md'}</span>
+                                {!editMode && (
+                                    <button type="button" onClick={() => setEditMode(true)} className="btn btn-sm">
+                                        <Pencil className="h-3.5 w-3.5" />Edit details
+                                    </button>
+                                )}
                             </div>
 
                             {validationWarnings.length > 0 && (
-                                <div className="mb-6 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-                                    <p className="font-satoshi text-xs text-yellow-200 font-semibold mb-2">⚠️ Parsing Notes:</p>
-                                    {validationWarnings.map((w, i) => (
-                                        <p key={i} className="font-satoshi text-xs text-yellow-300/80 mb-1">• {w}</p>
-                                    ))}
+                                <div className="flash flash-warn m-4 mb-0 flex gap-2 text-xs">
+                                    <AlertTriangle className="h-4 w-4 shrink-0 text-attention" />
+                                    <ul className="space-y-1">{validationWarnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
                                 </div>
                             )}
 
                             {editMode ? (
-                                // Edit Mode
-                                <div className="space-y-5">
+                                <div className="space-y-4 p-4">
                                     <div>
-                                        <label className="block font-satoshi text-xs text-white/50 font-semibold mb-2">Title</label>
-                                        <input
-                                            type="text"
-                                            value={extractedSkill.title || ''}
-                                            onChange={(e) => updateSkillField('title', e.target.value)}
-                                            maxLength={100}
-                                            className="w-full px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi text-sm outline-none transition-all duration-300"
-                                        />
-                                        <p className="text-xs text-white/30 mt-1">{extractedSkill.title?.length || 0}/100</p>
+                                        <label htmlFor="su-title" className="form-label">Title <span className="text-danger">*</span></label>
+                                        <input id="su-title" type="text" value={extractedSkill.title || ''} onChange={(e) => updateSkillField('title', e.target.value)} maxLength={100} className="input" />
+                                        <p className="form-hint text-right">{extractedSkill.title?.length || 0}/100</p>
                                     </div>
-
                                     <div>
-                                        <label className="block font-satoshi text-xs text-white/50 font-semibold mb-2">Description</label>
-                                        <textarea
-                                            value={extractedSkill.description || ''}
-                                            onChange={(e) => updateSkillField('description', e.target.value)}
-                                            maxLength={500}
-                                            rows={3}
-                                            className="w-full px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi text-sm outline-none transition-all duration-300 resize-none"
-                                        />
-                                        <p className="text-xs text-white/30 mt-1">{extractedSkill.description?.length || 0}/500</p>
+                                        <label htmlFor="su-desc" className="form-label">Description</label>
+                                        <textarea id="su-desc" value={extractedSkill.description || ''} onChange={(e) => updateSkillField('description', e.target.value)} maxLength={500} rows={3} className="input resize-none" />
+                                        <p className="form-hint text-right">{extractedSkill.description?.length || 0}/500</p>
                                     </div>
-
                                     <div>
-                                        <label className="block font-satoshi text-xs text-white/50 font-semibold mb-2">Tags</label>
+                                        <label htmlFor="su-tags" className="form-label">Topics</label>
                                         <input
+                                            id="su-tags"
                                             type="text"
                                             value={extractedSkill.tags?.join(', ') || ''}
-                                            onChange={(e) => {
-                                                const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t)
-                                                updateSkillField('tags', tags)
-                                            }}
-                                            placeholder="Enter tags separated by commas"
-                                            className="w-full px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-accent/40 focus:bg-white/[0.05] text-white placeholder:text-white/20 font-satoshi text-sm outline-none transition-all duration-300"
+                                            onChange={(e) => updateSkillField('tags', e.target.value.split(',').map((t) => t.trim()).filter((t) => t))}
+                                            placeholder="Separate topics with commas"
+                                            className="input"
                                         />
                                     </div>
-
-                                    <div className="flex gap-3 pt-4">
-                                        <button
-                                            onClick={() => setEditMode(false)}
-                                            className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 font-satoshi font-semibold text-sm transition-all duration-300"
-                                        >
-                                            Done Editing
-                                        </button>
+                                    <div className="flex justify-end">
+                                        <button type="button" onClick={() => setEditMode(false)} className="btn">Done editing</button>
                                     </div>
                                 </div>
                             ) : (
-                                // View Mode
-                                <div className="space-y-5">
-                                    <div>
-                                        <p className="font-satoshi text-xs text-white/50 font-semibold mb-2">Title</p>
-                                        <p className="font-satoshi text-white text-lg font-medium">{extractedSkill.title}</p>
+                                <dl className="divide-y divide-line-muted text-sm">
+                                    <div className="px-4 py-3">
+                                        <dt className="text-xs font-semibold text-fg-muted">Title</dt>
+                                        <dd className="mt-0.5 text-base font-semibold">{extractedSkill.title}</dd>
                                     </div>
-
                                     {extractedSkill.description && (
-                                        <div>
-                                            <p className="font-satoshi text-xs text-white/50 font-semibold mb-2">Description</p>
-                                            <p className="font-satoshi text-white/70 text-sm">{extractedSkill.description}</p>
+                                        <div className="px-4 py-3">
+                                            <dt className="text-xs font-semibold text-fg-muted">Description</dt>
+                                            <dd className="mt-0.5">{extractedSkill.description}</dd>
                                         </div>
                                     )}
-
-                                    {extractedSkill.tags && extractedSkill.tags.length > 0 && (
-                                        <div>
-                                            <p className="font-satoshi text-xs text-white/50 font-semibold mb-2">Tags</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {extractedSkill.tags.map((tag, i) => (
-                                                    <span key={i} className="px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent font-satoshi text-xs">
-                                                        {tag}
-                                                    </span>
-                                                ))}
-                                            </div>
+                                    {extractedSkill.tags?.length > 0 && (
+                                        <div className="px-4 py-3">
+                                            <dt className="text-xs font-semibold text-fg-muted">Topics</dt>
+                                            <dd className="mt-1 flex flex-wrap gap-1">{extractedSkill.tags.map((tag, i) => <span key={i} className="topic">{tag}</span>)}</dd>
                                         </div>
                                     )}
-
                                     {extractedSkill.category && (
-                                        <div>
-                                            <p className="font-satoshi text-xs text-white/50 font-semibold mb-2">Category</p>
-                                            <p className="font-satoshi text-white/70 text-sm">{extractedSkill.category}</p>
+                                        <div className="px-4 py-3">
+                                            <dt className="text-xs font-semibold text-fg-muted">Category</dt>
+                                            <dd className="mt-0.5 capitalize">{extractedSkill.category}</dd>
                                         </div>
                                     )}
-
-                                    <button
-                                        onClick={() => setEditMode(true)}
-                                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 font-satoshi font-semibold text-sm transition-all duration-300"
-                                    >
-                                        Edit Details
-                                    </button>
-                                </div>
+                                </dl>
                             )}
                         </div>
 
-                        {/* Action Buttons — under extracted data on desktop */}
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <button
-                                onClick={() => {
-                                    setStep('upload')
-                                    setSelectedFile(null)
-                                    setExtractedSkill(null)
-                                    setEditMode(false)
-                                }}
-                                className="flex-1 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 font-satoshi font-semibold hover:bg-white/10 hover:border-white/20 transition-all duration-300"
-                            >
-                                Upload Different File
+                        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <button type="button" onClick={resetUpload} className="btn">
+                                <RotateCcw className="h-4 w-4" />Choose a different file
                             </button>
                             <button
-                                onClick={() => {
-                                    if (!isLoggedIn) {
-                                        openAuthModal()
-                                        return
-                                    }
-                                    setShowSaveModal(true)
-                                }}
+                                type="button"
+                                onClick={() => { if (!isLoggedIn) { openAuthModal(); return } setShowSaveModal(true) }}
                                 disabled={!canSave || isSaving}
-                                className={`flex-1 px-6 py-3 rounded-xl font-satoshi font-semibold transition-all duration-300 ${canSave && !isSaving
-                                    ? 'bg-accent text-navy hover:bg-[#6bbcff]'
-                                    : 'bg-white/5 text-white/30 cursor-not-allowed'
-                                }`}
+                                className="btn-primary"
                             >
-                                {isSaving ? 'Saving...' : 'Save Skill'}
+                                {isSaving && <Spinner size={14} className="text-fg-onemphasis" />}
+                                {isSaving ? 'Saving…' : 'Publish skill'}
                             </button>
-                        </div>
-                        </div>
-
-                        {/* Right Panel — Preview (sticky with internal scroll on desktop) */}
-                        <div className="rounded-2xl border border-accent/15 bg-gradient-to-br from-accent/[0.04] via-transparent to-transparent p-4 sm:p-6 lg:p-8 flex flex-col lg:sticky lg:top-28 lg:max-h-[85vh]">
-                            <div className="flex items-center justify-between gap-4 mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 rounded-full bg-accent/60" />
-                                    <span className="font-clash font-semibold text-lg text-accent">
-                                        Preview
-                                    </span>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setViewMode('rendered')}
-                                        className={`px-3 py-1.5 rounded-lg font-satoshi text-xs font-semibold transition-all duration-300 ${viewMode === 'rendered'
-                                            ? 'bg-accent/30 text-accent border border-accent/50'
-                                            : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10'
-                                        }`}
-                                    >
-                                        Rendered
-                                    </button>
-                                    <button
-                                        onClick={() => setViewMode('raw')}
-                                        className={`px-3 py-1.5 rounded-lg font-satoshi text-xs font-semibold transition-all duration-300 ${viewMode === 'raw'
-                                            ? 'bg-accent/30 text-accent border border-accent/50'
-                                            : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10'
-                                        }`}
-                                    >
-                                        Raw
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="lg:flex-1 lg:overflow-y-auto lg:min-h-0 bg-white/[0.01] border border-white/[0.08] rounded-xl p-3 sm:p-4 lg:p-6">
-                                {viewMode === 'rendered' ? (
-                                    <div className="prose prose-invert max-w-none text-white/80 leading-relaxed">
-                                        <ReactMarkdown
-                                            remarkPlugins={[remarkGfm]}
-                                            components={{
-                                                h1: ({ node, ...props }) => <h1 className="text-2xl font-clash font-bold text-white mt-4 mb-2" {...props} />,
-                                                h2: ({ node, ...props }) => <h2 className="text-xl font-clash font-bold text-white/90 mt-4 mb-2" {...props} />,
-                                                h3: ({ node, ...props }) => <h3 className="text-lg font-clash font-bold text-white/90 mt-3 mb-1.5" {...props} />,
-                                                p: ({ node, ...props }) => <p className="text-sm leading-6 mb-3 text-white/70" {...props} />,
-                                                li: ({ node, ...props }) => <li className="text-sm leading-6 mb-1.5 ml-4 text-white/70 list-disc" {...props} />,
-                                                code: ({ node, inline, ...props }) => inline
-                                                    ? <code className="bg-white/10 px-1.5 py-0.5 rounded border border-white/10 font-mono text-xs text-accent" {...props} />
-                                                    : <code className="block bg-white/[0.02] border border-white/10 rounded-lg p-4 overflow-x-auto font-mono text-xs mb-3" {...props} />,
-                                            }}
-                                        >
-                                            {extractedSkill.content}
-                                        </ReactMarkdown>
-                                    </div>
-                                ) : (
-                                    <pre className="text-xs text-white/50 whitespace-pre-wrap break-words font-mono overflow-auto">
-                                        {extractedSkill.content}
-                                    </pre>
-                                )}
-                            </div>
                         </div>
                     </div>
-                )}
-            </div>
 
-            {/* Modals */}
+                    {/* Preview */}
+                    <div className="box flex min-w-0 flex-col overflow-hidden lg:sticky lg:top-20 lg:max-h-[calc(100vh-7rem)]">
+                        <div className="flex shrink-0 items-center gap-2 border-b border-line bg-canvas-subtle px-3 py-2">
+                            <div className="segmented" role="tablist" aria-label="Preview mode">
+                                <button type="button" role="tab" aria-selected={viewMode === 'rendered'} aria-pressed={viewMode === 'rendered'} onClick={() => setViewMode('rendered')} className="inline-flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" />Preview</button>
+                                <button type="button" role="tab" aria-selected={viewMode === 'raw'} aria-pressed={viewMode === 'raw'} onClick={() => setViewMode('raw')} className="inline-flex items-center gap-1.5"><Code2 className="h-3.5 w-3.5" />Code</button>
+                            </div>
+                            <span className="ml-auto text-xs text-fg-muted">{(extractedSkill.content || '').split('\n').length} lines</span>
+                        </div>
+                        <div className="min-h-0 flex-1 overflow-y-auto bg-canvas">
+                            {viewMode === 'rendered' ? (
+                                <div className="p-5 sm:p-8"><Markdown>{extractedSkill.content}</Markdown></div>
+                            ) : (
+                                <pre className="whitespace-pre-wrap break-words p-4 font-mono text-[12.5px] leading-5 text-fg">{extractedSkill.content}</pre>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {showSaveModal && <SaveModal onClose={() => setShowSaveModal(false)} onSave={handleSave} />}
             {showSuccessModal && <SuccessModal onClose={() => setShowSuccessModal(false)} isFirstSkill={false} authUser={authUser} />}
-
-            {/* Toasts */}
             {toast && <Toast message={toast} onClose={() => setToast(null)} />}
             {errorToast && <ErrorToast message={errorToast} onClose={() => setErrorToast(null)} />}
         </div>
