@@ -37,6 +37,11 @@ export default {
                     subtle: v('accent-subtle'),
                     muted: v('accent-muted'),
                 },
+                brand: {
+                    DEFAULT: v('brand'),
+                    hover: v('brand-hover'),
+                    fg: v('brand-fg'),
+                },
                 success: {
                     DEFAULT: v('success'),
                     emphasis: v('success-emphasis'),

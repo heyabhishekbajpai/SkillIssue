@@ -45,7 +45,7 @@ function PendingRow({ person, onAccept, onReject }) {
             </div>
             <div className="flex shrink-0 items-center gap-2">
                 <button type="button" onClick={handleAccept} disabled={accepting || rejecting} className="btn-primary btn-sm" title="Accept">
-                    {accepting ? <Spinner size={12} className="text-fg-onemphasis" /> : <Check className="h-3.5 w-3.5" />}Accept
+                    {accepting ? <Spinner size={12} className="text-brand-fg" /> : <Check className="h-3.5 w-3.5" />}Accept
                 </button>
                 <button type="button" onClick={handleReject} disabled={accepting || rejecting} className="btn btn-sm" title="Decline">
                     {rejecting ? <Spinner size={12} /> : <X className="h-3.5 w-3.5" />}Decline

@@ -23,7 +23,7 @@ function ActionButton({ action, compact }) {
     const variant = action.primary ? 'btn-primary' : 'btn'
     const className = `${variant} ${compact ? 'btn-sm' : ''} ${active && !action.primary ? 'bg-neutral-subtle' : ''} ${action.className || ''}`
     const icon = action.loading
-        ? <Spinner size={14} className={action.primary ? 'text-fg-onemphasis' : ''} />
+        ? <Spinner size={14} className={action.primary ? 'text-brand-fg' : ''} />
         : <Icon className={`h-4 w-4 ${action.status === 'success' ? '!text-success' : ''}`} fill={(action.icon === 'save' || action.icon === 'star') && active ? 'currentColor' : 'none'} />
 
     const content = (

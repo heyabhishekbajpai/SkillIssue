@@ -368,7 +368,7 @@ export default function SkillUploader() {
                     return (
                         <li key={id} className="flex items-center gap-2">
                             {i > 0 && <span className="h-px w-6 bg-line" aria-hidden="true" />}
-                            <span className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold ${done ? 'border-success bg-success-emphasis text-fg-onemphasis' : current ? 'border-accent text-accent' : 'border-line text-fg-muted'}`}>
+                            <span className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold ${done ? 'border-brand bg-brand text-brand-fg' : current ? 'border-accent text-accent' : 'border-line text-fg-muted'}`}>
                                 {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
                             </span>
                             <span className={current ? 'font-semibold' : 'text-fg-muted'} aria-current={current ? 'step' : undefined}>{label}</span>
@@ -488,7 +488,7 @@ export default function SkillUploader() {
                                 disabled={!canSave || isSaving}
                                 className="btn-primary"
                             >
-                                {isSaving && <Spinner size={14} className="text-fg-onemphasis" />}
+                                {isSaving && <Spinner size={14} className="text-brand-fg" />}
                                 {isSaving ? 'Saving…' : 'Publish skill'}
                             </button>
                         </div>

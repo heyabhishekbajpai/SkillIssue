@@ -510,7 +510,7 @@ export default function SkillBuilder() {
 
                     <div className="border-t border-line-muted pt-5">
                         <button type="button" onClick={handleGenerate} disabled={!canSubmit || isGenerating} className="btn-primary btn-lg w-full sm:w-auto">
-                            {isGenerating ? <Spinner size={14} className="text-fg-onemphasis" /> : <Wand2 className="h-4 w-4" />}
+                            {isGenerating ? <Spinner size={14} className="text-brand-fg" /> : <Wand2 className="h-4 w-4" />}
                             {isGenerating ? 'Generating…' : showOutput ? 'Regenerate skill' : 'Generate skill'}
                         </button>
                         {!isLoggedIn && <p className="form-hint">You’ll be asked to sign in before generating.</p>}
@@ -569,7 +569,7 @@ export default function SkillBuilder() {
                                         disabled={isSaving || !!savedAs}
                                         className="btn-primary btn-sm"
                                     >
-                                        {isSaving ? <Spinner size={12} className="text-fg-onemphasis" /> : savedAs ? <Check className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
+                                        {isSaving ? <Spinner size={12} className="text-brand-fg" /> : savedAs ? <Check className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
                                         {isSaving ? 'Saving…' : savedAs ? `Saved (${savedAs})` : 'Save'}
                                     </button>
                                 </div>

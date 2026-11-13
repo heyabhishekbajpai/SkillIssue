@@ -55,7 +55,7 @@ function CommentComposer({ user, userProfile, draft, setDraft, onSubmit, submitt
                 <div className="mt-2 flex items-center justify-between gap-2">
                     <span className="text-xs text-fg-muted">Ctrl + Enter to send</span>
                     <button type="button" onClick={onSubmit} disabled={!draft.trim() || submitting} className="btn-primary btn-sm">
-                        {submitting && <Spinner size={12} className="text-fg-onemphasis" />}
+                        {submitting && <Spinner size={12} className="text-brand-fg" />}
                         Comment
                     </button>
                 </div>

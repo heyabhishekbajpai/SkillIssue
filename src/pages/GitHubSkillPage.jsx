@@ -207,7 +207,7 @@ export default function GitHubSkillPage() {
                                 {copied ? 'Copied' : 'Copy'}
                             </button>
                             <button type="button" onClick={handleDownload} disabled={downloading} className="btn-primary btn-sm">
-                                {downloading ? <Spinner size={14} className="text-fg-onemphasis" /> : <Download className="h-3.5 w-3.5" />}
+                                {downloading ? <Spinner size={14} className="text-brand-fg" /> : <Download className="h-3.5 w-3.5" />}
                                 {downloading ? 'Zipping…' : 'Download .zip'}
                             </button>
                         </div>

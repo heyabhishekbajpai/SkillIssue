@@ -125,7 +125,7 @@ export default function AuthModal({ contextText }) {
                                 />
                             </div>
                             <button type="submit" disabled={loading} className="btn-primary btn-lg btn-block">
-                                {loading ? <Spinner className="text-fg-onemphasis" /> : <Mail className="h-4 w-4" />}
+                                {loading ? <Spinner className="text-brand-fg" /> : <Mail className="h-4 w-4" />}
                                 {loading ? 'Sending code…' : 'Send sign-in code'}
                             </button>
                         </form>

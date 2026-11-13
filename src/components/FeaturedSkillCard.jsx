@@ -20,7 +20,7 @@ export default function FeaturedSkillCard({ skill, onClick, onDownload, isDownlo
         ? { label: 'Discovered', icon: Github, cls: 'label-attention' }
         : isOpenClaw || skill.isCommunity || skill.label
             ? { label: 'Community', icon: Users, cls: 'label-done' }
-            : { label: 'Official', icon: BadgeCheck, cls: 'label-success' }
+            : { label: 'Official', icon: BadgeCheck, cls: 'label-accent' }
     const KindIcon = kind.icon
 
     return (

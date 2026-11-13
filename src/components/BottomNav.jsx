@@ -40,7 +40,7 @@ export default function BottomNav() {
                 <Tab to="/" end label="Home" icon={Home} />
                 <Tab to="/browse" label="Explore" icon={Compass} />
                 <Tab to="/build" label="New" icon={Plus}>
-                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-success-emphasis text-fg-onemphasis">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-brand text-brand-fg">
                         <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                     </span>
                 </Tab>

@@ -39,9 +39,15 @@
   --accent-subtle: 221 244 255;
   --accent-muted: 84 174 255;
 
-  --success: 26 127 55;
-  --success-emphasis: 31 136 61;
-  --success-subtle: 218 251 225;
+  /* Brand cyan from the logo (#4ba9ff). Text on it is near-black for contrast. */
+  --brand: 75 169 255;
+  --brand-hover: 107 188 255;
+  --brand-fg: 10 14 26;
+
+  /* "Success" uses the brand hue; darker in light theme so text stays readable */
+  --success: 11 116 201;
+  --success-emphasis: 75 169 255;
+  --success-subtle: 224 240 255;
 
   --attention: 154 103 0;
   --attention-subtle: 255 248 197;
@@ -87,9 +93,13 @@
   --accent-subtle: 18 38 66;
   --accent-muted: 56 139 253;
 
-  --success: 63 185 80;
-  --success-emphasis: 35 134 54;
-  --success-subtle: 18 46 28;
+  --brand: 75 169 255;
+  --brand-hover: 107 188 255;
+  --brand-fg: 10 14 26;
+
+  --success: 75 169 255;
+  --success-emphasis: 75 169 255;
+  --success-subtle: 16 42 70;
 
   --attention: 210 153 34;
   --attention-subtle: 48 38 14;
@@ -194,17 +204,17 @@
   }
 
   .btn-primary {
-    @apply btn border-transparent bg-success-emphasis text-fg-onemphasis;
+    @apply btn border-transparent bg-brand font-semibold text-brand-fg;
   }
   .btn-primary:hover:not(:disabled) {
-    background: rgb(var(--success-emphasis) / 0.9);
+    background: rgb(var(--brand-hover));
     border-color: transparent;
   }
   .btn-primary:active:not(:disabled) {
-    background: rgb(var(--success-emphasis) / 0.85);
+    background: rgb(var(--brand) / 0.85);
   }
   .btn-primary svg {
-    @apply text-fg-onemphasis;
+    @apply text-brand-fg;
   }
 
   .btn-accent {
