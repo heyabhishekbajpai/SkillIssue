@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Logo } from './ui/primitives'
 
 const COLUMNS = [
     {
@@ -36,10 +37,7 @@ export default function Footer() {
             <div className="container-page py-8 md:py-10">
                 <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
                     <div className="col-span-2 sm:col-span-3 lg:col-span-2">
-                        <div className="flex items-center gap-2">
-                            <img src="/favicon.png" alt="" width={24} height={24} loading="lazy" className="h-6 w-6 rounded-full ring-1 ring-line" />
-                            <span className="font-display text-sm font-semibold">Skill Issue</span>
-                        </div>
+                        <Logo size="sm" />
                         <p className="mt-3 max-w-xs text-sm text-fg-muted">
                             The open registry for AI agent skills. Discover, build and share SKILL.md files for every agent.
                         </p>

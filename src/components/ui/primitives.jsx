@@ -2,15 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 /* ── Brand ──────────────────────────────────────────────── */
-export function Logo({ to = '/', showText = true, className = '' }) {
+export function Logo({ to = '/', className = '', size = 'md' }) {
+    const h = size === 'sm' ? 'h-5' : 'h-6 md:h-7'
     return (
-        <Link to={to} className={`group inline-flex items-center gap-2 text-header-fg ${className}`} aria-label="Skill Issue home">
-            <img src="/favicon.png" alt="" width={32} height={32} className="h-8 w-8 rounded-full ring-1 ring-line" />
-            {showText && (
-                <span className="font-display text-[15px] font-semibold tracking-tight" style={{ fontStretch: '108%' }}>
-                    Skill Issue
-                </span>
-            )}
+        <Link to={to} className={`inline-flex shrink-0 items-center ${className}`} aria-label="Skill Issue home">
+            {/* White wordmark; .logo-wordmark flips it to dark lettering in light theme */}
+            <img src="/skill-issue-logo.png" alt="Skill Issue" width={800} height={159} className={`logo-wordmark ${h} w-auto`} />
         </Link>
     )
 }

@@ -728,3 +728,10 @@
   from { transform: translateX(-100%); }
   to { transform: none; }
 }
+
+/* Brand wordmark ships white with blue accents (for dark UIs).
+   In light theme invert it and rotate the hue back so the
+   lettering turns near-black while the accents stay blue. */
+[data-theme='light'] .logo-wordmark {
+  filter: invert(1) hue-rotate(180deg) saturate(1.4);
+}

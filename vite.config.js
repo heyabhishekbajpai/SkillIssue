@@ -483,7 +483,7 @@ export default defineConfig({
         sitemapPlugin(),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['favicon.png'],
+            includeAssets: ['favicon.png', 'skill-issue-logo.png'],
             manifest: {
                 name: 'Skill Issue',
                 short_name: 'SkillIssue',
