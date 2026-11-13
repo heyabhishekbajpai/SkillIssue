@@ -36,11 +36,11 @@ export default function FAQ() {
             <div className="box mt-4">
                 {FAQS.map((faq) => (
                     <details key={faq.question} className="group border-t border-line-muted first:border-t-0">
-                        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-semibold hover:bg-canvas-subtle [&::-webkit-details-marker]:hidden">
+                        <summary className="flex min-h-[48px] cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-semibold hover:bg-canvas-subtle [&::-webkit-details-marker]:hidden">
                             <ChevronRight className="h-4 w-4 shrink-0 text-fg-muted transition-transform group-open:rotate-90" />
                             {faq.question}
                         </summary>
-                        <p className="px-4 pb-4 pl-10 text-sm leading-6 text-fg-muted">{faq.answer}</p>
+                        <p className="px-4 pb-4 text-sm leading-6 text-fg-muted sm:pl-10">{faq.answer}</p>
                     </details>
                 ))}
             </div>

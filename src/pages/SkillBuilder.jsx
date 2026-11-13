@@ -542,7 +542,7 @@ export default function SkillBuilder() {
                 </div>
 
                 {/* ── Output ───────────────────────── */}
-                <div ref={outputRef} className="min-w-0 lg:sticky lg:top-20 lg:self-start">
+                <div ref={outputRef} className="min-w-0 scroll-mt-20 lg:sticky lg:top-20 lg:self-start">
                     <div className="box flex flex-col overflow-hidden lg:h-[calc(100vh-7.5rem)]">
                         <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line bg-canvas-subtle px-3 py-2">
                             <div className="segmented" role="tablist" aria-label="Output view">

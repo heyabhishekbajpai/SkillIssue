@@ -33,9 +33,9 @@ const COLUMNS = [
 export default function Footer() {
     return (
         <footer className="mt-8 border-t border-line-muted bg-canvas-subtle">
-            <div className="container-page py-10">
-                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
-                    <div className="lg:col-span-2">
+            <div className="container-page py-8 md:py-10">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
+                    <div className="col-span-2 sm:col-span-3 lg:col-span-2">
                         <div className="flex items-center gap-2">
                             <img src="/favicon.png" alt="" width={24} height={24} loading="lazy" className="h-6 w-6 rounded-full ring-1 ring-line" />
                             <span className="font-display text-sm font-semibold">Skill Issue</span>
@@ -47,13 +47,13 @@ export default function Footer() {
                     {COLUMNS.map((col) => (
                         <div key={col.title}>
                             <h2 className="mb-3 font-sans text-sm font-semibold text-fg">{col.title}</h2>
-                            <ul className="space-y-2">
+                            <ul className="space-y-1">
                                 {col.links.map(({ label, to, href }) => (
                                     <li key={label}>
                                         {to ? (
-                                            <Link to={to} className="text-sm text-fg-muted hover:text-accent hover:underline">{label}</Link>
+                                            <Link to={to} className="inline-block py-1 text-sm text-fg-muted hover:text-accent hover:underline">{label}</Link>
                                         ) : (
-                                            <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm text-fg-muted hover:text-accent hover:underline">{label}</a>
+                                            <a href={href} target="_blank" rel="noopener noreferrer" className="inline-block py-1 text-sm text-fg-muted hover:text-accent hover:underline">{label}</a>
                                         )}
                                     </li>
                                 ))}

@@ -36,6 +36,15 @@ export default function ModalShell({
     const dragRef = useRef(null)
     const isResizing = useRef(false)
     const [size, setSize] = useState(defaultSize)
+    // Phones get a full-screen sheet instead of a floating, resizable window
+    const [isPhone, setIsPhone] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 639px)').matches)
+    useEffect(() => {
+        const mq = window.matchMedia?.('(max-width: 639px)')
+        if (!mq) return undefined
+        const onChange = () => setIsPhone(mq.matches)
+        mq.addEventListener?.('change', onChange)
+        return () => mq.removeEventListener?.('change', onChange)
+    }, [])
 
     useEffect(() => {
         openerRef.current = document.activeElement
@@ -117,7 +126,7 @@ export default function ModalShell({
     }, [resizable, size])
 
     return (
-        <div className={`fixed inset-0 z-[100] flex items-center justify-center p-2 ${className}`} onClick={onClose}>
+        <div className={`fixed inset-0 z-[100] flex items-center justify-center ${isPhone ? '' : 'p-2'} ${className}`} onClick={onClose}>
             <div className="absolute inset-0 bg-[rgb(var(--shadow)/0.5)] animate-fade-in" />
             <div
                 ref={panelRef}
@@ -128,10 +137,10 @@ export default function ModalShell({
                 tabIndex={-1}
                 onClick={(event) => event.stopPropagation()}
                 className={`relative rounded-xl bg-canvas-overlay shadow-modal overflow-hidden flex flex-col animate-pop-in outline-none ${panelClassName}`}
-                style={resizable ? { width: size.width, height: size.height, maxWidth: 'calc(100vw - 16px)', maxHeight: 'calc(100vh - 16px)' } : undefined}
+                style={isPhone ? { width: '100vw', height: '100dvh', borderRadius: 0 } : resizable ? { width: size.width, height: size.height, maxWidth: 'calc(100vw - 16px)', maxHeight: 'calc(100vh - 16px)' } : undefined}
             >
                 <div className={`relative h-full ${contentClassName}`}>{children}</div>
-                {resizable && (
+                {resizable && !isPhone && (
                     <div
                         onMouseDown={onResizeMouseDown}
                         className="absolute bottom-0 right-0 w-8 h-8 cursor-se-resize z-10 flex items-end justify-end p-2 group"

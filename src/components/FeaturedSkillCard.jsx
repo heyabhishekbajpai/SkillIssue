@@ -54,9 +54,12 @@ export default function FeaturedSkillCard({ skill, onClick, onDownload, isDownlo
                     {skill.language && <span>{skill.language}</span>}
                     <span className="truncate font-mono">{repo}</span>
                     {isOpenClaw && skill.attributionLabel && <span className="truncate">{skill.attributionLabel}</span>}
+                    <button type="button" onClick={(e) => { e.stopPropagation(); onDownload(skill) }} disabled={isDownloading} className="-my-2 ml-auto inline-flex min-h-[36px] items-center gap-1 rounded-md px-2 font-medium text-accent sm:hidden" aria-label={`Download ${displayName} as zip`}>
+                        {isDownloading ? <Spinner size={12} /> : <Download className="h-3.5 w-3.5" />}.zip
+                    </button>
                 </div>
             </div>
-            <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+            <div className="hidden shrink-0 sm:block" onClick={(e) => e.stopPropagation()}>
                 <button
                     type="button"
                     onClick={() => onDownload(skill)}

@@ -417,7 +417,7 @@ export default function UserProfile() {
             />
 
             {/* Sticky-ish tab bar spans the page, like a profile header */}
-            <div className="border-b border-line">
+            <div className="hidden border-b border-line md:block">
                 <div className="container-page">
                     <div className="md:ml-[calc(296px+1.5rem)]">
                         <nav className="tabnav -mb-px border-b-0" aria-label="Profile sections" role="tablist">
@@ -440,7 +440,7 @@ export default function UserProfile() {
                 </div>
             </div>
 
-            <div className="container-page grid gap-6 py-6 md:grid-cols-[296px_minmax(0,1fr)]">
+            <div className="container-page grid gap-6 py-5 md:grid-cols-[296px_minmax(0,1fr)] md:py-6">
                 {/* ── Sidebar ─────────────────────────── */}
                 <aside className="md:-mt-14">
                     {loading ? (
@@ -526,6 +526,25 @@ export default function UserProfile() {
 
                 {/* ── Main ────────────────────────────── */}
                 <div className="min-w-0">
+                    {/* Phones: tabs sit below the profile summary */}
+                    <div className="-mx-4 mb-4 border-b border-line px-4 md:hidden">
+                            <nav className="tabnav -mb-px border-b-0" aria-label="Profile sections (mobile)" role="tablist">
+                                {TABS.map(({ id, label, icon: Icon, count }) => (
+                                    <button
+                                        key={id}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={tab === id}
+                                        onClick={() => setTab(id)}
+                                        className="tabnav-item"
+                                    >
+                                        <Icon className="h-4 w-4" />
+                                        {label}
+                                        {!loading && <span className="counter">{formatCount(count)}</span>}
+                                    </button>
+                                ))}
+                            </nav>
+                    </div>
                     {tab === 'skills' && (
                         <section aria-label="Published skills">
                             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-line-muted pb-4">

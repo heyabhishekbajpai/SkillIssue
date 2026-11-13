@@ -17,14 +17,14 @@ export function SkillRepoHeader({ avatar, avatarSquare = false, owner, ownerTo, 
         <div className="border-b border-line bg-canvas-subtle pt-4 md:pt-6">
             <div className="container-page">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex min-w-0 items-start gap-2 sm:items-center">
                         <Avatar src={avatar} name={owner} size={24} square={avatarSquare} />
-                        <h1 className="min-w-0 break-words font-sans text-xl leading-7">
+                        <h1 className="min-w-0 break-words font-sans text-lg leading-6 sm:text-xl sm:leading-7">
                             {ownerEl}
                             <span className="mx-1 text-fg-muted">/</span>
                             <strong className="font-semibold text-accent">{name}</strong>
                         </h1>
-                        {label && <span className="label shrink-0">{label}</span>}
+                        {label && <span className="label mt-0.5 shrink-0 sm:mt-0">{label}</span>}
                     </div>
                     {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
                 </div>

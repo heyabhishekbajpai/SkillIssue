@@ -83,7 +83,7 @@ function HeroSearch() {
                     type="search"
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    placeholder="Search skills, e.g. “code review”"
+                    placeholder="Search skills"
                     aria-label="Search skills"
                     className="input input-lg pl-9 text-[15px]"
                 />
@@ -122,12 +122,12 @@ function FeaturedSkills() {
         <section aria-labelledby="featured-title">
             <div className="flex items-end justify-between gap-4">
                 <div>
-                    <h2 id="featured-title" className="font-display text-2xl font-semibold">Popular community skills</h2>
+                    <h2 id="featured-title" className="font-display text-xl font-semibold md:text-2xl">Popular community skills</h2>
                     <p className="mt-1 text-sm text-fg-muted">Most-starred skills published by Skill Issue members.</p>
                 </div>
                 <Link to="/browse" className="link shrink-0 text-sm">View all</Link>
             </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-4 grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
                 {skills === null
                     ? [...Array(6)].map((_, i) => (
                         <div key={i} className="box space-y-3 p-4">
@@ -154,7 +154,7 @@ function TopRepositories() {
         <section aria-labelledby="indexed-title">
             <div className="flex items-end justify-between gap-4">
                 <div>
-                    <h2 id="indexed-title" className="font-display text-2xl font-semibold">Trending on GitHub</h2>
+                    <h2 id="indexed-title" className="font-display text-xl font-semibold md:text-2xl">Trending on GitHub</h2>
                     <p className="mt-1 text-sm text-fg-muted">
                         {state.total > 0 ? `${state.total.toLocaleString()} skills indexed from public repositories.` : 'Skills indexed from public repositories.'}
                     </p>
@@ -206,22 +206,22 @@ export default function Home() {
 
             {/* Hero */}
             <section className="border-b border-line-muted bg-canvas-subtle">
-                <div className="container-page grid gap-10 py-12 md:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:py-20">
-                    <div className="flex flex-col items-start gap-6">
+                <div className="container-page grid gap-10 py-8 sm:py-12 md:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:py-20">
+                    <div className="flex flex-col items-start gap-5 sm:gap-6">
                         <Link to="/about" className="label py-0.5 text-xs hover:border-accent hover:text-accent">
                             <FileText className="h-3 w-3" />
                             What is a SKILL.md file?
                             <ArrowRight className="h-3 w-3" />
                         </Link>
-                        <h1 className="text-balance font-display text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl lg:text-[56px]" style={{ fontStretch: '104%' }}>
+                        <h1 className="text-balance font-display text-[34px] font-semibold leading-[1.1] tracking-tight sm:text-5xl lg:text-[56px]" style={{ fontStretch: '104%' }}>
                             The open registry for AI agent skills.
                         </h1>
-                        <p className="max-w-xl text-base leading-7 text-fg-muted sm:text-lg">
+                        <p className="max-w-xl text-[15px] leading-6 text-fg-muted sm:text-lg sm:leading-7">
                             Discover, build and share SKILL.md files that give Claude, ChatGPT, Gemini, Cursor and every other agent
                             precise, reusable expertise.
                         </p>
                         <HeroSearch />
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
                             <Link to="/browse" className="btn">
                                 <Compass className="h-4 w-4" />Explore skills
                             </Link>
@@ -233,7 +233,7 @@ export default function Home() {
                     </div>
 
                     {/* Sample skill file */}
-                    <div className="box overflow-hidden shadow-overlay">
+                    <div className="box hidden overflow-hidden shadow-overlay sm:block">
                         <div className="box-header py-2">
                             <BookMarked className="h-4 w-4 text-fg-muted" />
                             <span className="text-sm">
@@ -263,13 +263,14 @@ export default function Home() {
 
             {/* Works with */}
             <section aria-labelledby="platforms-title" className="border-b border-line-muted">
-                <div className="container-page py-8">
-                    <h2 id="platforms-title" className="text-center font-sans text-sm font-medium text-fg-muted">
+                <div className="py-6 sm:container-page sm:py-8">
+                    <h2 id="platforms-title" className="px-4 font-sans text-sm font-medium text-fg-muted sm:px-0 sm:text-center">
                         Works with the agents your team already uses
                     </h2>
-                    <ul className="mx-auto mt-5 grid max-w-5xl grid-cols-3 gap-2 sm:grid-cols-6 lg:grid-cols-9">
+                    {/* Phones: one swipeable row. Larger screens: a grid. */}
+                    <ul className="mx-auto mt-3 flex max-w-5xl snap-x gap-1 overflow-x-auto px-2 scrollbar-hide sm:mt-5 sm:grid sm:grid-cols-6 sm:gap-2 sm:overflow-visible sm:px-0 lg:grid-cols-9">
                         {PLATFORMS.map(([key, name, href]) => (
-                            <li key={key}>
+                            <li key={key} className="w-[76px] shrink-0 snap-start sm:w-auto">
                                 <a
                                     href={href}
                                     target="_blank"
@@ -286,16 +287,16 @@ export default function Home() {
                 </div>
             </section>
 
-            <div className="container-page space-y-14 py-12">
+            <div className="container-page space-y-10 py-8 md:space-y-14 md:py-12">
                 <FeaturedSkills />
                 <TopRepositories />
 
                 {/* How it works */}
                 <section aria-labelledby="how-title">
-                    <h2 id="how-title" className="font-display text-2xl font-semibold">How it works</h2>
+                    <h2 id="how-title" className="font-display text-xl font-semibold md:text-2xl">How it works</h2>
                     <ol className="mt-4 grid gap-4 md:grid-cols-3">
                         {STEPS.map(({ icon: Icon, title, body }, i) => (
-                            <li key={title} className="box p-5">
+                            <li key={title} className="box p-4 md:p-5">
                                 <div className="flex items-center gap-3">
                                     <span className="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-canvas-subtle">
                                         <Icon className="h-4 w-4 text-fg-muted" />
@@ -311,10 +312,10 @@ export default function Home() {
 
                 {/* Features */}
                 <section aria-labelledby="features-title">
-                    <h2 id="features-title" className="font-display text-2xl font-semibold">Everything you need to manage skills</h2>
+                    <h2 id="features-title" className="font-display text-xl font-semibold md:text-2xl">Everything you need to manage skills</h2>
                     <div className="mt-4 grid overflow-hidden rounded-md border border-line sm:grid-cols-2 lg:grid-cols-3">
                         {FEATURES.map(({ icon: Icon, title, body }) => (
-                            <div key={title} className="-mb-px -mr-px border-b border-r border-line-muted p-5">
+                            <div key={title} className="-mb-px -mr-px border-b border-r border-line-muted p-4 md:p-5">
                                 <Icon className="h-5 w-5 text-accent" strokeWidth={1.75} />
                                 <h3 className="mt-3 font-sans text-sm font-semibold">{title}</h3>
                                 <p className="mt-1 text-sm leading-6 text-fg-muted">{body}</p>
@@ -326,7 +327,7 @@ export default function Home() {
                 {/* Video */}
                 <section aria-labelledby="video-title" className="grid gap-6 lg:grid-cols-[1fr_1.4fr] lg:items-center">
                     <div>
-                        <h2 id="video-title" className="font-display text-2xl font-semibold">Meet the maker</h2>
+                        <h2 id="video-title" className="font-display text-xl font-semibold md:text-2xl">Meet the maker</h2>
                         <p className="mt-2 text-sm leading-6 text-fg-muted">
                             Abhishek explains what Skill Issue is, why skill files matter, and how to get the most out of them in a few minutes.
                         </p>
@@ -351,12 +352,12 @@ export default function Home() {
                 <FAQ />
 
                 {/* CTA */}
-                <section className="box flex flex-col items-start gap-4 bg-canvas-subtle p-6 md:flex-row md:items-center md:justify-between md:p-8">
+                <section className="box flex flex-col items-stretch gap-4 bg-canvas-subtle p-5 sm:items-start md:flex-row md:items-center md:justify-between md:p-8">
                     <div>
                         <h2 className="font-display text-xl font-semibold">Give your agent a skill upgrade</h2>
                         <p className="mt-1 text-sm text-fg-muted">Free to browse, free to build, free to share.</p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
                         <Link to="/browse" className="btn">Explore skills</Link>
                         <Link to="/build" className="btn-primary">Build your first skill</Link>
                     </div>

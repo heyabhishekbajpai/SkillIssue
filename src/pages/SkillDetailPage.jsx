@@ -292,6 +292,7 @@ export default function SkillDetailPage() {
                         </div>
                     </div>
 
+                    {skill.description && <p className="text-[15px] leading-6 text-fg lg:hidden">{skill.description}</p>}
                     <SkillViewer
                         rootName={slug(skill.title)}
                         markdownContent={skill.content || ''}
@@ -332,14 +333,14 @@ export default function SkillDetailPage() {
                 <aside className="min-w-0">
                     <SidebarSection title="About">
                         {skill.description
-                            ? <p className="text-[15px] leading-6">{skill.description}</p>
-                            : <p className="text-sm italic text-fg-muted">No description provided.</p>}
+                            ? <p className="hidden text-[15px] leading-6 lg:block">{skill.description}</p>
+                            : <p className="hidden text-sm italic text-fg-muted lg:block">No description provided.</p>}
                         {tags.length > 0 && (
                             <div className="mt-3 flex flex-wrap gap-1">
                                 {tags.map((t) => <Link key={t} to={`/browse?q=${encodeURIComponent(t)}`} className="topic">{t}</Link>)}
                             </div>
                         )}
-                        <ul className="mt-4 space-y-2">
+                        <ul className="space-y-2 lg:mt-4">
                             {skill.category && <li><CategoryDot category={skill.category} className="text-sm" /></li>}
                             <MetaItem icon={Star}><strong className="text-fg">{starCount.toLocaleString()}</strong> stars</MetaItem>
                             <MetaItem icon={Copy}><strong className="text-fg">{(skill.copy_count ?? 0).toLocaleString()}</strong> copies</MetaItem>

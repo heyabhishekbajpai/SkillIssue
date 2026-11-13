@@ -9,7 +9,7 @@ function Tab({ to, label, icon: Icon, end, children }) {
             to={to}
             end={end}
             className={({ isActive }) =>
-                `flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium ${
+                `flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium ${
                     isActive ? 'text-fg' : 'text-fg-muted'
                 }`
             }
@@ -58,7 +58,7 @@ export default function BottomNav() {
                     <button
                         type="button"
                         onClick={openAuthModal}
-                        className="flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium text-fg-muted"
+                        className="flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium text-fg-muted"
                     >
                         <User className="h-5 w-5" strokeWidth={1.75} />
                         <span>Sign in</span>

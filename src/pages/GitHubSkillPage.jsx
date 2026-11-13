@@ -132,10 +132,12 @@ export default function GitHubSkillPage() {
                 <div className="box mx-auto max-w-xl">
                     <Blankslate
                         icon={AlertCircle}
-                        title="Skill not found"
+                        title={/rate limit/i.test(error || '') ? 'GitHub is busy' : 'Skill not found'}
                         action={<Link to="/browse" className="btn-primary">Browse skills</Link>}
                     >
-                        {error || 'This share link appears to be invalid or the skill has been removed.'}
+                        {/rate limit/i.test(error || '')
+                            ? 'GitHub is limiting requests right now. Please try again in a few minutes.'
+                            : error || 'This share link appears to be invalid or the skill has been removed.'}
                     </Blankslate>
                 </div>
             </div>
@@ -211,6 +213,7 @@ export default function GitHubSkillPage() {
                         </div>
                     </div>
 
+                    {description && <p className="text-[15px] leading-6 text-fg lg:hidden">{description}</p>}
                     <SkillViewer
                         files={skillFiles}
                         rootName={rawName}
@@ -226,9 +229,9 @@ export default function GitHubSkillPage() {
                 <aside className="min-w-0">
                     <SidebarSection title="About">
                         {description
-                            ? <p className="text-[15px] leading-6 text-fg">{description}</p>
-                            : <p className="text-sm italic text-fg-muted">No description provided.</p>}
-                        <ul className="mt-4 space-y-2">
+                            ? <p className="hidden text-[15px] leading-6 text-fg lg:block">{description}</p>
+                            : <p className="hidden text-sm italic text-fg-muted lg:block">No description provided.</p>}
+                        <ul className="space-y-2 lg:mt-4">
                             <MetaItem icon={ExternalLink}>
                                 <a href={githubUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent hover:underline">{repo}</a>
                             </MetaItem>

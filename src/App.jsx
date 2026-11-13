@@ -61,7 +61,7 @@ export default function App() {
                 </Routes>
                 </Suspense>
             </main>
-            <div className="pb-16 md:pb-0">
+            <div className="pb-tabbar">
                 <Footer />
             </div>
 

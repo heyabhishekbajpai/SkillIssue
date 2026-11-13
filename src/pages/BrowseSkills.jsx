@@ -310,9 +310,13 @@ function DbSkillCard({ skill, uploaderProfile, onClick }) {
                     <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5" />{formatCount(star_count)}</span>
                     <span className="inline-flex items-center gap-1"><Copy className="h-3.5 w-3.5" />{formatCount(copy_count)}</span>
                     {($createdAt || created_at) && <span>Updated {timeAgo($createdAt || created_at)}</span>}
+                    <span className="ml-auto flex items-center gap-1 sm:hidden" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => setCommentsOpen(true)} className="-my-2 inline-flex min-h-[36px] items-center gap-1 rounded-md px-2 font-medium text-accent" aria-label="Comments"><MessageSquare className="h-3.5 w-3.5" /></button>
+                        <button type="button" onClick={() => { if (!user) { openAuthModal(); return } handleDownloadZip() }} disabled={downloading} className="-my-2 inline-flex min-h-[36px] items-center gap-1 rounded-md px-2 font-medium text-accent">{downloading ? <Spinner size={12} /> : <Download className="h-3.5 w-3.5" />}.zip</button>
+                    </span>
                 </div>
             </div>
-            <div className="flex shrink-0 items-start gap-1" onClick={(e) => e.stopPropagation()}>
+            <div className="hidden shrink-0 items-start gap-1 sm:flex" onClick={(e) => e.stopPropagation()}>
                 <button
                     type="button"
                     onClick={() => setCommentsOpen(true)}
@@ -644,7 +648,7 @@ export default function BrowseSkills() {
     )
 
     return (
-        <div className="container-page py-6">
+        <div className="container-page py-4 md:py-6">
             <SEO
                 title="Explore AI Skills — Skill Files for Claude, ChatGPT, Gemini & Cursor"
                 description="Search AI skill files from leading companies, GitHub and the Skill Issue community. Find skills for coding, writing, design, marketing and more."
@@ -655,20 +659,11 @@ export default function BrowseSkills() {
                 ])}
             />
 
-            <div className="grid gap-6 md:grid-cols-[256px_minmax(0,1fr)]">
+            <div className="grid gap-4 md:grid-cols-[256px_minmax(0,1fr)] md:gap-6">
                 {/* ── Sidebar ─────────────────────────────── */}
-                <aside className="md:sticky md:top-20 md:self-start">
+                <aside className="hidden md:sticky md:top-20 md:block md:self-start">
                     <h2 className="mb-2 hidden font-sans text-sm font-semibold md:block">Filter by</h2>
 
-                    {/* Mobile: compact select */}
-                    <label className="md:hidden">
-                        <span className="sr-only">Filter by source</span>
-                        <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value)} className="input">
-                            {allFilterItems.map((it) => (
-                                <option key={it.id} value={it.id}>{it.label}{it.count != null ? ` (${it.count.toLocaleString()})` : ''}</option>
-                            ))}
-                        </select>
-                    </label>
 
                     <nav aria-label="Filter skills" className="hidden md:block">
                         {filterGroups.map((group, gi) => (
@@ -709,7 +704,7 @@ export default function BrowseSkills() {
                             type="search"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search skills by name, owner or description"
+                            placeholder="Search skills"
                             aria-label="Search skills"
                             className="input input-lg pl-9 pr-9"
                         />
@@ -720,7 +715,29 @@ export default function BrowseSkills() {
                         )}
                     </form>
 
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    {/* Phones: swipeable filter chips */}
+                    <div className="-mx-4 mt-3 md:hidden" role="group" aria-label="Filter by source">
+                        <div className="flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide">
+                            {allFilterItems.map((it) => {
+                                const active = activeFilter === it.id
+                                return (
+                                    <button
+                                        key={it.id}
+                                        type="button"
+                                        onClick={() => setActiveFilter(it.id)}
+                                        aria-pressed={active}
+                                        className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors ${active ? 'border-fg bg-fg text-canvas' : 'border-line bg-canvas text-fg'}`}
+                                    >
+                                        {it.avatar && <img src={it.avatar} alt="" width={16} height={16} loading="lazy" className={`h-4 w-4 ${it.round ? 'rounded-full' : 'rounded'}`} />}
+                                        {it.id === 'All' ? 'All' : it.id === SKILL_ISSUE_FILTER ? 'Community' : it.id === DISCOVERED_FILTER ? 'GitHub' : it.label}
+                                        {it.count != null && <span className={`text-xs ${active ? 'text-canvas/80' : 'text-fg-muted'}`}>{formatCount(it.count)}</span>}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 md:mt-4">
                         <h1 className="font-sans text-base font-semibold">
                             {isSearchPending || (loading && dbLoading)
                                 ? <span className="inline-flex items-center gap-2 text-fg-muted"><Spinner size={14} />Searching…</span>
@@ -732,8 +749,8 @@ export default function BrowseSkills() {
                         </h1>
                         {(isSkillIssueFilter || activeFilter === 'All') && (
                             <label className="flex items-center gap-2 text-sm text-fg-muted">
-                                Sort community by
-                                <select value={dbSort} onChange={(e) => setDbSort(e.target.value)} className="input h-8 w-auto py-0 text-sm">
+                                <span className="hidden sm:inline">Sort community by</span><span className="sm:hidden">Sort</span>
+                                <select value={dbSort} onChange={(e) => setDbSort(e.target.value)} className="input h-9 w-auto py-0 text-sm md:h-8">
                                     <option value="recent">Recently added</option>
                                     <option value="most-rated">Most stars</option>
                                     <option value="most-copied">Most copied</option>
